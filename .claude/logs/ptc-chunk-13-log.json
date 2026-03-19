@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-13",
+    "started_at": "2026-02-28T22:00:00Z",
+    "last_updated": "2026-03-01T05:30:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-13-2026-02-28",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "resume_point": "All 255 tests pass, quality gate clean, awaiting user approval",
+  "phase_history": [
+    {
+      "phase": "context_loading",
+      "timestamp": "2026-02-28T22:00:00Z",
+      "details": "Loaded plan JSON chunk-13, test specs, all 5 source files, all 5 test files"
+    },
+    {
+      "phase": "test_writing",
+      "timestamp": "2026-02-28T22:30:00Z",
+      "details": "Previous coder wrote all 18 tests across 5 files (11 failing, 7 passing)"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T22:30:00Z",
+      "details": "11 tests failed as expected: 4 container_manager, 2 ipc_host, 3 ptc_execute, 2 sandbox_runtime"
+    },
+    {
+      "phase": "implementation",
+      "timestamp": "2026-03-01T05:00:00Z",
+      "details": "Continuation coder implemented all error handling code"
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-03-01T05:25:00Z",
+      "details": "255/255 tests passing"
+    }
+  ],
+  "files_modified": [
+    "~/.claude/mcp/ptc-server/container_manager.py",
+    "~/.claude/mcp/ptc-server/ipc_host.py",
+    "~/.claude/mcp/ptc-server/server.py",
+    "~/.claude/mcp/ptc-server/sandbox_runtime/executor.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/analyze_imports.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/analyze_structure.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/count_tokens.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/coverage_summary.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/diff_summary.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/git_diff_summary.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/list_changes.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/list_dir.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/mcp_call_summary.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/read_file.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/run_linter.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/run_tests.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/search_code.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/web_fetch_summary.py",
+    "~/.claude/mcp/ptc-server/tool_implementations/write_file.py",
+    "tests/ptc/test_ipc_host.py"
+  ],
+  "files_deleted": [
+    "tests/ptc/test_kernel_manager.py",
+    "tests/ptc/test_server.py",
+    "tests/ptc/test_tools.py"
+  ],
+  "tests_written": [
+    {"name": "test_crash_during_execution_returns_error", "file": "test_ipc_host.py", "status": "passing"},
+    {"name": "test_crash_rejects_all_pending_futures", "file": "test_ipc_host.py", "status": "passing"},
+    {"name": "test_per_tool_timeout_sends_error", "file": "test_ipc_host.py", "status": "passing"},
+    {"name": "test_overall_timeout_sends_cancel", "file": "test_ipc_host.py", "status": "passing"},
+    {"name": "test_max_tool_calls_exceeded", "file": "test_ipc_host.py", "status": "passing"},
+    {"name": "test_crash_during_idle_restarts", "file": "test_container_manager.py", "status": "passing"},
+    {"name": "test_pip_install_timeout", "file": "test_container_manager.py", "status": "passing"},
+    {"name": "test_pip_install_failure", "file": "test_container_manager.py", "status": "passing"},
+    {"name": "test_idle_timeout_destroys_container", "file": "test_container_manager.py", "status": "passing"},
+    {"name": "test_namespace_eviction_at_512mb", "file": "test_sandbox_runtime.py", "status": "passing"},
+    {"name": "test_namespace_eviction_preserves_callables", "file": "test_sandbox_runtime.py", "status": "passing"},
+    {"name": "test_repl_crash_only_affects_that_repl", "file": "test_repl_pool.py", "status": "passing"},
+    {"name": "test_repl_crash_logged", "file": "test_repl_pool.py", "status": "passing"},
+    {"name": "test_docker_unavailable_check", "file": "test_ptc_execute.py", "status": "passing"},
+    {"name": "test_all_error_results_are_json", "file": "test_ptc_execute.py", "status": "passing"},
+    {"name": "test_execution_error_has_traceback", "file": "test_ptc_execute.py", "status": "passing"},
+    {"name": "test_no_make_kernel_code_in_tool_implementations", "file": "test_ptc_execute.py", "status": "passing"},
+    {"name": "test_old_test_files_deleted", "file": "test_ptc_execute.py", "status": "passing"}
+  ],
+  "invariants_status": {
+    "inv-13-01_crash_recovery": "pass",
+    "inv-13-02_pip_failure_handling": "pass",
+    "inv-13-03_idle_timeout": "pass",
+    "inv-13-04_per_tool_timeout": "pass",
+    "inv-13-05_max_tool_calls": "pass",
+    "inv-13-06_make_kernel_code_removed": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [],
+  "deviations": [],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "Added docker_available attribute to ContainerManager.__init__",
+      "reason": "Pyright complained about unknown attribute when server.py set it dynamically"
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 1
+  }
+}

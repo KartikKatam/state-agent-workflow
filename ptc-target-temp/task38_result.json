@@ -1,0 +1,854 @@
+{
+  "file": "tests/test_ocr_aggregator.py",
+  "file_size_bytes": 189317,
+  "docstrings": [
+    {
+      "function_name": "make_cfg",
+      "docstring": "Create ConsumerConfig with optional overrides for aggregation fields.",
+      "line_number": 41
+    },
+    {
+      "function_name": "make_distribution",
+      "docstring": "Create a random (N, max_T, vocab_size) softmax distribution.",
+      "line_number": 49
+    },
+    {
+      "function_name": "make_peaked_distribution",
+      "docstring": "Create a (max_T, vocab_size) distribution with known argmax at each position.\n\nArgs:\n    max_t: Number of positions.\n    vocab_size: Vocabulary size.\n    peaks: List of length max_t giving the index of the peak character.\n    peak_prob: Probability mass on the peak character (rest spread uniformly).",
+      "line_number": 64
+    },
+    {
+      "function_name": "test_single_base_no_enhanced",
+      "docstring": "1 group with only base ROI \u2192 EvidenceUnit with has_enhanced=False,\nagree_mask all False, agree_char_indices all -1, pair_min_p1 all 0.0.",
+      "line_number": 93
+    },
+    {
+      "function_name": "test_base_enhanced_pair_fused",
+      "docstring": "1 group with base+enhanced \u2192 fused = normalize(dist[base]+dist[enhanced]);\nhas_enhanced=True.",
+      "line_number": 111
+    },
+    {
+      "function_name": "test_agree_mask_positions",
+      "docstring": "base argmax=[A,B,C], enhanced argmax=[A,X,C] \u2192 agree_mask=[True,False,True].",
+      "line_number": 130
+    },
+    {
+      "function_name": "test_agree_char_indices",
+      "docstring": "Where agree_mask True, stores argmax(base) as int; where False, stores -1.",
+      "line_number": 143
+    },
+    {
+      "function_name": "test_pair_min_p1",
+      "docstring": "base top1=[0.9,0.7], enhanced top1=[0.8,0.6] \u2192 pair_min_p1=[0.8,0.6].",
+      "line_number": 157
+    },
+    {
+      "function_name": "test_one_unit_per_group",
+      "docstring": "3 duplicate groups \u2192 exactly 3 EvidenceUnit instances returned.",
+      "line_number": 181
+    },
+    {
+      "function_name": "test_quality_from_base_roi",
+      "docstring": "group {g1: [2,3]}, quality_scores=[0.5,0.6,0.9,0.4] \u2192 unit.quality==0.9 (base_idx=2).",
+      "line_number": 191
+    },
+    {
+      "function_name": "test_empty_groups_empty_list",
+      "docstring": "Empty duplicate_groups dict \u2192 returns empty list.",
+      "line_number": 202
+    },
+    {
+      "function_name": "test_fused_distribution_normalized",
+      "docstring": "Fused distribution from base+enhanced sums to ~1.0 per position along vocab axis.",
+      "line_number": 211
+    },
+    {
+      "function_name": "test_group_id_propagated",
+      "docstring": "Each unit's group_id matches the input group key string.",
+      "line_number": 223
+    },
+    {
+      "function_name": "test_golden_evidence_formation",
+      "docstring": "2 groups (base-only q=0.8 + pair q=0.6) with seed=42 distributions\n\u2192 exact fused dist, agree positions, and field values verified.",
+      "line_number": 234
+    },
+    {
+      "function_name": "_make_unit",
+      "docstring": "Create a minimal EvidenceUnit with the given quality score.",
+      "line_number": 289
+    },
+    {
+      "function_name": "test_uniform_quality_uniform_weights",
+      "docstring": "4 units all q=0.5 (==q0) \u2192 all weights == pytest.approx(1.0).",
+      "line_number": 303
+    },
+    {
+      "function_name": "test_weights_normalized_mean_one",
+      "docstring": "5 units q=[0.1,0.3,0.5,0.7,0.9] \u2192 mean(weights) == pytest.approx(1.0, abs=1e-6).",
+      "line_number": 313
+    },
+    {
+      "function_name": "test_weights_capped_at_w_cap",
+      "docstring": "2 units q=[0.0,1.0], w_cap=1.3 \u2192 max(weights) <= 1.3.",
+      "line_number": 323
+    },
+    {
+      "function_name": "test_symmetry",
+      "docstring": "q0=0.5, units q=[0.3,0.7] \u2192 abs(w[0]-1.0) == abs(w[1]-1.0) before cap.\n\nTests that raw weights are symmetric around q0. We use a high cap to avoid capping.",
+      "line_number": 332
+    },
+    {
+      "function_name": "test_higher_quality_higher_weight",
+      "docstring": "2 units q=[0.3,0.9] \u2192 weights[1] > weights[0].",
+      "line_number": 345
+    },
+    {
+      "function_name": "test_single_unit_weight_one",
+      "docstring": "1 unit q=0.3 \u2192 weight == [1.0] (normalized to itself).",
+      "line_number": 354
+    },
+    {
+      "function_name": "test_golden_quality_weights",
+      "docstring": "3 units q=[0.3,0.5,0.9], defaults \u2192 exact hand-computed weights.",
+      "line_number": 364
+    },
+    {
+      "function_name": "test_extreme_qualities_capped",
+      "docstring": "2 units q=[0.0,1.0], w_cap=1.1 \u2192 both weights <= 1.1.",
+      "line_number": 384
+    },
+    {
+      "function_name": "test_beta_zero_uniform_weights",
+      "docstring": "beta=0, various qualities \u2192 all raw_w==1.0 \u2192 all weights==1.0.",
+      "line_number": 393
+    },
+    {
+      "function_name": "_make_unit",
+      "docstring": "Create a minimal EvidenceUnit with controllable EOS profile.\n\nArgs:\n    quality: Quality score for the unit.\n    max_t: Number of positions.\n    vocab_size: Vocabulary size.\n    eos_index: Index of the EOS token in vocab.\n    eos_profile: If provided, sets distribution[t, eos_index] to these values\n        (length must equal max_t). The rest of the vocab is spread uniformly.\n    seed: RNG seed for reproducible random distributions.",
+      "line_number": 408
+    },
+    {
+      "function_name": "test_eos_distribution_sums_to_one",
+      "docstring": "Arbitrary distribution (seed=42) \u2192 output sums to ~1.0.",
+      "line_number": 455
+    },
+    {
+      "function_name": "test_clear_eos_peak",
+      "docstring": "Strong EOS (0.95) at position 5 \u2192 argmax(result)==4 (0-indexed for length=5).",
+      "line_number": 468
+    },
+    {
+      "function_name": "test_monotonic_survival_after_peak",
+      "docstring": "Strong EOS at position 3 \u2192 P(L=4) > P(L=5) > P(L=6).",
+      "line_number": 481
+    },
+    {
+      "function_name": "test_numerical_stability_near_zero",
+      "docstring": "EOS probs all < 1e-8 \u2192 no NaN/Inf; sums to ~1.0; all >= 0.",
+      "line_number": 495
+    },
+    {
+      "function_name": "test_immediate_eos",
+      "docstring": "EOS=0.99 at position 1 \u2192 P(L=1) > 0.5 (dominant mode).",
+      "line_number": 510
+    },
+    {
+      "function_name": "test_uniform_eos_geometric",
+      "docstring": "All positions equal EOS=0.1 \u2192 distribution approximately geometric;\nP(L=1) > P(L=2) > P(L=3) > ...",
+      "line_number": 523
+    },
+    {
+      "function_name": "test_output_length_matches_max_t",
+      "docstring": "max_T=15 \u2192 len(result) == 15.",
+      "line_number": 537
+    },
+    {
+      "function_name": "test_golden_eos_hazard",
+      "docstring": "4-position dist, EOS=[0.1,0.1,0.8,0.2] \u2192 hand-computed P(L=t).",
+      "line_number": 548
+    },
+    {
+      "function_name": "test_agg_valid_distribution",
+      "docstring": "3 units with weights \u2192 P_pass_len: all >= 0, sum == ~1.0.",
+      "line_number": 587
+    },
+    {
+      "function_name": "test_l1_is_argmax",
+      "docstring": "Units with clear preference at L=7 \u2192 L1 == 7.",
+      "line_number": 602
+    },
+    {
+      "function_name": "test_l2_is_second_argmax",
+      "docstring": "Primary L=7, secondary L=5 \u2192 L2 == 5.",
+      "line_number": 614
+    },
+    {
+      "function_name": "test_length_monotonic_evidence",
+      "docstring": "2 units both supporting L=7 \u2192 P(L=7) >= P(L=7) with only 1 unit.",
+      "line_number": 641
+    },
+    {
+      "function_name": "test_length_weighted_by_quality",
+      "docstring": "u1 (weight=1.2) supports L=5, u2 (weight=0.8) supports L=7 \u2192 L1==5.",
+      "line_number": 657
+    },
+    {
+      "function_name": "test_single_unit_passthrough",
+      "docstring": "1 unit with clear L=4 peak \u2192 L1==4.",
+      "line_number": 671
+    },
+    {
+      "function_name": "test_two_competing_near_tie",
+      "docstring": "One unit supports L=7, other L=8, equal weights \u2192 {L1,L2}=={7,8}.",
+      "line_number": 683
+    },
+    {
+      "function_name": "test_golden_length_aggregation",
+      "docstring": "3 units seed=42, weights=[1.1,1.0,0.9] \u2192 exact L1, L2, and distribution.",
+      "line_number": 697
+    },
+    {
+      "function_name": "_make_char_unit",
+      "docstring": "Create an EvidenceUnit with controllable character peaks and agreement signals.\n\nArgs:\n    max_t: Number of positions.\n    vocab_size: Vocabulary size (including EOS at index 0).\n    char_peaks: Vocab indices of peak character per position (length max_t).\n    quality: Quality score.\n    peak_prob: Probability mass on the peak char.\n    has_enhanced: Whether this unit had an enhanced ROI.\n    agree_positions: Positions where base/enhanced agree.\n    agree_vocab_indices: Vocab index of the agreed char at agree positions.\n    pair_min_p1_values: Min(base_top1, enh_top1) per agree position.\n    seed: RNG seed.",
+      "line_number": 749
+    },
+    {
+      "function_name": "test_eos_removed_renormalized",
+      "docstring": "Output has no EOS column; shape (L, 36); each position sums to ~1.0.",
+      "line_number": 809
+    },
+    {
+      "function_name": "test_decoded_is_argmax",
+      "docstring": "Position 0 strong 'A', position 1 strong 'B' \u2192 decoded matches.",
+      "line_number": 840
+    },
+    {
+      "function_name": "test_char_monotonic_evidence",
+      "docstring": "Adding unit supporting 'A' at pos 0 increases P('A') at pos 0.",
+      "line_number": 862
+    },
+    {
+      "function_name": "test_char_weighted_by_quality",
+      "docstring": "u1 (weight=1.2) supports 'A', u2 (weight=0.8) supports 'B' \u2192 decoded=='A'.",
+      "line_number": 892
+    },
+    {
+      "function_name": "test_single_unit_char_match",
+      "docstring": "Single unit \u2192 decoded matches unit's argmax per position.",
+      "line_number": 910
+    },
+    {
+      "function_name": "test_allowed_chars_dimension",
+      "docstring": "allowed_chars has 36 chars \u2192 char_dists.shape[1]==36.",
+      "line_number": 931
+    },
+    {
+      "function_name": "test_char_output_shape",
+      "docstring": "candidate_length=7, 36 chars \u2192 char_dists.shape==(7,36).",
+      "line_number": 948
+    },
+    {
+      "function_name": "test_golden_characters",
+      "docstring": "2 units, 3 positions, seed=42 \u2192 exact decoded string and char_dists.",
+      "line_number": 966
+    },
+    {
+      "function_name": "test_all_units_agree_high_prob",
+      "docstring": "3 units agree on same char per position \u2192 top-1 prob > 0.95.",
+      "line_number": 1029
+    },
+    {
+      "function_name": "_make_narrow_margin_dists",
+      "docstring": "Create char_dists with a controllable margin between top-1 and top-2.\n\ntop1 gets prob = base + margin, top2 gets prob = base, rest spread uniformly.",
+      "line_number": 1057
+    },
+    {
+      "function_name": "test_override_margin_gate_fires",
+      "docstring": "Margin=0.04 (<=0.06), unit agrees on runner-up \u2192 override fires.",
+      "line_number": 1082
+    },
+    {
+      "function_name": "test_wide_margin_no_override",
+      "docstring": "Margin=0.10 (>0.06) \u2192 override does NOT fire.",
+      "line_number": 1116
+    },
+    {
+      "function_name": "test_pair_confidence_gate",
+      "docstring": "Margin=0.04 but pair_min_p1=0.55 (<0.60) \u2192 override blocked.",
+      "line_number": 1147
+    },
+    {
+      "function_name": "test_override_pair_confident_fires",
+      "docstring": "Margin=0.04, pair_min_p1=0.65, pair agrees on runner-up \u2192 fires.",
+      "line_number": 1177
+    },
+    {
+      "function_name": "test_override_agree_on_runner_up_only",
+      "docstring": "Pair agrees on char index 5 but runner-up is index 8 \u2192 does NOT fire.",
+      "line_number": 1208
+    },
+    {
+      "function_name": "test_override_no_enhanced_no_fire",
+      "docstring": "All units has_enhanced=False, tight margin \u2192 no override.",
+      "line_number": 1239
+    },
+    {
+      "function_name": "test_override_multiple_positions",
+      "docstring": "Positions 1 and 4 both meet all conditions \u2192 both overridden.",
+      "line_number": 1265
+    },
+    {
+      "function_name": "test_override_positions_tracked",
+      "docstring": "Override at positions [0,3] \u2192 overridden_positions==[0,3].",
+      "line_number": 1298
+    },
+    {
+      "function_name": "test_override_no_conditions_preserved",
+      "docstring": "All margins > 0.06 \u2192 decoded identical; overridden_positions==[].",
+      "line_number": 1328
+    },
+    {
+      "function_name": "test_golden_O_to_0_override",
+      "docstring": "Pos 3: top1='O' 0.52, top2='0' 0.48 (margin=0.04), pair agrees '0' p1=0.65\n\u2192 decoded[3] changed to '0'.",
+      "line_number": 1358
+    },
+    {
+      "function_name": "test_score_confident_negative",
+      "docstring": "High-confidence dists \u2192 score < 0 (log probs) but closer to 0 than weak case.",
+      "line_number": 1416
+    },
+    {
+      "function_name": "test_score_lambda_zero_pure_char",
+      "docstring": "lambda_len=0 \u2192 score == sum(log(eps + char_dists[t, decoded[t]])) exactly.",
+      "line_number": 1455
+    },
+    {
+      "function_name": "test_score_length_term",
+      "docstring": "Same chars, len_dist[L-1]=0.9 vs 0.1 \u2192 difference == 0.25*(log(0.9+e)-log(0.1+e)).",
+      "line_number": 1472
+    },
+    {
+      "function_name": "test_golden_score",
+      "docstring": "L=4, specific dists, lambda_len=0.25, eps=1e-10 \u2192 exact hand-computed score.",
+      "line_number": 1499
+    },
+    {
+      "function_name": "test_score_deterministic",
+      "docstring": "Same inputs twice \u2192 identical score.",
+      "line_number": 1523
+    },
+    {
+      "function_name": "make_candidate",
+      "docstring": "Create a CandidateResult with peaked distributions matching the string.\n\nThe char_dists are peaked at the character indices implied by the string\n(mapping A=0, B=1, ..., Z=25, 0=26, ..., 9=35). The len_dist is peaked\nat the candidate length position.",
+      "line_number": 1544
+    },
+    {
+      "function_name": "make_aggregator",
+      "docstring": "Create an OcrAggregator with default config + overrides.",
+      "line_number": 1588
+    },
+    {
+      "function_name": "test_bootstrap_h1",
+      "docstring": "New track, 1 candidate 'ABC' \u2192 H1.string=='ABC', H1.win_count==1, H2 is None.",
+      "line_number": 1602
+    },
+    {
+      "function_name": "test_second_different_creates_h2",
+      "docstring": "After bootstrap, candidates 'ABC' and 'ABD' \u2192 H1 and H2 both exist.",
+      "line_number": 1613
+    },
+    {
+      "function_name": "test_match_h1_increments_win",
+      "docstring": "H1='ABC' win_count=1, new candidate 'ABC' \u2192 H1.win_count==2.",
+      "line_number": 1628
+    },
+    {
+      "function_name": "test_match_h2_ema_update",
+      "docstring": "H2='XYZ', new candidate 'XYZ' \u2192 H2.win_count incremented, EMA updated.",
+      "line_number": 1642
+    },
+    {
+      "function_name": "test_h1_always_stronger",
+      "docstring": "Setup where H2 becomes stronger \u2192 after update, H1.score >= H2.score (swap).",
+      "line_number": 1661
+    },
+    {
+      "function_name": "test_ema_convergence",
+      "docstring": "5 passes identical 'ABC' \u2192 distance(ema, target) decreases monotonically.",
+      "line_number": 1677
+    },
+    {
+      "function_name": "test_length_converges_faster",
+      "docstring": "After 3 passes: len_dist relative error < char_dist relative error.",
+      "line_number": 1699
+    },
+    {
+      "function_name": "test_stale_replacement",
+      "docstring": "H2 last_seen at pass 1, now pass 5 (stale_passes=3), new candidate \u2192 H2 replaced.",
+      "line_number": 1724
+    },
+    {
+      "function_name": "test_weak_replacement",
+      "docstring": "H2 with low-confidence distributions, strong candidate replaces it.",
+      "line_number": 1741
+    },
+    {
+      "function_name": "test_close_score_discard",
+      "docstring": "H2 not stale, H2.score=-3.0, candidate score=-3.2 \u2192 H2 unchanged (discarded).",
+      "line_number": 1775
+    },
+    {
+      "function_name": "test_deterministic_matching",
+      "docstring": "Same track+candidates+pass_num on two fresh aggregators \u2192 identical state.",
+      "line_number": 1793
+    },
+    {
+      "function_name": "test_re_decode_from_ema",
+      "docstring": "After EMA update, H1.string is decoded from ema_char_dists, not stored.",
+      "line_number": 1812
+    },
+    {
+      "function_name": "test_clear_track",
+      "docstring": "After clear_track('t1') \u2192 get_hypotheses('t1') returns (None, None).",
+      "line_number": 1832
+    },
+    {
+      "function_name": "test_independent_tracks",
+      "docstring": "Update track 't1' and 't2' independently \u2192 each has its own state.",
+      "line_number": 1844
+    },
+    {
+      "function_name": "test_golden_3pass_convergence",
+      "docstring": "3-pass sequence with known inputs \u2192 exact H1 state after each pass.\n\nPass 1: candidates ['ABC'@-1.5, 'ABD'@-2.0] \u2192 H1='ABC', H2='ABD'\nPass 2: candidates ['ABC'@-1.0] \u2192 H1='ABC' win=2, H2='ABD' untouched\nPass 3: candidates ['ABC'@-0.8, 'ABD'@-1.2] \u2192 H1='ABC' win=3, H2='ABD' win=2",
+      "line_number": 1861
+    },
+    {
+      "function_name": "_char_idx",
+      "docstring": "Map a character to its allowed_chars index.",
+      "line_number": 1916
+    },
+    {
+      "function_name": "make_char_dists_with_margins",
+      "docstring": "Build char_dists with explicit control over p1 and margin per position.\n\nchar_dists[t, decoded] = p1s[t], char_dists[t, p2] = p1s[t] - margins[t],\nrest is spread uniformly.",
+      "line_number": 1925
+    },
+    {
+      "function_name": "make_hypothesis_for_done",
+      "docstring": "Create a HypothesisState for testing.",
+      "line_number": 1962
+    },
+    {
+      "function_name": "test_high_confidence_all_clear",
+      "docstring": "mean_p1=0.95, min_margin>=0.10, no confusion \u2192 HIGH.",
+      "line_number": 2002
+    },
+    {
+      "function_name": "test_confusion_blocks_high",
+      "docstring": "mean_p1>=0.90 overall, but O/0 confusion at margin 0.15 (<0.20) \u2192 NOT HIGH.",
+      "line_number": 2017
+    },
+    {
+      "function_name": "test_med_confidence",
+      "docstring": "mean_p1=0.80, mean_margin high, no confusion \u2192 MED (below HIGH threshold).",
+      "line_number": 2035
+    },
+    {
+      "function_name": "test_low_confidence",
+      "docstring": "mean_p1=0.60 \u2192 LOW.",
+      "line_number": 2052
+    },
+    {
+      "function_name": "test_confusion_does_not_block_med",
+      "docstring": "Confusion position exists but MED thresholds met \u2192 MED (confusion only blocks HIGH).",
+      "line_number": 2067
+    },
+    {
+      "function_name": "test_high_requires_min_margin",
+      "docstring": "mean_p1=0.92, but min_margin=0.05 (<0.10) \u2192 NOT HIGH.",
+      "line_number": 2082
+    },
+    {
+      "function_name": "test_golden_confidence",
+      "docstring": "7 positions, B/8 confusion at margin 0.22 (>=0.20) \u2192 HIGH.",
+      "line_number": 2098
+    },
+    {
+      "function_name": "test_boundary_mean_p1_at_090",
+      "docstring": "mean_p1=0.900 exactly, min_margin>=0.10, no confusion \u2192 HIGH (boundary inclusive).",
+      "line_number": 2115
+    },
+    {
+      "function_name": "_make_pass_c1",
+      "docstring": "Build a CandidateResult and char_dists for Path A evaluation.",
+      "line_number": 2139
+    },
+    {
+      "function_name": "test_path_a_all_clear",
+      "docstring": "len_prob=0.85, all p1>=0.92, all margin>=0.15, no confusion below 0.25\n\u2192 (True, FINAL_ONEPASS_AGREE).",
+      "line_number": 2169
+    },
+    {
+      "function_name": "test_path_a_thresholds",
+      "docstring": "One position p1=0.88 (<0.90) \u2192 Path A fails.",
+      "line_number": 2198
+    },
+    {
+      "function_name": "test_path_a_confusion_strict",
+      "docstring": "Confusion position O/0 margin=0.20 (<0.25 required for one-pass) \u2192 Path A fails.",
+      "line_number": 2225
+    },
+    {
+      "function_name": "test_path_a_length_prob_gate",
+      "docstring": "len_prob=0.65 (<0.70) but chars all strong \u2192 Path A fails on length.",
+      "line_number": 2253
+    },
+    {
+      "function_name": "test_path_b_requirements",
+      "docstring": "h1_bucket=HIGH, win_count=3, H2=None \u2192 (True, FINAL_MULTIPASS_STABLE).",
+      "line_number": 2284
+    },
+    {
+      "function_name": "test_path_b_not_high",
+      "docstring": "h1_bucket=MED, win_count=3, H2=None \u2192 Path B fails.",
+      "line_number": 2313
+    },
+    {
+      "function_name": "test_path_b_win_count_low",
+      "docstring": "h1_bucket=HIGH, win_count=1 (<2) \u2192 Path B fails.",
+      "line_number": 2340
+    },
+    {
+      "function_name": "test_path_b_h2_competitive",
+      "docstring": "H1=HIGH win=3, H2 close score \u2192 Path B fails (H2 competitive).",
+      "line_number": 2367
+    },
+    {
+      "function_name": "test_interim_confusion",
+      "docstring": "Neither path passes; confusion position below threshold \u2192 INTERIM_CONFUSION.",
+      "line_number": 2397
+    },
+    {
+      "function_name": "test_interim_ambiguous",
+      "docstring": "Neither path passes; no confusion, just weak \u2192 INTERIM_AMBIGUOUS.",
+      "line_number": 2425
+    },
+    {
+      "function_name": "_make_confusion_dists",
+      "docstring": "Build char_dists with a specified number of confusion positions.",
+      "line_number": 2462
+    },
+    {
+      "function_name": "test_score_gate",
+      "docstring": "Score diff=0.35 (>=0.25) \u2192 (0, False), no tiebreak.",
+      "line_number": 2497
+    },
+    {
+      "function_name": "test_ca_close_scores_c2_wins",
+      "docstring": "Diff=0.18, C2 matches CA, C1 doesn't, >=50% confusion \u2192 (1, True).",
+      "line_number": 2514
+    },
+    {
+      "function_name": "test_no_confidence_raise",
+      "docstring": "CA tiebreak does NOT change confidence bucket.",
+      "line_number": 2531
+    },
+    {
+      "function_name": "test_ca_ambiguity_dominance_required",
+      "docstring": "<50% confusion AND length_ambiguity<0.30 \u2192 (0, False) even with close scores.",
+      "line_number": 2554
+    },
+    {
+      "function_name": "test_ca_confusion_dominated",
+      "docstring": ">=50% confusion positions, scores close \u2192 dominance gate passes.",
+      "line_number": 2571
+    },
+    {
+      "function_name": "test_ca_length_ambiguity_dominated",
+      "docstring": "length_ambiguity>=0.30, <50% confusion \u2192 dominance gate passes via length.",
+      "line_number": 2590
+    },
+    {
+      "function_name": "test_ca_both_match_no_swap",
+      "docstring": "Both C1 and C2 match CA patterns \u2192 (0, False).",
+      "line_number": 2609
+    },
+    {
+      "function_name": "test_ca_c1_matches_c2_doesnt",
+      "docstring": "C1 matches CA, C2 doesn't \u2192 (0, True).",
+      "line_number": 2626
+    },
+    {
+      "function_name": "_make_simple_input",
+      "docstring": "Create simple aggregation inputs with peaked distributions.",
+      "line_number": 2652
+    },
+    {
+      "function_name": "test_always_produces_output",
+      "docstring": "Any valid input \u2192 AggregationDecision returned.",
+      "line_number": 2691
+    },
+    {
+      "function_name": "test_deterministic",
+      "docstring": "Same inputs on two independent aggregators \u2192 identical outputs.",
+      "line_number": 2706
+    },
+    {
+      "function_name": "test_empty_input_no_prior",
+      "docstring": "0 ROIs, no prior state \u2192 best_string='', LOW, done=False, INTERIM_AMBIGUOUS.",
+      "line_number": 2721
+    },
+    {
+      "function_name": "test_empty_input_with_prior",
+      "docstring": "0 ROIs, prior H1='ABC' \u2192 returns prior H1, LOW, done=False.",
+      "line_number": 2733
+    },
+    {
+      "function_name": "test_reason_precedence_done_wins",
+      "docstring": "When done=True, reason is always FINAL_*.",
+      "line_number": 2748
+    },
+    {
+      "function_name": "test_debug_payload_all_fields",
+      "docstring": "agg_enable_debug_payload=True \u2192 payload not None; all 16 fields present.",
+      "line_number": 2766
+    },
+    {
+      "function_name": "_build_peaked_pipeline_input",
+      "docstring": "Build full pipeline inputs with peaked distributions for a target plate string.\n\nEnhanced ROIs are paired with the first n_enhanced base ROIs.\nReturns (distributions, groups, qualities, eos_index).",
+      "line_number": 2804
+    },
+    {
+      "function_name": "_build_confusion_pipeline_input",
+      "docstring": "Build pipeline inputs with confusion at a specific position.\n\nAt confusion_pos, all ROIs have correct_char at correct_prob and\nconfused_char at confused_prob. Other positions are strongly peaked.",
+      "line_number": 2866
+    },
+    {
+      "function_name": "_build_dup_override_input",
+      "docstring": "Build pipeline inputs designed to trigger (or not) duplicate override.\n\nCreates n_dominant_base base-only units favouring dominant_char at override_pos\nand n_agree_base base+enhanced pairs agreeing on runner_up_char.",
+      "line_number": 2927
+    },
+    {
+      "function_name": "test_empty_degenerate",
+      "docstring": "0 ROIs, no prior state \u2192 best_string='', LOW, done=False, INTERIM_AMBIGUOUS.",
+      "line_number": 3015
+    },
+    {
+      "function_name": "test_single_pass_insufficient",
+      "docstring": "1 base ROI only, moderate quality \u2192 LOW confidence, done=False.\n\nWith a single unit there is no log-space aggregation amplification,\nso the raw peak probability (~0.60) flows through to char_dists.",
+      "line_number": 3027
+    },
+    {
+      "function_name": "test_happy_unambig_abc1234",
+      "docstring": "8 base + 4 enhanced, all high quality, clear 'ABC1234' \u2192 1-pass DONE.",
+      "line_number": 3049
+    },
+    {
+      "function_name": "test_all_low_quality_conservative",
+      "docstring": "8 base with near-uniform distributions \u2192 MED/LOW after 3 passes, done=False.\n\nDistributions are constructed with very small peaks (1% above uniform)\nand small per-unit random variation, so 8-unit aggregation cannot push\np1 above the MED threshold (0.75).",
+      "line_number": 3068
+    },
+    {
+      "function_name": "test_blur_bias_high_wins",
+      "docstring": "Mixed: 4 high-q correct 'D', 4 low-q blur-bias '0' at pos 3.\n\nHigh-quality ROIs dominate via quality weighting.",
+      "line_number": 3113
+    },
+    {
+      "function_name": "test_length_ambiguity_blocks",
+      "docstring": "7-char and 8-char near-tie length \u2192 done=False.",
+      "line_number": 3159
+    },
+    {
+      "function_name": "test_b8_convergence_3pass",
+      "docstring": "B/8 confusion at pos 3, resolves over 3 passes \u2192 FINAL_MULTIPASS_STABLE.\n\nPass 1: '8' dominates (reversed confusion) \u2192 H1=\"ABC8234\"\nPass 2-3: 'B' dominates \u2192 creates competing H2=\"ABCB234\", wins 2 passes.\nn_base=2 keeps aggregation moderate so confusion pos p1 < 0.90\n(blocks Path A), while non-confusion positions stay near 1.0 (HIGH bucket).\nScore gap \u2248 0.5+ between hypotheses enables Path B convergence.",
+      "line_number": 3198
+    },
+    {
+      "function_name": "test_persistent_confusion",
+      "docstring": "I/1 confusion at pos 2, margin stays ~0.07 over 3 passes \u2192 never done.\n\nUses n_base=1 to avoid log-space aggregation amplification.\nWith 1 unit: p1=0.25, p2=0.18, margin=0.07 < confusion_margin_high=0.20\n\u2192 _has_confusion_below_threshold returns True \u2192 INTERIM_CONFUSION.",
+      "line_number": 3236
+    },
+    {
+      "function_name": "test_dup_override_O_to_0",
+      "docstring": "Tight margin at pos 3 with enhanced pair agreeing on '0' \u2192 override fires.\n\nManual construction (no factory): 1 dominant base unit with 'O'=0.76\nat pos 3, plus 1 base+enhanced agree pair with '0'=0.65.  After\nweighted log-space aggregation the margin at pos 3 is ~0.055\n(within agg_delta_agree_override=0.06).  The enhanced pair agrees\non '0' with pair_min_p1=0.65 (\u2265 agg_pair_agree_min_p1=0.60),\nso the override fires and flips decoded[3] from 'O' \u2192 '0'.",
+      "line_number": 3266
+    },
+    {
+      "function_name": "test_dup_blocked_margin_wide",
+      "docstring": "Same setup but with wide margin \u2192 override does NOT fire.",
+      "line_number": 3342
+    },
+    {
+      "function_name": "test_dup_blocked_pair_weak",
+      "docstring": "Tight margin (\u22640.06) but weak pair (p1=0.45 < 0.60) \u2192 override blocked.\n\nManual construction matching test_dup_override_O_to_0 layout but with\nlower agree_peak=0.45 (below agg_pair_agree_min_p1=0.60).  Uses\ndominant_peak=0.48 to balance the weaker agree signal, keeping the\naggregated margin at pos 3 within 0.06 so the margin gate passes.\nThe override is then blocked specifically by the pair_min_p1 gate.",
+      "line_number": 3363
+    },
+    {
+      "function_name": "test_ca_tiebreak_fires",
+      "docstring": "L1=8, L2=7 with CA-matching 7-char candidate \u2192 tiebreak swaps to C2.\n\nManual construction: plate chars \"1ABC2345\" across 8 positions with\nmoderate EOS at pos 6 (\u2192 P(L=7) \u2248 0.43) and stronger EOS at pos 7\n(\u2192 P(L=8) \u2248 0.57).  This gives length_ambiguity = 1 - 0.57 = 0.43\n\u2265 0.30 (ambiguity dominance gate passes).\n\nC1 (L=8) = \"1ABC2345\" \u2192 does NOT match CA patterns (8 chars).\nC2 (L=7) = \"1ABC234\" \u2192 matches CA pattern ^[0-9][A-Z]{3}[0-9]{3}$.\nScore diff \u2248 0.02 < agg_tie_score=0.25.  Path A fails (len_prob < 0.70).\nPath B fails (single pass, win_count=1 < 2).  CA tiebreak fires.",
+      "line_number": 3431
+    },
+    {
+      "function_name": "_make_boundary_char_dists",
+      "docstring": "Build char_dists with exact p1 and margin for boundary testing.\n\nUnlike make_char_dists_with_margins, this does NOT renormalize \u2014\nit preserves exact threshold boundary values even when p1 + p2 > 1.0.\nSuitable for function-level tests of compute_confidence_bucket / _check_path_a.",
+      "line_number": 3493
+    },
+    {
+      "function_name": "test_boundary_high_mean_p1",
+      "docstring": "mean_p1=0.899 \u2192 NOT HIGH (MED); mean_p1=0.901 \u2192 HIGH.",
+      "line_number": 3535
+    },
+    {
+      "function_name": "test_boundary_high_min_margin",
+      "docstring": "min_margin=0.099 \u2192 NOT HIGH (MED); min_margin=0.101 \u2192 HIGH.",
+      "line_number": 3555
+    },
+    {
+      "function_name": "test_boundary_confusion_margin_high",
+      "docstring": "Confusion margin=0.199 blocks HIGH (\u2192MED); 0.201 allows HIGH.",
+      "line_number": 3575
+    },
+    {
+      "function_name": "test_boundary_med_mean_p1",
+      "docstring": "mean_p1=0.749 \u2192 LOW; mean_p1=0.751 \u2192 MED.",
+      "line_number": 3600
+    },
+    {
+      "function_name": "test_boundary_med_mean_margin",
+      "docstring": "mean_margin=0.049 \u2192 LOW; mean_margin=0.051 \u2192 MED.",
+      "line_number": 3620
+    },
+    {
+      "function_name": "_make_path_a_candidate",
+      "docstring": "Create a CandidateResult for Path A boundary tests.\n\nConstructs char_dists with exact p1/margin (no renormalization).\nUses argmax-safe layout: only decoded and runner-up indices are non-zero.",
+      "line_number": 3642
+    },
+    {
+      "function_name": "test_boundary_onepass_len_prob",
+      "docstring": "len_prob=0.699 \u2192 Path A fails (not done); 0.701 \u2192 passes (done).",
+      "line_number": 3680
+    },
+    {
+      "function_name": "test_boundary_onepass_min_p1",
+      "docstring": "p1=0.899 at one position \u2192 Path A fails; 0.901 \u2192 passes.",
+      "line_number": 3710
+    },
+    {
+      "function_name": "test_boundary_onepass_min_margin",
+      "docstring": "margin=0.119 at one position \u2192 Path A fails; 0.121 \u2192 passes.",
+      "line_number": 3743
+    },
+    {
+      "function_name": "test_boundary_onepass_confusion",
+      "docstring": "Confusion margin=0.249 \u2192 Path A fails; 0.251 \u2192 passes.",
+      "line_number": 3776
+    },
+    {
+      "function_name": "test_boundary_multipass_min_wins",
+      "docstring": "win_count=1 \u2192 Path B fails; win_count=2 \u2192 Path B passes.",
+      "line_number": 3817
+    },
+    {
+      "function_name": "test_boundary_hyp_gap_done",
+      "docstring": "gap=0.499 \u2192 H2 competitive (not done); gap=0.501 \u2192 done.",
+      "line_number": 3853
+    },
+    {
+      "function_name": "test_boundary_tie_score",
+      "docstring": "score_diff=0.251 \u2192 no tiebreak; 0.249 \u2192 tiebreak fires.",
+      "line_number": 3892
+    },
+    {
+      "function_name": "test_boundary_delta_agree_override",
+      "docstring": "margin=0.061 \u2192 override blocked; margin=0.059 \u2192 fires.",
+      "line_number": 3943
+    },
+    {
+      "function_name": "test_boundary_pair_agree_min_p1",
+      "docstring": "pair_p1=0.599 \u2192 override blocked; pair_p1=0.601 \u2192 fires.",
+      "line_number": 3994
+    },
+    {
+      "function_name": "_make_minimal_unit",
+      "docstring": "Create a minimal EvidenceUnit for property testing.",
+      "line_number": 4043
+    },
+    {
+      "function_name": "test_prop_weight_normalization",
+      "docstring": "For any quality in [0,1]^N, weights are positive, within cap,\nand mean ~= 1.0 when no capping fires.",
+      "line_number": 4080
+    },
+    {
+      "function_name": "test_prop_length_dist_valid",
+      "docstring": "For any valid softmax distribution, P(L=t) >= 0 and sum ~= 1.0.",
+      "line_number": 4101
+    },
+    {
+      "function_name": "test_prop_char_dist_valid",
+      "docstring": "After aggregation, char_dists[t,:].sum() ~= 1.0 per position.",
+      "line_number": 4123
+    },
+    {
+      "function_name": "test_prop_determinism",
+      "docstring": "Same inputs produce identical aggregate_pass outputs.",
+      "line_number": 4168
+    },
+    {
+      "function_name": "test_prop_monotonic_evidence",
+      "docstring": "Adding a supportive unit never decreases target char probability.",
+      "line_number": 4197
+    },
+    {
+      "function_name": "test_prop_low_never_done",
+      "docstring": "LOW confidence with realistic near-uniform char_dists \u2192 done always False.\n\nUses realistic LOW-confidence distributions (p1 \u2248 1/36 \u2248 0.028) with a\nnon-zero pass_len_dist. Path A fails at per-position p1 gate (0.028 < 0.90).\nPath B fails because LOW != HIGH. This proves LOW confidence can't achieve\nDONE through any realistic input, without artificially zeroing distributions.",
+      "line_number": 4275
+    },
+    {
+      "function_name": "test_scenario_ambiguity_axis",
+      "docstring": "Ambiguity: unambig_high, unambig_low, ambig_tiny_margin, ambig_low.",
+      "line_number": 4356
+    },
+    {
+      "function_name": "test_scenario_quality_axis",
+      "docstring": "Quality: all_high, mixed, all_low, blur_bias_adversarial.",
+      "line_number": 4426
+    },
+    {
+      "function_name": "test_scenario_duplicate_axis",
+      "docstring": "Duplicate: no_dups, agree_narrow, agree_wrong, blocked_wide.",
+      "line_number": 4523
+    },
+    {
+      "function_name": "test_scenario_length_axis",
+      "docstring": "Length: single_clear, two_near_tie, three_way, early_eos_bias.",
+      "line_number": 4605
+    },
+    {
+      "function_name": "test_scenario_temporal_axis",
+      "docstring": "Temporal: 1_pass, 2_converge, 3_converge, conflict_resolves, stays_ambiguous.",
+      "line_number": 4733
+    },
+    {
+      "function_name": "test_factory_deterministic_from_seed",
+      "docstring": "Each factory produces identical output when called with the same seed.",
+      "line_number": 4882
+    },
+    {
+      "function_name": "test_factory_output_shapes_and_normalization",
+      "docstring": "Factory outputs have correct shapes and normalized distributions.",
+      "line_number": 4920
+    },
+    {
+      "function_name": "test_assertion_messages_contain_seed",
+      "docstring": "Scenario test assertion messages include seed for reproducibility.",
+      "line_number": 4960
+    },
+    {
+      "function_name": "test_different_seeds_produce_different_outputs",
+      "docstring": "Different seeds produce different (non-identical) quality/distribution values.",
+      "line_number": 4985
+    }
+  ],
+  "documented_count": 169,
+  "undocumented_count": 0,
+  "total_functions": 169
+}

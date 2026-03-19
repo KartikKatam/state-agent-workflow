@@ -1,0 +1,267 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "team-message.schema.json",
+  "title": "Agent Team Message",
+  "description": "Discriminated union of all 5 message types for the Agent Teams communication protocol. All messages are JSON, sent via SendMessage. Rule: never send file content in messages — only file paths.",
+  "type": "object",
+  "required": ["type", "from", "to", "timestamp", "payload"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "task_assign",
+        "task_complete",
+        "info_request",
+        "info_ready",
+        "status_update"
+      ],
+      "description": "Discriminator field — determines payload shape"
+    },
+    "from": {
+      "type": "string",
+      "description": "Sender teammate name (e.g., 'lead', 'chunk-coder-1', 'scribe')"
+    },
+    "to": {
+      "type": "string",
+      "description": "Recipient teammate name"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Message-type-specific payload (see oneOf)"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "type": { "const": "task_assign" },
+        "payload": { "$ref": "#/$defs/task_assign_payload" }
+      }
+    },
+    {
+      "properties": {
+        "type": { "const": "task_complete" },
+        "payload": { "$ref": "#/$defs/task_complete_payload" }
+      }
+    },
+    {
+      "properties": {
+        "type": { "const": "info_request" },
+        "payload": { "$ref": "#/$defs/info_request_payload" }
+      }
+    },
+    {
+      "properties": {
+        "type": { "const": "info_ready" },
+        "payload": { "$ref": "#/$defs/info_ready_payload" }
+      }
+    },
+    {
+      "properties": {
+        "type": { "const": "status_update" },
+        "payload": { "$ref": "#/$defs/status_update_payload" }
+      }
+    }
+  ],
+
+  "$defs": {
+    "task_assign_payload": {
+      "type": "object",
+      "description": "Lead → teammate. Replaces Task() spawn prompt.",
+      "required": ["task_type", "instructions"],
+      "properties": {
+        "task_type": {
+          "type": "string",
+          "description": "Category of work (e.g., 'explore', 'research', 'implement', 'plan', 'log')"
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Natural language task instructions"
+        },
+        "inputs": {
+          "type": "object",
+          "properties": {
+            "files_to_read": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "File paths the teammate should read for context"
+            },
+            "session_log": {
+              "type": "string",
+              "description": "Path to session log for resumption scenarios"
+            },
+            "resume_instructions": {
+              "type": "string",
+              "description": "1-line summary of where to pick up (for replacement teammates)"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "write_to": {
+              "type": "string",
+              "description": "Expected output file path"
+            }
+          }
+        }
+      }
+    },
+
+    "task_complete_payload": {
+      "type": "object",
+      "description": "Teammate → lead. Replaces write-and-discard return.",
+      "required": ["status", "summary"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["success", "partial", "failed", "blocked"],
+          "description": "Outcome of the task"
+        },
+        "output_files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to files written during the task"
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "1-line summary of what was done. Lead uses this for routing — keep concise."
+        },
+        "context_pressure": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if teammate is running low on context"
+        }
+      }
+    },
+
+    "info_request_payload": {
+      "type": "object",
+      "description": "Teammate → lead. Replaces BLOCKED protocol. Teammate does NOT terminate — continues if priority is normal.",
+      "required": ["request_type", "query", "priority"],
+      "properties": {
+        "request_type": {
+          "type": "string",
+          "enum": ["documentation", "codebase", "research"],
+          "description": "Type of information needed"
+        },
+        "query": {
+          "type": "string",
+          "description": "Specific question or information needed"
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "feature": { "type": "string" },
+            "chunk": { "type": "string" },
+            "why_needed": { "type": "string" }
+          }
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["blocking", "normal"],
+          "description": "blocking = wait for response before continuing. normal = continue other work while waiting."
+        },
+        "what_we_need": {
+          "type": ["string", "null"],
+          "description": "Precise description of what information is needed. More specific than query. Optional — use for nuanced requests."
+        },
+        "why_we_need_it": {
+          "type": ["string", "null"],
+          "description": "Why this information matters for the current task. Helps explorer/researcher understand nuances. Optional."
+        },
+        "relevant_context": {
+          "type": ["object", "null"],
+          "description": "Structured context to guide the search. Optional — use for complex requests.",
+          "properties": {
+            "design_doc_section": {
+              "type": ["string", "null"],
+              "description": "Which part of the design doc prompted this request"
+            },
+            "existing_knowledge": {
+              "type": ["string", "null"],
+              "description": "What we already know — so the researcher doesn't re-discover it"
+            },
+            "related_files": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Files to start searching from"
+            },
+            "specific_questions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Concrete questions to answer — explorer/researcher can spawn one sub-agent per question"
+            }
+          }
+        },
+        "existing_checked": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "File paths already checked to prevent duplicate work"
+        }
+      }
+    },
+
+    "info_ready_payload": {
+      "type": "object",
+      "description": "Lead → teammate. Replaces inbox.json. Content stays on disk — only paths sent.",
+      "required": ["status"],
+      "properties": {
+        "file_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to files containing requested information"
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "1-line summary of what was found"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["fulfilled", "partial", "not_found"],
+          "description": "Whether the request was fully satisfied"
+        }
+      }
+    },
+
+    "status_update_payload": {
+      "type": "object",
+      "description": "Teammate → lead. Replaces context threshold auto-handoff and handoff_writer.py.",
+      "required": ["phase", "progress"],
+      "properties": {
+        "phase": {
+          "type": "string",
+          "description": "Current work phase"
+        },
+        "progress": {
+          "type": "string",
+          "description": "Brief progress description (e.g., '4/7 tests passing')"
+        },
+        "context_pressure": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if context is at 70%+"
+        },
+        "needs_replacement": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if teammate should be shut down and replaced"
+        },
+        "session_log": {
+          "type": "string",
+          "description": "Path to session log / state file for replacement teammate"
+        },
+        "resume_instructions": {
+          "type": "string",
+          "description": "1-line instruction for where replacement should pick up"
+        }
+      }
+    }
+  }
+}

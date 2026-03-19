@@ -1,0 +1,4 @@
+# file: /ptc_server/ipc_protocol.py
+# hypothesis_version: 6.151.9
+
+[1048576, ',', ':', 'complete', 'error', 'execute', 'ping', 'pong']

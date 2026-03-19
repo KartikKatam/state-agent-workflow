@@ -1,0 +1,1273 @@
+{
+  "meta": {
+    "type": "plan",
+    "created": "2026-02-28T18:00:00Z",
+    "updated": "2026-02-28T18:00:00Z",
+    "schema_version": "1.0",
+    "feature_name": "ptc",
+    "status": "archived",
+    "archive_note": "Superseded by ptc-v2-simplification.md. V2 removed tool dispatch layer, enabled bridge networking, uses pre-built role images."
+  },
+  "feature": {
+    "design_doc": ".claude/designs/ptc.md",
+    "context_packet": ".claude/context/ptc-context.json",
+    "codebase_context": ".claude/context/_codebase.json",
+    "summary": "Replace 15-tool MCP server with single ptc_execute backed by NDJSON IPC over Unix sockets, persistent Docker containers with REPL pool, host-side tool dispatch, runtime pip install, and JSONL observability.",
+    "goals": [
+      "True pause-resume tool calling via Unix socket IPC",
+      "Persistent container namespaces (state survives across ptc_execute calls)",
+      "REPL pool: sub-agents share parent container (no extra pip install)",
+      "ptc_tools library usable inside container and on host",
+      "JSONL observability for all events",
+      "No fallback mode — Docker required"
+    ],
+    "primary_block": "ptc-server",
+    "estimated_chunks": 14,
+    "estimated_time": "8-12 hours"
+  },
+  "chunks": [
+    {
+      "id": "chunk-01",
+      "name": "IPC Protocol Messages and Serialization",
+      "purpose": "foundational",
+      "delivers": "All IPC message types can be instantiated, serialized to NDJSON, and deserialized back with unique correlation IDs.",
+      "description": "Define 8 message dataclasses (4 host-to-container, 4 container-to-host) with NDJSON encode/decode functions and UUID-based ID generators. This is the wire protocol foundation used by all IPC components.",
+      "out_of_scope": [
+        "Socket transport (chunk-03/05)",
+        "Message routing logic (chunk-05)",
+        "Docker operations"
+      ],
+      "status": "pending",
+      "dependencies": [],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/ipc_protocol.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/ipc_protocol.py",
+          "tests/ptc/test_ipc_protocol.py",
+          "tests/ptc/conftest.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Define 4 host-to-container dataclasses",
+          "details": "ExecuteMsg(exec_id, code, type='execute'), ToolResultMsg(call_id, content, error=None, type='tool_result'), CancelMsg(exec_id, reason='timeout', type='cancel'), PingMsg(type='ping'). All use @dataclass with type field defaulted."
+        },
+        {
+          "task": "Define 4 container-to-host dataclasses",
+          "details": "ToolCallMsg(call_id, tool, input: dict, type='tool_call'), CompleteMsg(exec_id, stdout, stderr='', return_code=0, namespace_keys=[], namespace_size_kb=0, type='complete'), ErrorMsg(exec_id, message, traceback='', type='error'), PongMsg(type='pong')."
+        },
+        {
+          "task": "Implement encode(msg) -> bytes",
+          "details": "json.dumps(asdict(msg), separators=(',',':')) + '\\n' encoded to bytes. Compact NDJSON — one message per line."
+        },
+        {
+          "task": "Implement decode(line: bytes) -> dict",
+          "details": "json.loads(line.strip()). Returns raw dict; caller reconstructs typed message."
+        },
+        {
+          "task": "Implement new_call_id() and new_exec_id()",
+          "details": "new_call_id() returns f'c-{uuid.uuid4().hex[:12]}', new_exec_id() returns f'e-{uuid.uuid4().hex[:12]}'. 12 hex chars = 48 bits of randomness."
+        },
+        {
+          "task": "Define MAX_MESSAGE_SIZE constant",
+          "details": "MAX_MESSAGE_SIZE = 1_048_576 (1MB per message)."
+        },
+        {
+          "task": "Write tests and initial conftest.py",
+          "details": "Round-trip encode/decode for each message type, ID uniqueness across 1000 calls, MAX_MESSAGE_SIZE value check. Create conftest.py with message fixture factories.",
+          "file": "tests/ptc/test_ipc_protocol.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-01-01",
+          "description": "All 8 message types importable from ipc_protocol",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from ipc_protocol import ExecuteMsg, ToolResultMsg, CancelMsg, PingMsg, ToolCallMsg, CompleteMsg, ErrorMsg, PongMsg\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-01-02",
+          "description": "encode/decode round-trip preserves message data",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from ipc_protocol import *; m = ExecuteMsg('e1','print(1)'); d = decode(encode(m)); assert d['exec_id'] == 'e1' and d['code'] == 'print(1)' and d['type'] == 'execute'\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-01-03",
+          "description": "All protocol tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ipc_protocol.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 1, lines 260-345. Exact code provided — follow closely."
+    },
+    {
+      "id": "chunk-02",
+      "name": "Code Executor with Persistent Namespace",
+      "purpose": "core_logic",
+      "delivers": "Python code executes in a persistent namespace with stdout capture, await detection/wrapping, and tool stubs injected from an IPC client interface.",
+      "description": "Build the Executor class that runs agent-written Python code inside the container. Namespace persists across calls (variables survive). Stdout/stderr captured. Top-level await detected and wrapped in async def. Tool stubs generated for each allowed tool name.",
+      "out_of_scope": [
+        "Namespace eviction at 512MB (chunk-13)",
+        "Socket connections (chunk-03)",
+        "Docker containers (chunk-06)"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-01"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/sandbox_runtime/executor.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/sandbox_runtime/__init__.py",
+          "~/.claude/mcp/ptc-server/sandbox_runtime/executor.py",
+          "tests/ptc/test_sandbox_runtime.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Create sandbox_runtime/ package with __init__.py"
+        },
+        {
+          "task": "Implement Executor.__init__(ipc_client, allowed_tools)",
+          "details": "Init persistent _namespace dict. Store ipc_client reference. Call _setup_tool_stubs(allowed_tools)."
+        },
+        {
+          "task": "Implement _setup_tool_stubs(tools: list[str])",
+          "details": "For each tool_name: create async def _stub(_name=tool_name, **kwargs): return await self._ipc_client.call_tool(_name, kwargs). Inject into self._namespace[tool_name]. Use default arg capture to avoid closure bug."
+        },
+        {
+          "task": "Implement execute(code) returning a tuple",
+          "details": "Returns (stdout, stderr, return_code, namespace_keys, namespace_size_kb). Steps: redirect stdout/stderr to StringIO, compile(code, '<ptc>', 'exec'), detect 'await' then wrap in async def _ptc_main() + asyncio.run(), exec() in self._namespace, extract new locals, return captured output."
+        },
+        {
+          "task": "Implement namespace size tracking",
+          "details": "After each execute(), calculate approximate namespace size via sys.getsizeof. Track namespace_keys list and namespace_size_kb. Log warning at 256MB."
+        },
+        {
+          "task": "Write executor tests with mock IPC client",
+          "details": "Test: simple code exec + stdout capture, namespace persistence across calls, await wrapping, syntax error returns error tuple, tool stub calls mock IPC, namespace size tracking.",
+          "file": "tests/ptc/test_sandbox_runtime.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-02-01",
+          "description": "Executor importable with correct __init__ signature",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from sandbox_runtime.executor import Executor; import inspect; sig = inspect.signature(Executor.__init__); assert 'ipc_client' in sig.parameters and 'allowed_tools' in sig.parameters\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-02-02",
+          "description": "Execute returns tuple with stdout, stderr, return_code, keys, size",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from sandbox_runtime.executor import Executor; e = Executor(None, []); r = e.execute('print(42)'); assert r[0].strip() == '42' and r[2] == 0\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-02-03",
+          "description": "Namespace persists across execute calls",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_sandbox_runtime.py -v -k namespace_persist",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-02-04",
+          "description": "Executor tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_sandbox_runtime.py -v -k executor",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 3, executor.py (lines 410-437). execute() must handle both sync and async code transparently. The await wrapping is critical."
+    },
+    {
+      "id": "chunk-03",
+      "name": "Container-side IPC Client + Runtime",
+      "purpose": "core_logic",
+      "delivers": "A runtime process connects to a Unix socket, receives execute commands, runs code via Executor, calls tools via IPC with parallel future routing, and returns results.",
+      "description": "Build IpcClient (container-side socket client with call_tool and parallel response routing) and runtime.py (REPL process entry point). Together they form the complete container-side stack.",
+      "out_of_scope": [
+        "Host-side socket server (chunk-05)",
+        "Docker containers (chunk-06)",
+        "Real socket I/O with Docker (integration)"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-01", "chunk-02"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/sandbox_runtime/runtime.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/sandbox_runtime/runtime.py",
+          "~/.claude/mcp/ptc-server/ipc_sandbox.py",
+          "tests/ptc/test_sandbox_runtime.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Implement IpcClient in ipc_sandbox.py",
+          "details": "connect(socket_path) via asyncio.open_unix_connection. call_tool(tool_name, params) sends ToolCallMsg, creates Future keyed by call_id, awaits Future. _response_handler() reads lines, routes ToolResultMsg to matching Future. Raise ToolError if result has error."
+        },
+        {
+          "task": "Implement runtime.py main loop",
+          "details": "Parse --socket CLI arg (default repl-0.sock). Connect to /ptc_ipc/{socket_name}. Create IpcClient + Executor. Loop: read ExecuteMsg then executor.execute(code) then send CompleteMsg or ErrorMsg. Handle CancelMsg (task.cancel). Handle PingMsg (send PongMsg)."
+        },
+        {
+          "task": "Write IPC client + runtime tests",
+          "details": "IpcClient call_tool with mock socket stream. Parallel call routing (2 concurrent call_tools, each gets correct result by call_id). ToolError raised on error result. Runtime main loop with mock socket.",
+          "file": "tests/ptc/test_sandbox_runtime.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-03-01",
+          "description": "IpcClient importable with call_tool method",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from ipc_sandbox import IpcClient; assert hasattr(IpcClient, 'call_tool')\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-03-02",
+          "description": "Runtime main function importable",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from sandbox_runtime.runtime import main\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-03-03",
+          "description": "All sandbox runtime tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_sandbox_runtime.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 3: runtime.py (lines 394-408), ipc_sandbox.py (lines 439-461). IpcClient._response_handler must handle out-of-order responses for asyncio.gather support."
+    },
+    {
+      "id": "chunk-04",
+      "name": "Event Logger (JSONL Observability)",
+      "purpose": "foundational",
+      "delivers": "All PTC events logged to JSONL with proper envelope (ts, event, agent_id, exec_id, container, data) and queryable with jq.",
+      "description": "Build PtcEventLogger with 20+ convenience methods covering container lifecycle, REPL pool, code execution, tool dispatch, and IPC health events. Append-only JSONL file, compact format, empty fields omitted.",
+      "out_of_scope": [
+        "Log rotation (deferred)",
+        "TUI dashboard (deferred)",
+        "Debug code logging (config-driven)"
+      ],
+      "status": "pending",
+      "dependencies": [],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/event_logger.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/event_logger.py",
+          "tests/ptc/test_event_logger.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Implement PtcEventLogger class with _emit() base",
+          "details": "Init with log_path (default ~/.claude/logs/ptc-events.jsonl), create parent dirs. _emit(event, agent_id, exec_id, container, data) builds envelope dict with ISO timestamp, filters empty strings, appends JSONL line."
+        },
+        {
+          "task": "Implement container lifecycle methods (6)",
+          "details": "log_container_create, log_container_ready, log_container_stop, log_container_crash, log_container_health, log_container_handoff. Each delegates to _emit with correct event name and data dict."
+        },
+        {
+          "task": "Implement REPL pool event methods (6)",
+          "details": "log_repl_start, log_repl_stop, log_repl_crash, log_pip_install_start, log_pip_install_done, log_pip_install_error."
+        },
+        {
+          "task": "Implement execution event methods (4)",
+          "details": "log_exec_start(agent_id, exec_id, code_length, has_await), log_exec_complete(agent_id, exec_id, duration_ms, stdout_bytes, tool_calls, namespace_keys, namespace_size_kb), log_exec_error, log_exec_timeout."
+        },
+        {
+          "task": "Implement tool dispatch + IPC event methods (7)",
+          "details": "log_tool_call_start, log_tool_call_complete (result_preview truncated to 200 chars), log_tool_call_error, log_tool_call_denied, log_ipc_connect, log_ipc_disconnect, log_ipc_ping."
+        },
+        {
+          "task": "Write tests for all event types",
+          "details": "Each event type emits valid JSONL, envelope has ts/event fields, empty strings omitted, result_preview truncated to 200 chars, file is append-only.",
+          "file": "tests/ptc/test_event_logger.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-04-01",
+          "description": "PtcEventLogger importable",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from event_logger import PtcEventLogger\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-04-02",
+          "description": "Emitted events are valid JSONL with required envelope fields",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_event_logger.py -v -k 'jsonl or envelope'",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-04-03",
+          "description": "All 20+ convenience methods exist on PtcEventLogger",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from event_logger import PtcEventLogger; methods = dir(PtcEventLogger); required = ['log_container_create','log_exec_start','log_tool_call_start','log_repl_start','log_ipc_connect']; assert all(m in methods for m in required)\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-04-04",
+          "description": "Event logger tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_event_logger.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 8 (lines 913-1046). 23 event types total across 5 categories. result_preview is 200 chars max."
+    },
+    {
+      "id": "chunk-05",
+      "name": "IPC Host (Host-side Socket Server)",
+      "purpose": "core_logic",
+      "delivers": "Host-side server accepts container connection via Unix socket, orchestrates the execute/tool_call/tool_result/complete lifecycle with concurrent dispatch.",
+      "description": "Build IpcHost: Unix socket server that sends execute commands, receives tool_call messages and dispatches them concurrently via the tool_dispatcher, returns tool_results, and receives complete/error responses. Handles timeout with CancelMsg.",
+      "out_of_scope": [
+        "Docker container management (chunk-06)",
+        "Actual tool execution (mock dispatcher)",
+        "Multiple container connections (one IpcHost per REPL)"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-01", "chunk-04"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/ipc_host.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/ipc_host.py",
+          "tests/ptc/test_ipc_host.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Implement IpcHost.__init__ with socket_path, dispatcher, logger",
+          "details": "Store deps, init pending_futures dict (exec_id to Future), reader/writer as None."
+        },
+        {
+          "task": "Implement start() and stop()",
+          "details": "start(): create Unix socket with asyncio.start_unix_server, chmod 0o666. _handle_client stores reader/writer. stop(): close writer, cancel server, remove socket file."
+        },
+        {
+          "task": "Implement send_execute(exec_id, code, role, timeout)",
+          "details": "Send ExecuteMsg. Read NDJSON lines in loop: ToolCallMsg dispatched via asyncio.create_task (concurrent), send ToolResultMsg back. CompleteMsg/ErrorMsg returned. Timeout via asyncio.wait_for sends CancelMsg. Log all events."
+        },
+        {
+          "task": "Handle parallel tool calls from asyncio.gather",
+          "details": "Multiple ToolCallMsg can arrive before any resolve. Each dispatched concurrently as asyncio.create_task. Results sent back independently as they complete."
+        },
+        {
+          "task": "Implement health_check() returning bool",
+          "details": "Send PingMsg, wait for PongMsg with 5s timeout. Return True/False."
+        },
+        {
+          "task": "Write IPC host tests",
+          "details": "Mock socket pairs (asyncio streams). Full execute to complete cycle. Execute with tool_call then tool_result. Parallel tool calls (2+ concurrent). Timeout then cancel. Health check pass/fail.",
+          "file": "tests/ptc/test_ipc_host.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-05-01",
+          "description": "IpcHost importable with correct init signature",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from ipc_host import IpcHost; import inspect; sig = inspect.signature(IpcHost.__init__); assert 'socket_path' in sig.parameters\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-05-02",
+          "description": "Full execute-to-complete cycle works with mock",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ipc_host.py -v -k execute_complete",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-05-03",
+          "description": "IPC host tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ipc_host.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 2 (lines 349-387). Key: send_execute handles the full pause-resume loop. Multiple ToolCallMsg can arrive from asyncio.gather in agent code."
+    },
+    {
+      "id": "chunk-06",
+      "name": "Container Manager Core",
+      "purpose": "core_logic",
+      "delivers": "Docker containers created for agent roles with runtime pip install, single REPL started, code executed via IPC, and containers stopped cleanly.",
+      "description": "Build ContainerManager with ReplHandle/ContainerInfo dataclasses, container creation (docker run with mounts), role-specific pip install (ROLE_PACKAGES dict), single REPL start per container, code execution delegation to IpcHost, and clean shutdown.",
+      "out_of_scope": [
+        "Sub-agent routing (chunk-07)",
+        "Handoff logic (chunk-07)",
+        "Idle container reuse (chunk-07)",
+        "Error recovery / crash handling (chunk-13)"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-01", "chunk-04", "chunk-05"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/container_manager.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/container_manager.py",
+          "tests/ptc/test_container_manager.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Define ReplHandle and ContainerInfo dataclasses",
+          "details": "ReplHandle: agent_id, repl_index, ipc (IpcHost), started_at, exec_count=0, tool_call_count=0. ContainerInfo: container_name, role, created_at, last_used_at, repls: dict[str, ReplHandle], max_repls=6, packages_installed=False."
+        },
+        {
+          "task": "Implement ContainerManager.__init__ with config, project_root, registry, logger",
+          "details": "Store deps. Init _containers: dict, _agent_to_container: dict, _parent_map: dict, _locks: dict."
+        },
+        {
+          "task": "Implement _create_container(role) returning ContainerInfo",
+          "details": "Build docker run command: -d, --name, --memory, --cpus, --network none, --tmpfs, -v project:ro, -v socket_dir, -v runtime:ro, -v ptc_tools:ro, -e PYTHONPATH, image, sleep infinity. Run async. Log container_create."
+        },
+        {
+          "task": "Implement _install_role_packages(container_name, role)",
+          "details": "Get packages from ROLE_PACKAGES[role]. docker exec pip install --no-cache-dir. Async with timeout. Log pip_install events. Set packages_installed=True."
+        },
+        {
+          "task": "Implement _start_repl_in_container + basic get_or_create_repl",
+          "details": "_start_repl: docker exec -d for runtime.py --socket repl-{N}.sock, create IpcHost, wait for pong, register in container.repls. get_or_create_repl: check existing then create new container + REPL."
+        },
+        {
+          "task": "Implement execute_code, stop, health_check, reset_namespace",
+          "details": "execute_code: acquire per-agent lock, delegate to repl.ipc.send_execute. stop_container: stop all REPLs, docker rm -f. stop_all: iterate. health_check: ping via IPC. reset_namespace: send execute that clears namespace."
+        },
+        {
+          "task": "Include ROLE_PACKAGES dict with all 6 roles",
+          "details": "explorer (16 pkgs), coder (12), auditor (13), tester (9), researcher (10), strategist (4). Exact lists from design doc."
+        },
+        {
+          "task": "Write container manager tests with Docker mocks",
+          "details": "Mock asyncio.create_subprocess_exec for docker commands. Test: container creation command, pip install, REPL start, execute delegates to IPC host, stop cleans up.",
+          "file": "tests/ptc/test_container_manager.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-06-01",
+          "description": "ContainerManager, ReplHandle, ContainerInfo importable",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from container_manager import ContainerManager, ReplHandle, ContainerInfo\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-06-02",
+          "description": "ROLE_PACKAGES has all 6 roles with correct counts",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from container_manager import ROLE_PACKAGES; assert set(ROLE_PACKAGES.keys()) == {'explorer','coder','auditor','tester','researcher','strategist'}; assert len(ROLE_PACKAGES['explorer']) == 16\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-06-03",
+          "description": "Container creation builds correct docker run command with mounts",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_container_manager.py -v -k create_container",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-06-04",
+          "description": "Container manager tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_container_manager.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 6 (lines 537-667), ROLE_PACKAGES (lines 671-741), Docker config (lines 749-778). All tests must mock Docker."
+    },
+    {
+      "id": "chunk-07",
+      "name": "REPL Pool + Handoff",
+      "purpose": "extension",
+      "delivers": "Multiple REPL processes run independently in one container. Sub-agents share parent container. Handoff preserves container but resets REPL. Idle containers reused by same-role agents.",
+      "description": "Extend ContainerManager with full REPL pool routing (sub-agent to parent, idle reuse), parent registration, handoff (preserve container + reset REPL), individual REPL stop, and max REPL enforcement.",
+      "out_of_scope": [
+        "Idle timeout automation (chunk-13)",
+        "REPL crash recovery (chunk-13)",
+        "Container OOM handling (chunk-13)"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-06"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/container_manager.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/container_manager.py",
+          "tests/ptc/test_repl_pool.py"
+        ],
+        "action": "modify"
+      },
+      "tasks": [
+        {
+          "task": "Extend get_or_create_repl() with full routing priority",
+          "details": "1) existing REPL, 2) sub-agent to parent container via _parent_map, 3) idle same-role container (empty repls), 4) under max_containers then new container. Return error if all exhausted."
+        },
+        {
+          "task": "Implement register_parent(sub_agent_id, parent_agent_id)"
+        },
+        {
+          "task": "Implement handle_handoff(old_agent_id, new_agent_id)",
+          "details": "Find old agent container. Kill old REPL. Remove from container.repls. Start fresh REPL for new agent. Update _agent_to_container. Log container_handoff. Container persists — no pip reinstall."
+        },
+        {
+          "task": "Implement stop_repl(agent_id) and max REPL enforcement",
+          "details": "stop_repl: kill specific REPL, remove from repls, container stays. Enforce max_repls_per_container before starting new REPL."
+        },
+        {
+          "task": "Write REPL pool tests",
+          "details": "Sub-agent routes to parent container. REPL isolation. Handoff preserves container, creates fresh REPL. Idle reuse. Max REPL enforcement. Concurrent execution in 2 REPLs.",
+          "file": "tests/ptc/test_repl_pool.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-07-01",
+          "description": "Sub-agent routes to parent container (tested)",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_repl_pool.py -v -k sub_agent",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-07-02",
+          "description": "Handoff preserves container, creates fresh REPL",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_repl_pool.py -v -k handoff",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-07-03",
+          "description": "Max REPL enforcement returns error at limit",
+          "level": "constraint",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_repl_pool.py -v -k max_repl",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-07-04",
+          "description": "All REPL pool tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_repl_pool.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 6: REPL pool routing (lines 578-610), handoff (lines 640-652), lifecycle (lines 780-832). Covers verification criteria 15-23."
+    },
+    {
+      "id": "chunk-08",
+      "name": "ptc_tools Library — Direct-Call Functions",
+      "purpose": "core_logic",
+      "delivers": "7 tool functions (read_file, write_file, list_dir, search_code, analyze_imports, analyze_structure, count_tokens) extracted from old fallback() code, callable on host returning structured dicts.",
+      "description": "Create ptc_tools/ package by extracting fallback() logic from tool_implementations/. Functions work on host and inside container (via /workspace mount). Base utility detects project root path.",
+      "out_of_scope": [
+        "Subprocess-based tools (chunk-09)",
+        "Host-network tools (chunk-09)",
+        "Tool dispatcher routing (chunk-10)",
+        "Removing old tool_implementations (chunk-13)"
+      ],
+      "status": "pending",
+      "dependencies": [],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/ptc_tools/files.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/ptc_tools/__init__.py",
+          "~/.claude/mcp/ptc-server/ptc_tools/_base.py",
+          "~/.claude/mcp/ptc-server/ptc_tools/files.py",
+          "~/.claude/mcp/ptc-server/ptc_tools/search.py",
+          "~/.claude/mcp/ptc-server/ptc_tools/tokens.py",
+          "tests/ptc/test_ptc_tools.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Create ptc_tools/ package with __init__.py and _base.py",
+          "details": "__init__.py: convenience re-exports. _base.py: get_project_root() (detect /workspace vs host), MAX_FILE_SIZE, DEFAULT_ENCODING constants."
+        },
+        {
+          "task": "Extract file tool functions into ptc_tools/files.py",
+          "details": "read_file(path, project_root, encoding='utf-8') returns {path, lines, size_bytes, content, truncated}. write_file returns {path, size_bytes, written}. list_dir with max_depth and include_hidden. Extract from tool_implementations/ fallback() functions."
+        },
+        {
+          "task": "Extract search tool functions into ptc_tools/search.py",
+          "details": "search_code(pattern, project_root, glob_pattern, max_results) returns {pattern, files_searched, matches, total_matches, truncated}. analyze_imports and analyze_structure extracted similarly."
+        },
+        {
+          "task": "Extract count_tokens into ptc_tools/tokens.py",
+          "details": "count_tokens(paths, project_root) returns dict. Extracted from tool_implementations/count_tokens.py fallback()."
+        },
+        {
+          "task": "Write ptc_tools tests",
+          "details": "Each function: correct return dict structure, required keys present, file-not-found handling, project root detection. Use tmp_path fixture.",
+          "file": "tests/ptc/test_ptc_tools.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-08-01",
+          "description": "All ptc_tools direct-call functions importable",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from ptc_tools.files import read_file, write_file, list_dir; from ptc_tools.search import search_code, analyze_imports, analyze_structure; from ptc_tools.tokens import count_tokens\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-08-02",
+          "description": "read_file returns dict with expected keys",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ptc_tools.py -v -k 'read_file and keys'",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-08-03",
+          "description": "get_project_root returns valid path",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from ptc_tools._base import get_project_root; p = get_project_root(); assert p\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-08-04",
+          "description": "ptc_tools core tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ptc_tools.py -v -k 'files or search or tokens'",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 4 (lines 465-486). Extract from existing tool_implementations/ fallback() functions. See ptc-context.json tools_15 for exact signatures."
+    },
+    {
+      "id": "chunk-09",
+      "name": "ptc_tools — Subprocess + Host Functions",
+      "purpose": "core_logic",
+      "delivers": "All remaining tool functions (run_tests, run_linter, coverage_summary, git tools, network stubs) extracted. Complete ptc_tools library with all 15 functions.",
+      "description": "Extract subprocess-based tools (testing, git) and host-only tools (network) from fallback() code. Update __init__.py with full re-exports. These functions invoke external commands via subprocess.",
+      "out_of_scope": [
+        "MCP proxy implementation (v1 stub only)",
+        "Removing old tool_implementations (chunk-13)"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-08"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/ptc_tools/testing.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/ptc_tools/testing.py",
+          "~/.claude/mcp/ptc-server/ptc_tools/git.py",
+          "~/.claude/mcp/ptc-server/ptc_tools/network.py",
+          "~/.claude/mcp/ptc-server/ptc_tools/__init__.py",
+          "tests/ptc/test_ptc_tools.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Extract testing tools into ptc_tools/testing.py",
+          "details": "run_tests returns {passed, failed, errors, failures, duration_seconds}. run_linter and coverage_summary extracted similarly. Use subprocess.run for pytest/ruff."
+        },
+        {
+          "task": "Extract git tools into ptc_tools/git.py",
+          "details": "git_diff_summary returns {base_branch, files_changed, insertions, deletions, changes}. diff_summary and list_changes extracted. Use subprocess.run for git."
+        },
+        {
+          "task": "Extract network tools into ptc_tools/network.py",
+          "details": "web_fetch_summary (host-only). mcp_call_summary (v1 stub returns not-implemented)."
+        },
+        {
+          "task": "Update __init__.py and write tests",
+          "details": "Full re-exports. Mock subprocess.run for testing/git. Verify correct return dict structure. Network stubs return expected structure.",
+          "file": "tests/ptc/test_ptc_tools.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-09-01",
+          "description": "All subprocess/host tool functions importable",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from ptc_tools.testing import run_tests, run_linter, coverage_summary; from ptc_tools.git import git_diff_summary, diff_summary, list_changes; from ptc_tools.network import web_fetch_summary, mcp_call_summary\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-09-02",
+          "description": "run_tests returns dict with pass/fail keys",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ptc_tools.py -v -k 'run_tests and keys'",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-09-03",
+          "description": "ptc_tools subprocess tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ptc_tools.py -v -k 'testing or git or network'",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 4 (lines 465-486), strategy mapping (lines 527-533). mcp_call_summary is a placeholder stub in v1."
+    },
+    {
+      "id": "chunk-10",
+      "name": "Tool Dispatcher",
+      "purpose": "core_logic",
+      "delivers": "Tool calls from IPC routed to correct execution strategy (ptc_tools, subprocess, host_fs, host_network) with role permission checking and semaphore backpressure.",
+      "description": "Build ToolDispatcher that receives tool_call messages from IpcHost, checks permissions via registry, routes to the appropriate dispatch function based on tool_strategies config, and enforces concurrency limits via asyncio.Semaphore(4).",
+      "out_of_scope": [
+        "MCP proxy strategy (stub only)",
+        "Integration with real Docker containers"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-04", "chunk-08", "chunk-09"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/tool_dispatcher.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/tool_dispatcher.py",
+          "tests/ptc/test_tool_dispatcher.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Implement ToolDispatcher class with semaphore",
+          "details": "Init with registry, project_root, event_logger, max_concurrent=4. Create asyncio.Semaphore(max_concurrent)."
+        },
+        {
+          "task": "Implement dispatch(role, tool_name, input, exec_id) returning JSON str",
+          "details": "Check registry.is_allowed then acquire semaphore. Get strategy from registry.get_strategy. Route to dispatch function. Log start/complete/error. Return json.dumps(result)."
+        },
+        {
+          "task": "Implement 4 strategy dispatch functions",
+          "details": "ptc_tools_dispatch: call ptc_tools by name. subprocess_dispatch: async subprocess. host_fs_dispatch: write_file on host. host_network_dispatch: web_fetch, mcp_call."
+        },
+        {
+          "task": "Write tool dispatcher tests",
+          "details": "Strategy routing for each of 15 tools. Permission denial returns JSON error. Semaphore limits concurrency to 4. Event logging occurs.",
+          "file": "tests/ptc/test_tool_dispatcher.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-10-01",
+          "description": "ToolDispatcher importable with dispatch method",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from tool_dispatcher import ToolDispatcher; assert hasattr(ToolDispatcher, 'dispatch')\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-10-02",
+          "description": "Each of 15 tools maps to correct strategy",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_tool_dispatcher.py -v -k strategy_routing",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-10-03",
+          "description": "Permission denial returns JSON error",
+          "level": "constraint",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_tool_dispatcher.py -v -k denied",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-10-04",
+          "description": "Semaphore limits concurrency to 4",
+          "level": "constraint",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_tool_dispatcher.py -v -k semaphore",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-10-05",
+          "description": "Tool dispatcher tests pass",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_tool_dispatcher.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 5 (lines 489-533). Semaphore(4) backpressure is critical for host saturation prevention."
+    },
+    {
+      "id": "chunk-11",
+      "name": "Docker Image + Config + Registry Updates",
+      "purpose": "integration",
+      "delivers": "Base Docker image builds and passes verification. Config.json has complete new schema. Tool registry supports execute permission and strategy lookup.",
+      "description": "Write Dockerfile (thin base), build-image.sh (build + verify), rewrite config.json (7 sections), modify tool_registry.py (execute permission + get_strategy).",
+      "out_of_scope": [
+        "Per-role Dockerfiles (deferred)",
+        "Running Docker build in CI"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-08", "chunk-09"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/Dockerfile",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/Dockerfile",
+          "~/.claude/mcp/ptc-server/build-image.sh",
+          "~/.claude/mcp/ptc-server/config.json",
+          "~/.claude/mcp/ptc-server/tool_registry.py",
+          "tests/ptc/test_tool_registry.py"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Write Dockerfile for thin base image",
+          "details": "FROM python:3.11-slim. Install git. pip install pyyaml toml pytest ruff. Create non-root ptcuser. WORKDIR /workspace. No entrypoint."
+        },
+        {
+          "task": "Write build-image.sh build + verify script",
+          "details": "docker build -t ptc-sandbox:latest. Verify python3, yaml, pytest, ruff imports. Print image size."
+        },
+        {
+          "task": "Rewrite config.json with 7 sections",
+          "details": "role_tools (6 roles + execute), tool_strategies (15 mappings), resource_limits, repl_pool, docker, ipc, observability."
+        },
+        {
+          "task": "Modify tool_registry.py for execute + strategies",
+          "details": "Add execute to role_tools. Add get_strategy(tool_name) method. Load tool_strategies from config. Write/update tests.",
+          "file": "tests/ptc/test_tool_registry.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-11-01",
+          "description": "Dockerfile exists with python:3.11-slim base",
+          "level": "existence",
+          "verify": {
+            "command": "grep 'FROM python:3.11-slim' ~/.claude/mcp/ptc-server/Dockerfile",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-11-02",
+          "description": "Config has all required sections",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"import json; c = json.load(open('config.json')); assert all(k in c for k in ['role_tools','tool_strategies','resource_limits','repl_pool','docker','ipc','observability'])\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-11-03",
+          "description": "Registry supports execute permission and get_strategy method",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from tool_registry import ToolRegistry; assert hasattr(ToolRegistry, 'get_strategy')\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-11-04",
+          "description": "Registry tests pass",
+          "level": "system",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_tool_registry.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 9 (lines 1050-1264) for Dockerfile, Component 10 (lines 1268-1330) for config."
+    },
+    {
+      "id": "chunk-12",
+      "name": "MCP Server Rewrite",
+      "purpose": "integration",
+      "delivers": "Complete MCP server with 5 tools (ptc_execute, ptc_status, ptc_reset_namespace, ptc_shutdown, ptc_shutdown_all) wired to all components. End-to-end ptc_execute works.",
+      "description": "Rewrite server.py: remove all 15 old tool handlers, add 5 new tools, wire ContainerManager + ToolDispatcher + EventLogger + Registry. Implement _cap_output for 64KB truncation.",
+      "out_of_scope": [
+        "Real Docker integration (tests use mocks)",
+        "Error recovery details (chunk-13)"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-06", "chunk-07", "chunk-10", "chunk-11"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/server.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/server.py",
+          "~/.claude/mcp/ptc-server/requirements.txt",
+          "tests/ptc/test_ptc_execute.py"
+        ],
+        "action": "refactor"
+      },
+      "tasks": [
+        {
+          "task": "Remove all 15 old tool handlers from server.py"
+        },
+        {
+          "task": "Initialize components in server.py",
+          "details": "Load config.json. Create EventLogger, ToolRegistry, ToolDispatcher, ContainerManager. Set docker_available flag via docker info check."
+        },
+        {
+          "task": "Implement 5 MCP tools",
+          "details": "ptc_execute: check docker, check role, resolve timeout, get_or_create_repl, execute_code, cap_output. ptc_status, ptc_reset_namespace, ptc_shutdown, ptc_shutdown_all delegate to container_manager."
+        },
+        {
+          "task": "Implement _cap_output(output, max_bytes) and write tests",
+          "details": "Truncate to 64KB, add truncation warning. Tests: execute returns stdout, status returns health, shutdown cleans up, output cap enforced, invalid role rejected.",
+          "file": "tests/ptc/test_ptc_execute.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-12-01",
+          "description": "server.py imports without error",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"import server\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-12-02",
+          "description": "ptc_execute registered as MCP tool",
+          "level": "existence",
+          "verify": {
+            "command": "cd ~/.claude/mcp/ptc-server && python -c \"from server import mcp; tools = [t.name for t in mcp.list_tools()]; assert 'ptc_execute' in tools\"",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-12-03",
+          "description": "Output cap enforced at 64KB",
+          "level": "constraint",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ptc_execute.py -v -k cap",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-12-04",
+          "description": "All MCP server tests pass",
+          "level": "system",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/test_ptc_execute.py -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Component 7 (lines 836-909). Complete replacement — no backwards compatibility with 15-tool approach."
+    },
+    {
+      "id": "chunk-13",
+      "name": "Error Handling + Hardening + Cleanup",
+      "purpose": "hardening",
+      "delivers": "All error scenarios handled: crash recovery, timeouts, namespace eviction, REPL limits, pip failures, idle cleanup. Old make_kernel_code code removed.",
+      "description": "Add comprehensive error handling across ipc_host, container_manager, executor, server. Remove old code: make_kernel_code from tool_implementations, old test files.",
+      "out_of_scope": [
+        "Deleting tool_implementations/ entirely",
+        "Log rotation"
+      ],
+      "status": "pending",
+      "dependencies": ["chunk-12"],
+      "scope": {
+        "primary_file": "~/.claude/mcp/ptc-server/container_manager.py",
+        "touched_files": [
+          "~/.claude/mcp/ptc-server/container_manager.py",
+          "~/.claude/mcp/ptc-server/ipc_host.py",
+          "~/.claude/mcp/ptc-server/sandbox_runtime/runtime.py",
+          "~/.claude/mcp/ptc-server/sandbox_runtime/executor.py",
+          "~/.claude/mcp/ptc-server/server.py",
+          "tests/ptc/test_container_manager.py",
+          "tests/ptc/test_ipc_host.py",
+          "tests/ptc/test_ptc_execute.py"
+        ],
+        "action": "modify"
+      },
+      "tasks": [
+        {
+          "task": "Implement crash recovery (container + REPL)",
+          "details": "Container crash during exec: socket EOF, reject futures, return error, NEVER re-execute. Crash during idle: ping timeout, restart, namespace lost, warn. REPL crash: kill only that REPL, container + others survive."
+        },
+        {
+          "task": "Implement timeout handling",
+          "details": "Per-tool: asyncio.wait_for on dispatch. Overall: deadline timer, send CancelMsg. Max tool calls: counter, send cancel after 50."
+        },
+        {
+          "task": "Implement namespace eviction at 512MB",
+          "details": "In Executor: after each execute(), if namespace > 512MB, evict oldest non-callable objects until under 256MB."
+        },
+        {
+          "task": "Implement pip + Docker failure handling",
+          "details": "Pip timeout: log error, container usable for stdlib. Pip failure: log package name. Docker unavailable: flag at startup, return error."
+        },
+        {
+          "task": "Implement idle timeout and cleanup",
+          "details": "Background task: check every 60s, destroy containers with no REPLs and last_used > idle_timeout. Remove make_kernel_code from tool_implementations. Delete old test files."
+        },
+        {
+          "task": "Write error handling tests",
+          "details": "Crash returns error (never re-execute). Timeout sends CancelMsg. Namespace eviction works. All errors return structured JSON.",
+          "file": "tests/ptc/test_ptc_execute.py"
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-13-01",
+          "description": "Crash during execution returns error, never re-executes",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/ -v -k crash",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-13-02",
+          "description": "Timeout sends CancelMsg",
+          "level": "behavioral",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/ -v -k timeout",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-13-03",
+          "description": "Namespace eviction triggers at 512MB and reduces to under 256MB",
+          "level": "constraint",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/ -v -k namespace_eviction",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-13-04",
+          "description": "All error scenarios return structured JSON errors with error key",
+          "level": "constraint",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/ -v -k 'error_json or structured_error'",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-13-05",
+          "description": "No make_kernel_code in tool_implementations",
+          "level": "system",
+          "verify": {
+            "command": "grep -r 'make_kernel_code' ~/.claude/mcp/ptc-server/tool_implementations/ | wc -l | grep '^0$'",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-13-06",
+          "description": "All PTC tests pass",
+          "level": "system",
+          "verify": {
+            "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/ -v",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc Error Handling table (lines 1334-1354), crash recovery (lines 1355-1372). CRITICAL: never re-execute after crash. Covers verification criteria 5, 7, 24-27."
+    },
+    {
+      "id": "chunk-14",
+      "name": "PTC Skills Documentation",
+      "purpose": "extension",
+      "delivers": "Complete PTC skill docs: universal mechanics SKILL.md, 6 role-specific specs, 2 reference docs, and robotics-cv domain specialization.",
+      "description": "Write all PTC skill files. SKILL.md covers universal mechanics (~900 tokens). Each role-spec lists packages, when to use PTC, when not to, and concrete recipes. References cover patterns and anti-patterns. No Python code — only markdown.",
+      "out_of_scope": [
+        "data-engineering domain specialization",
+        "web-dev domain specialization"
+      ],
+      "status": "pending",
+      "dependencies": [],
+      "scope": {
+        "primary_file": "skills/ptc-sandbox/SKILL.md",
+        "touched_files": [
+          "skills/ptc-sandbox/SKILL.md",
+          "skills/ptc-sandbox/role-specs/explorer.md",
+          "skills/ptc-sandbox/role-specs/coder.md",
+          "skills/ptc-sandbox/role-specs/auditor.md",
+          "skills/ptc-sandbox/role-specs/tester.md",
+          "skills/ptc-sandbox/role-specs/researcher.md",
+          "skills/ptc-sandbox/role-specs/strategist.md",
+          "skills/ptc-sandbox/references/tool-calling-patterns.md",
+          "skills/ptc-sandbox/references/anti-patterns.md",
+          "skills/ptc-sandbox/specializations/robotics-cv.md"
+        ],
+        "action": "create"
+      },
+      "tasks": [
+        {
+          "task": "Write SKILL.md — universal PTC mechanics (~900 tokens)",
+          "details": "YAML frontmatter (name, description, triggers, loads_role_spec). Body: ptc_execute API, available tools, print discipline, parallel calls, state persistence, anti-patterns, error handling."
+        },
+        {
+          "task": "Write 6 role-spec files with packages and recipes",
+          "details": "Each lists packages available, when to use PTC (with recipes), when NOT to use. Explorer ~400 tokens, coder ~400, auditor ~400, tester ~350, researcher ~250, strategist ~200."
+        },
+        {
+          "task": "Write reference docs and domain specialization",
+          "details": "tool-calling-patterns.md: await, asyncio.gather, error handling, loops. anti-patterns.md: printing raw data, repeated single calls, ignoring packages. robotics-cv.md: opencv, torch, scipy patterns."
+        },
+        {
+          "task": "Add PTC delegation section to sub-agent-delegation skill",
+          "details": "Update the sub-agent delegation skill to document how sub-agents interact with PTC containers (parent container sharing, REPL pool routing, namespace isolation)."
+        }
+      ],
+      "invariants": [
+        {
+          "id": "inv-14-01",
+          "description": "SKILL.md exists with correct YAML frontmatter",
+          "level": "existence",
+          "verify": {
+            "command": "grep 'name: ptc-sandbox' /home/kartik/personal/agentic_workflow/skills/ptc-sandbox/SKILL.md",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-14-02",
+          "description": "All 6 role-spec files exist",
+          "level": "existence",
+          "verify": {
+            "command": "ls /home/kartik/personal/agentic_workflow/skills/ptc-sandbox/role-specs/*.md | wc -l | grep '^6$'",
+            "expect": "exit_code_0"
+          }
+        },
+        {
+          "id": "inv-14-03",
+          "description": "Reference docs exist",
+          "level": "existence",
+          "verify": {
+            "command": "ls /home/kartik/personal/agentic_workflow/skills/ptc-sandbox/references/*.md | wc -l | grep '^2$'",
+            "expect": "exit_code_0"
+          }
+        }
+      ],
+      "notes": "Design doc PTC Skill Design (lines 1513-1903). No Python code. All markdown. Can be done in parallel with any code chunk."
+    }
+  ],
+  "module_tests": {
+    "_note": "Populated during Test Architecture Phase. See test-architecture skill.",
+    "integration_scenarios": [],
+    "golden_examples": [],
+    "error_recovery": [],
+    "performance_criteria": {}
+  },
+  "quality_gates": {
+    "format": "ruff format .",
+    "lint": "ruff check . --fix && ruff check .",
+    "typecheck": "pyright",
+    "test": "pytest tests/ptc/ -v",
+    "gate_script": "scripts/gate.sh"
+  },
+  "global_invariants": [
+    {
+      "id": "global-01",
+      "description": "All PTC tests pass end-to-end",
+      "verify": {
+        "command": "cd /home/kartik/personal/agentic_workflow && pytest tests/ptc/ -v",
+        "expect": "exit_code_0"
+      },
+      "required_chunks": ["chunk-01", "chunk-02", "chunk-03", "chunk-04", "chunk-05", "chunk-06", "chunk-07", "chunk-08", "chunk-09", "chunk-10", "chunk-11", "chunk-12", "chunk-13"]
+    },
+    {
+      "id": "global-02",
+      "description": "Quality gate passes",
+      "verify": {
+        "command": "cd /home/kartik/personal/agentic_workflow && ./scripts/gate.sh",
+        "expect": "exit_code_0"
+      },
+      "required_chunks": ["chunk-01", "chunk-02", "chunk-03", "chunk-04", "chunk-05", "chunk-06", "chunk-07", "chunk-08", "chunk-09", "chunk-10", "chunk-11", "chunk-12", "chunk-13"]
+    },
+    {
+      "id": "global-03",
+      "description": "No old make_kernel_code references remain",
+      "verify": {
+        "command": "grep -r 'make_kernel_code' ~/.claude/mcp/ptc-server/tool_implementations/ | wc -l | grep '^0$'",
+        "expect": "exit_code_0"
+      },
+      "required_chunks": ["chunk-13"]
+    },
+    {
+      "id": "global-04",
+      "description": "All 10 PTC skill files exist",
+      "verify": {
+        "command": "find /home/kartik/personal/agentic_workflow/skills/ptc-sandbox -name '*.md' | wc -l | grep -E '^(9|10)$'",
+        "expect": "exit_code_0"
+      },
+      "required_chunks": ["chunk-14"]
+    }
+  ],
+  "related_context": {
+    "codebase": ".claude/context/_codebase.json",
+    "feature": ".claude/context/ptc-context.json",
+    "design": ".claude/designs/ptc.md"
+  }
+}

@@ -1,0 +1,860 @@
+{
+  "parameters": {
+    "yolo_model_path": {
+      "defined_in": "producer/config.py",
+      "type": "str",
+      "default": "'models/yolov11m.pt'",
+      "used_in": [
+        "producer/ops_detection.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "plate_class_id": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "0",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "producer/ops_detection.py"
+      ]
+    },
+    "input_size": {
+      "defined_in": "producer/config.py",
+      "type": "tuple[int, int]",
+      "default": "(960, 544)",
+      "used_in": [
+        "producer/ops_detection.py"
+      ]
+    },
+    "conf_threshold": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.25",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "iou_threshold": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.45",
+      "used_in": [
+        "producer/ops_detection.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "device": {
+      "defined_in": "producer/config.py",
+      "type": "str",
+      "default": "'cuda'",
+      "used_in": [
+        "tests/test_training_loop.py",
+        "tests/test_preprocess.py",
+        "tests/test_yolo_config.py",
+        "tests/test_production_training.py",
+        "tests/test_yolo_integration.py",
+        "tests/test_producer_quality.py",
+        "tests/test_yolo_train.py",
+        "training/evaluate.py",
+        "training/losses.py",
+        "training/train.py",
+        "training/efficientnet_b3/train.py",
+        "training/regression/evaluate.py",
+        "training/regression/losses.py",
+        "training/regression/train_ema.py",
+        "training/regression/train_progressive.py",
+        "training/regression/train.py",
+        "training/regression/variance/evaluate.py",
+        "training/regression/variance/losses.py",
+        "training/regression/variance/report.py",
+        "training/regression/variance/train.py",
+        "training/regression/production/losses.py",
+        "training/regression/production/train.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "training/yolo/train.py",
+        "scripts/sweep_photometric_parseq.py",
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/build_golden_fixtures.py",
+        "scripts/view_golden_crops.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "consumer/ops_preprocess_gpu.py",
+        "consumer/ops_parseq.py",
+        "producer/ops_detection.py",
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "max_detections": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "200",
+      "used_in": [
+        "producer/ops_detection.py"
+      ]
+    },
+    "warmup_runs": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "1",
+      "used_in": [
+        "producer/ops_detection.py"
+      ]
+    },
+    "corner_cnn_enabled": {
+      "defined_in": "producer/config.py",
+      "type": "bool",
+      "default": "False",
+      "used_in": [
+        "tests/test_corner_cnn.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "corner_cnn_model_path": {
+      "defined_in": "producer/config.py",
+      "type": "str",
+      "default": "'models/corner_cnn.engine'",
+      "used_in": [
+        "tests/test_corner_cnn.py",
+        "producer/ops_corner_cnn.py"
+      ]
+    },
+    "corner_cnn_input_h": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "80",
+      "used_in": [
+        "tests/test_corner_cnn.py",
+        "producer/ops_corner_cnn.py"
+      ]
+    },
+    "corner_cnn_input_w": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "256",
+      "used_in": [
+        "tests/test_corner_cnn.py",
+        "producer/ops_corner_cnn.py"
+      ]
+    },
+    "corner_cnn_confidence_threshold": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.3",
+      "used_in": [
+        "tests/test_corner_cnn.py",
+        "producer/ops_corner_cnn.py"
+      ]
+    },
+    "corner_cnn_device": {
+      "defined_in": "producer/config.py",
+      "type": "str",
+      "default": "'cuda'",
+      "used_in": [
+        "tests/test_corner_cnn.py",
+        "producer/ops_corner_cnn.py"
+      ]
+    },
+    "frame_sample_interval_ms": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1000.0 / 15.0",
+      "used_in": [
+        "producer/ops_detection.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "tracking_alpha": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.85",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "tracking_beta": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.05",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "iou_threshold_confirmed": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.25",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "producer/ops_tracking.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "iou_threshold_tentative": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.4",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "producer/ops_tracking.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "min_hits": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "3",
+      "used_in": [
+        "producer/ops_tracking.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "max_frames_lost": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "5",
+      "used_in": [
+        "producer/ops_tracking.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "min_bbox_width": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "100",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "producer/ops_tracking.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "min_bbox_height": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "40",
+      "used_in": [
+        "producer/ops_tracking.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "min_aspect_ratio": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1.5",
+      "used_in": [
+        "producer/ops_tracking.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "max_aspect_ratio": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "5.0",
+      "used_in": [
+        "producer/ops_tracking.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "max_velocity_change_ratio": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1.0",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "max_velocity_change_abs": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "50.0",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "enable_lk_motion": {
+      "defined_in": "producer/config.py",
+      "type": "bool",
+      "default": "True",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "lk_max_corners": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "100",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "lk_quality_level": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.01",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "lk_min_distance": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "10",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "lk_win_size": {
+      "defined_in": "producer/config.py",
+      "type": "tuple[int, int]",
+      "default": "(21, 21)",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "lk_max_level": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "2",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "lk_max_frame_skip": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "2",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "lk_reenable_delay_frames": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "1",
+      "used_in": [
+        "producer/ops_tracking.py"
+      ]
+    },
+    "crop_padding_ratio": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.15",
+      "used_in": [
+        "producer/ops_cropping.py"
+      ]
+    },
+    "crop_padding_min_px": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "12",
+      "used_in": [
+        "producer/ops_cropping.py"
+      ]
+    },
+    "crop_adaptive_resize_threshold": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "800",
+      "used_in": [
+        "scripts/build_golden_fixtures.py",
+        "scripts/golden_crops_generator.py",
+        "producer/ops_cropping.py"
+      ]
+    },
+    "crop_min_width": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "100",
+      "used_in": [
+        "producer/ops_cropping.py"
+      ]
+    },
+    "crop_min_height": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "40",
+      "used_in": [
+        "producer/ops_cropping.py"
+      ]
+    },
+    "fast_quality_enabled": {
+      "defined_in": "producer/config.py",
+      "type": "bool",
+      "default": "True",
+      "used_in": []
+    },
+    "fast_quality_gradient_histogram_bins": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "16",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_spatial_quadrants": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "9",
+      "used_in": []
+    },
+    "fast_quality_h_metrics": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "48",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_w_metrics": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "160",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_h_thumb": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "48",
+      "used_in": [
+        "tests/test_producer_quality.py",
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_w_thumb": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "160",
+      "used_in": [
+        "tests/test_producer_quality.py",
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_focus_min": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_contrast_min": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_band_edge_min": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_bright_min": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_bright_max": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_over_exposed_max": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_under_exposed_max": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_bright_target": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.5",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_bright_tol": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.3",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_over_threshold": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.94",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_under_threshold": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.06",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_band_top_frac": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.3",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_band_bottom_frac": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.7",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_focus_good": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_contrast_good": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.1",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_band_edge_good": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_w_focus": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.4",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "tests/test_producer_quality.py",
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_w_contrast": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.25",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "tests/test_producer_quality.py",
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_w_band": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.15",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "tests/test_producer_quality.py",
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_w_bright": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.15",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "tests/test_producer_quality.py",
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_w_exposure": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.05",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "tests/test_producer_quality.py",
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_over_weight": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "1.0",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "fast_quality_under_weight": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.5",
+      "used_in": [
+        "producer/ops_quality_fast.py"
+      ]
+    },
+    "buffer_bin_capacity": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "32",
+      "used_in": [
+        "producer/buffer.py"
+      ]
+    },
+    "buffer_bootstrap_k_insertions": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "3",
+      "used_in": [
+        "producer/buffer.py"
+      ]
+    },
+    "buffer_min_quality": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.25",
+      "used_in": [
+        "producer/buffer.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "buffer_bootstrap_discount": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.75",
+      "used_in": [
+        "producer/buffer.py"
+      ]
+    },
+    "buffer_similarity_threshold": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.8",
+      "used_in": [
+        "producer/buffer.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "buffer_novelty_weight_pixel": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.6",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "producer/buffer.py"
+      ]
+    },
+    "buffer_novelty_weight_feature": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.4",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "producer/buffer.py"
+      ]
+    },
+    "buffer_quality_margin_similar": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.02",
+      "used_in": [
+        "producer/buffer.py"
+      ]
+    },
+    "buffer_quality_margin_worst": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.05",
+      "used_in": [
+        "producer/buffer.py"
+      ]
+    },
+    "buffer_band_edge_min": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "0.5",
+      "used_in": [
+        "producer/buffer.py"
+      ]
+    },
+    "pipeline_frame_budget_ms": {
+      "defined_in": "producer/config.py",
+      "type": "float",
+      "default": "66.0",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "pipeline_skip_on_no_detections": {
+      "defined_in": "producer/config.py",
+      "type": "bool",
+      "default": "True",
+      "used_in": []
+    },
+    "pipeline_skip_on_no_confirmed": {
+      "defined_in": "producer/config.py",
+      "type": "bool",
+      "default": "True",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "pipeline_logging_mode": {
+      "defined_in": "producer/config.py",
+      "type": "LoggingMode",
+      "default": "LoggingMode.PRODUCTION",
+      "used_in": [
+        "tests/test_producer_types.py",
+        "producer/config.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "logging_queue_size": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "1000",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "pipeline_percentile_window_frames": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "150",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "production_log_path": {
+      "defined_in": "producer/config.py",
+      "type": "str",
+      "default": "'logs/production_metrics.jsonl'",
+      "used_in": [
+        "producer/config.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "debug_log_path": {
+      "defined_in": "producer/config.py",
+      "type": "str",
+      "default": "'logs/debug_metrics.jsonl'",
+      "used_in": [
+        "producer/config.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "tuning_log_path": {
+      "defined_in": "producer/config.py",
+      "type": "str",
+      "default": "'logs/tuning_metrics.jsonl'",
+      "used_in": [
+        "producer/config.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "production_stats_interval_frames": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "4500",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "production_frame_interval": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "300",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "debug_frame_interval": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "1",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "debug_stats_interval_frames": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "150",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "debug_log_detections": {
+      "defined_in": "producer/config.py",
+      "type": "bool",
+      "default": "True",
+      "used_in": []
+    },
+    "debug_log_tracks": {
+      "defined_in": "producer/config.py",
+      "type": "bool",
+      "default": "True",
+      "used_in": []
+    },
+    "debug_log_quality": {
+      "defined_in": "producer/config.py",
+      "type": "bool",
+      "default": "True",
+      "used_in": []
+    },
+    "tuning_frame_interval": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "1",
+      "used_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "tuning_stats_interval_frames": {
+      "defined_in": "producer/config.py",
+      "type": "int",
+      "default": "300",
+      "used_in": []
+    }
+  },
+  "total_params": 98,
+  "traced_params": 91
+}

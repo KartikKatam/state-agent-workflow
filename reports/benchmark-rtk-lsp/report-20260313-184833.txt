@@ -1,0 +1,61 @@
+==========================================================================================
+RTK + LSP BENCHMARK RESULTS
+==========================================================================================
+
+Task                   Cat   Mode      Turns  Output     Work    Total     Cost     Time
+------------------------------------------------------------------------------------------
+bash_git_log           RTK   baseline      4     462   71,478   96,118 $ 0.1207  26,144ms
+bash_git_log           RTK   enhanced      4     469   87,481   96,748 $ 0.0679  16,248ms
+                             DELTA                    -16,003     -630 $+0.0527   22.4% MORE
+
+bash_find_files        RTK   baseline      4     718   64,342   74,701 $ 0.0687  15,583ms
+bash_find_files        RTK   enhanced      4     863   24,737   52,451 $ 0.1240  20,765ms
+                             DELTA                    +39,605  +22,250 $-0.0553   61.6% SAVED
+
+bash_grep_search       RTK   baseline      2     700   39,484   51,819 $ 0.0684  16,077ms
+bash_grep_search       RTK   enhanced      4     969   40,027   52,482 $ 0.0730  16,953ms
+                             DELTA                       -543     -663 $-0.0046   1.4% MORE
+
+lsp_find_definition    LSP   baseline      6   1,097   89,019   99,295 $ 0.0814  18,509ms
+lsp_find_definition    LSP   enhanced     10   1,629  143,616  155,616 $ 0.1121  31,223ms
+                             DELTA                    -54,597  -56,321 $-0.0307   61.3% MORE
+
+lsp_type_analysis      LSP   baseline      6   1,592   90,918  102,053 $ 0.0925  31,167ms
+lsp_type_analysis      LSP   enhanced     12   2,161  146,430  159,309 $ 0.1267  35,062ms
+                             DELTA                    -55,512  -57,256 $-0.0343   61.1% MORE
+
+lsp_call_hierarchy     LSP   baseline      5   1,915   96,219  110,916 $ 0.1121  29,411ms
+lsp_call_hierarchy     LSP   enhanced     22   3,882   70,467  116,164 $ 0.2496  39,429ms
+                             DELTA                    +25,752   -5,248 $-0.1374   26.8% SAVED
+
+mixed_exploration      MIXED baseline      3   1,632   64,213   75,065 $ 0.1735  40,731ms
+mixed_exploration      MIXED enhanced      3   2,287   65,424   77,691 $ 0.1960  52,956ms
+                             DELTA                     -1,211   -2,626 $-0.0224   1.9% MORE
+
+mixed_refactor         MIXED baseline      3     842   39,595   51,747 $ 0.0698  15,662ms
+mixed_refactor         MIXED enhanced      3     898   24,751   52,351 $ 0.1241  17,446ms
+                             DELTA                    +14,844     -604 $-0.0543   37.5% SAVED
+
+==========================================================================================
+GRAND TOTALS
+
+  Work tokens (excl. system prompt):
+    Baseline:      555,268
+    Enhanced:      602,933
+    Delta:         -47,665 (-8.6%)
+
+  Total tokens (incl. system prompt):
+    Baseline:      661,714
+    Enhanced:      762,812
+    Delta:        -101,098 (-15.3%)
+
+  Cost:
+    Baseline: $     0.7871
+    Enhanced: $     1.0734
+    Delta:    $    -0.2863 (-36.4%)
+
+BY CATEGORY (work tokens)
+  RTK      baseline= 175,304  enhanced= 152,245  delta= +23,059 (+13.2%)
+  LSP      baseline= 276,156  enhanced= 360,513  delta= -84,357 (-30.5%)
+  MIXED    baseline= 103,808  enhanced=  90,175  delta= +13,633 (+13.1%)
+==========================================================================================

@@ -1,0 +1,41 @@
+{"ts": "2026-03-14T13:43:34.029075", "event": "session_started", "agent": "main", "agent_type": "interactive", "session_id": "4febb8f9-7faa-4fc9-9800-cb3d0b25c074"}
+{"ts": "2026-03-14T13:43:40.866557", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:45:11.641328", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:45:12.045486", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:45:16.444258", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:47:28.067445", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:47:39.072413", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:47:43.036026", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:58:14.445288", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:58:25.728771", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:58:27.708116", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:58:31.496955", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:15:15.819712", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:15:19.866098", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:28:08.204352", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:29:54.499742", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:30:06.273786", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:30:13.405758", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:30:18.493480", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:39:17.008002", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:47:14.432475", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:47:19.104857", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:47:44.204502", "event": "context_pressure", "percentage": 51.0, "level": "warning", "agent": "4febb8f9-7faa-4fc9-9800-cb3d0b25c074"}
+{"ts": "2026-03-14T14:49:37.077715", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:49:41.011331", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:49:48.682856", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:49:51.625010", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:50:59.588946", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T14:51:03.946247", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T01:49:25.672717", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T01:49:33.166468", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T02:04:32.443178", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T02:04:37.458551", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T02:15:20.947196", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T02:15:24.708595", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:02:15.344437", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:02:50.878643", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:03:13.599811", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:03:23.319088", "event": "context_pressure", "percentage": 70.1, "level": "critical", "agent": "4febb8f9-7faa-4fc9-9800-cb3d0b25c074"}
+{"ts": "2026-03-15T14:08:06.189975", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:08:19.255100", "event": "session_ended", "agent": "main"}

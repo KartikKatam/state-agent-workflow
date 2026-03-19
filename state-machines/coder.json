@@ -1,0 +1,612 @@
+{
+  "name": "coder",
+  "description": "Per-task coder lifecycle. One task, one life. TDD cycle: test design \u2192 red \u2192 handoff \u2192 implement \u2192 green \u2192 quality gate \u2192 review \u2192 merge. Mandatory context isolation between test-writing and implementation phases via handoff.",
+  "version": "2.0.0",
+  "agent_role": "coder",
+  "initial_state": "SPAWNED",
+  "terminal_states": [
+    "TASK_COMPLETE",
+    "SCRAP_RETRY",
+    "HANDOFF",
+    "PLAN_ERROR",
+    "RED_VERIFIED_COMPLETE"
+  ],
+  "variables": {
+    "source_globs": ["src/**/*.py"],
+    "test_globs": ["tests/**/*.py", "**/test_*.py", "**/conftest.py"]
+  },
+  "universal_transitions": [
+    {
+      "to_state": "HANDOFF",
+      "trigger": "context_pressure_exceeded",
+      "guards": [
+        "context_usage_above_threshold"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "name": "SPAWNED",
+      "description": "Coder just spawned. Reading task assignment and plan context.",
+      "write_allowed": false
+    },
+    {
+      "name": "TASK_CLAIMED",
+      "description": "Task accepted. Preparing to create worktree.",
+      "write_allowed": false
+    },
+    {
+      "name": "WORKTREE_CREATED",
+      "description": "Isolated worktree + port allocation created. Ready to request context.",
+      "write_allowed": false
+    },
+    {
+      "name": "CONTEXT_REQUESTED",
+      "description": "Dispatched explorer/researcher for task-specific context. Waiting for results.",
+      "write_allowed": false
+    },
+    {
+      "name": "CONTEXT_LOADED",
+      "description": "Context packets and research loaded. Routes to TEST_DESIGN (fresh task) or IMPLEMENTATION (continuation coder with tests already written).",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Before transitioning, think about: 1) What is the core requirement of this task from the plan? 2) What existing code patterns and conventions should be followed? 3) If this is a fresh task: what test cases will cover critical paths and edge cases? If continuing from a test-phase handoff: what implementation strategy will satisfy the failing tests? 4) Are there any dependencies on other tasks? 5) What could go wrong and how to mitigate it? Use THOUGHT/CONSIDERED/CHOSEN format."
+    },
+    {
+      "name": "TEST_DESIGN",
+      "description": "Designing and writing test cases. Write/Edit restricted to test files only.",
+      "write_allowed": true,
+      "write_globs": [
+        "$test_globs"
+      ],
+      "post_actions": {
+        "Write": [
+          "ruff_lint_critical"
+        ],
+        "Edit": [
+          "ruff_lint_critical"
+        ]
+      }
+    },
+    {
+      "name": "TESTS_WRITTEN",
+      "description": "All test cases written. Ready to verify they fail (TDD red phase).",
+      "write_allowed": false
+    },
+    {
+      "name": "TDD_RED",
+      "description": "Running tests to verify they fail. Confirms tests are meaningful.",
+      "write_allowed": false
+    },
+    {
+      "name": "RED_VERIFIED",
+      "description": "Tests confirmed failing. Think phase prepares implementation handoff summary for fresh implementation coder.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Before transitioning, think about: 1) Do the failing tests cover all the requirements for this task? 2) What is the minimal implementation that will make these tests pass? 3) Which existing modules or functions should be extended vs created new? 4) Are there any patterns from the codebase context that should guide the implementation? 5) What order should the implementation proceed in to get tests passing incrementally? Use THOUGHT/CONSIDERED/CHOSEN format."
+    },
+    {
+      "name": "RED_VERIFIED_COMPLETE",
+      "description": "Tests verified failing correctly. Implementation handoff written (excludes test internals). Coder terminates; orchestrator spawns fresh implementation coder with clean context.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    },
+    {
+      "name": "RED_FAILED",
+      "description": "Tests did not fail as expected (syntax errors, import issues). Must fix tests and retry.",
+      "write_allowed": true,
+      "write_globs": [
+        "$test_globs"
+      ],
+      "post_actions": {
+        "Write": [
+          "ruff_lint_critical"
+        ],
+        "Edit": [
+          "ruff_lint_critical"
+        ]
+      }
+    },
+    {
+      "name": "IMPLEMENTATION",
+      "description": "Writing production code to make tests pass. Source files only \u2014 cannot modify or read test files (enforced by hooks). Implementation driven by plan checklist and test error output, not test internals.",
+      "write_allowed": true,
+      "write_globs": [
+        "$source_globs"
+      ],
+      "read_globs_exclude": [
+        "$test_globs"
+      ],
+      "post_actions": {
+        "Write": [
+          "ruff_lint_critical"
+        ],
+        "Edit": [
+          "ruff_lint_critical"
+        ]
+      }
+    },
+    {
+      "name": "TDD_GREEN",
+      "description": "Running tests to verify they pass. No file edits.",
+      "write_allowed": false
+    },
+    {
+      "name": "GREEN_PROGRESS_CHECK",
+      "description": "Tests still failing after implementation attempt. Think phase evaluates whether progress is being made before allowing another cycle. No arbitrary retry limit \u2014 progress is the criterion.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Answer ALL questions. 1) How many tests passed vs failed compared to the previous green check? List specific tests that changed status. 2) What is the specific cause of remaining failures \u2014 code-level fix or deeper issue? 3) If continuing: what SPECIFIC file and function will you change and why? 4) If stuck: what evidence shows the current approach cannot satisfy the tests? CHOSEN: CONTINUE or STUCK."
+    },
+    {
+      "name": "INVARIANT_CHECK",
+      "description": "Running plan invariants to verify implementation meets spec.",
+      "write_allowed": false
+    },
+    {
+      "name": "INVARIANT_PROGRESS_CHECK",
+      "description": "Invariant check failed. Think phase evaluates whether fixing is progressing or stuck.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Answer ALL questions. 1) Which invariants passed and which failed? List each. 2) Compared to the previous check: did any previously-failing invariants now pass? 3) If continuing: what specific change will fix the remaining failures? 4) If stuck: is the approach fundamentally incompatible with the invariants? CHOSEN: CONTINUE or STUCK."
+    },
+    {
+      "name": "APPROACH_ASSESSMENT",
+      "description": "Decision point: agent evaluates whether the current approach is salvageable, should be scrapped, or reveals a fundamental plan error. Reached from IMPLEMENTATION (concern flagged), GREEN_PROGRESS_CHECK (stuck), or INVARIANT_PROGRESS_CHECK (stuck).",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Answer ALL questions. 1) What specific issue triggered this assessment? Is it code-level (fixable) or design/requirements-level (fundamental)? 2) Can the issue be worked around within the current task scope? 3) If scrapping: what should the next coder know and NOT repeat? 4) If escalating: what specific plan contradiction or impossible requirement was found? CHOSEN: CONTINUE, SCRAP, or ESCALATE."
+    },
+    {
+      "name": "QUALITY_GATE",
+      "description": "Running synchronous quality gate (ruff, pyright, pytest, bandit). Read-only except gate-identified fixes.",
+      "write_allowed": true,
+      "write_globs": [
+        "$source_globs",
+        "$test_globs"
+      ],
+      "post_actions": {
+        "Write": [
+          "ruff_lint_critical"
+        ],
+        "Edit": [
+          "ruff_lint_critical"
+        ]
+      }
+    },
+    {
+      "name": "TASK_REVIEW_REQUESTED",
+      "description": "Quality gate passed. Waiting for task auditor review.",
+      "write_allowed": false
+    },
+    {
+      "name": "FIXES",
+      "description": "Auditor found source code issues. Fixing source code only (not test assertions).",
+      "write_allowed": true,
+      "write_globs": [
+        "$source_globs"
+      ],
+      "think_on_exit": true,
+      "think_prompt": "Before transitioning, think about: 1) What is the root cause of each auditor-identified issue? 2) Will the fix introduce any regressions in existing tests? 3) Is the fix consistent with the patterns established in this task's implementation? 4) Are there any related issues the auditor didn't catch that should be fixed proactively? 5) Will the quality gate pass after these fixes? Use THOUGHT/CONSIDERED/CHOSEN format.",
+      "post_actions": {
+        "Write": [
+          "ruff_lint_critical"
+        ],
+        "Edit": [
+          "ruff_lint_critical"
+        ]
+      }
+    },
+    {
+      "name": "MERGE",
+      "description": "Auditor approved. Merging worktree to base branch. Only git commands allowed.",
+      "write_allowed": false,
+      "blocked_tools": [
+        "Write",
+        "Edit"
+      ]
+    },
+    {
+      "name": "MERGE_CONFLICT",
+      "description": "Merge conflicts detected. Agent edits conflicted files to resolve. No think_on_exit \u2014 this is manual resolution work. Exits when all conflict markers are cleared.",
+      "write_allowed": true,
+      "write_globs": ["**/*"]
+    },
+    {
+      "name": "MERGE_RESOLVED",
+      "description": "Merge complete (clean or conflicts resolved). Ready to terminate.",
+      "write_allowed": false
+    },
+    {
+      "name": "TASK_COMPLETE",
+      "description": "Task done. Coder terminates. Stop hook verifies merge succeeded."
+    },
+    {
+      "name": "SCRAP_RETRY",
+      "description": "Approach failed or retries exhausted. Writing handoff summary of what went wrong and what NOT to repeat. Coder terminates, orchestrator spawns fresh coder.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    },
+    {
+      "name": "PLAN_ERROR",
+      "description": "Terminal: plan contradiction or impossible requirement discovered during implementation. Error report written for orchestrator to relay to plan-architect.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    },
+    {
+      "name": "HANDOFF",
+      "description": "Context pressure exceeded. Writing handoff summary of progress, current state, files modified. Coder terminates, orchestrator spawns fresh coder to continue.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from_state": "SPAWNED",
+      "to_state": "TASK_CLAIMED",
+      "trigger": "task_assignment_read",
+      "guards": [
+        "task_id_valid",
+        "plan_chunk_exists"
+      ]
+    },
+    {
+      "from_state": "TASK_CLAIMED",
+      "to_state": "WORKTREE_CREATED",
+      "trigger": "worktree_setup_complete",
+      "guards": [
+        "worktree_path_exists",
+        "port_allocated"
+      ]
+    },
+    {
+      "from_state": "WORKTREE_CREATED",
+      "to_state": "CONTEXT_REQUESTED",
+      "trigger": "context_dispatched",
+      "guards": [
+        "exploration_queries_sent_or_skipped"
+      ]
+    },
+    {
+      "from_state": "CONTEXT_REQUESTED",
+      "to_state": "CONTEXT_LOADED",
+      "trigger": "context_received",
+      "guards": [
+        "context_packets_loaded"
+      ]
+    },
+    {
+      "from_state": "CONTEXT_REQUESTED",
+      "to_state": "SCRAP_RETRY",
+      "trigger": "context_timeout",
+      "guards": [
+        "context_wait_exceeded"
+      ],
+      "actions": [
+        "write_scrap_handoff",
+        "notify_orchestrator_scrap_retry"
+      ]
+    },
+    {
+      "from_state": "CONTEXT_LOADED",
+      "to_state": "TEST_DESIGN",
+      "trigger": "test_design_started",
+      "guards": [
+        "think_completed",
+        "tests_not_yet_written"
+      ],
+      "description": "Fresh task coder: tests need to be written first."
+    },
+    {
+      "from_state": "CONTEXT_LOADED",
+      "to_state": "IMPLEMENTATION",
+      "trigger": "implementation_continuation",
+      "guards": [
+        "think_completed",
+        "tests_already_written"
+      ],
+      "description": "Continuation coder: tests already exist from test-phase handoff, skip directly to implementation."
+    },
+    {
+      "from_state": "TEST_DESIGN",
+      "to_state": "TESTS_WRITTEN",
+      "trigger": "tests_complete",
+      "guards": [
+        "test_files_exist",
+        "test_count_gt_zero"
+      ]
+    },
+    {
+      "from_state": "TESTS_WRITTEN",
+      "to_state": "TDD_RED",
+      "trigger": "red_phase_started",
+      "actions": [
+        "run_pytest"
+      ]
+    },
+    {
+      "from_state": "TDD_RED",
+      "to_state": "RED_VERIFIED",
+      "trigger": "tests_failed_as_expected",
+      "guards": [
+        "pytest_exit_nonzero",
+        "failures_are_assertion_or_import"
+      ]
+    },
+    {
+      "from_state": "TDD_RED",
+      "to_state": "RED_FAILED",
+      "trigger": "tests_did_not_fail_correctly",
+      "guards": [
+        "syntax_errors_or_no_tests_collected"
+      ]
+    },
+    {
+      "from_state": "RED_FAILED",
+      "to_state": "TDD_RED",
+      "trigger": "tests_fixed_retry",
+      "max_occurrences": 2
+    },
+    {
+      "from_state": "RED_FAILED",
+      "to_state": "SCRAP_RETRY",
+      "trigger": "red_retries_exhausted",
+      "guards": [
+        "max_red_retries_exceeded"
+      ],
+      "actions": [
+        "write_scrap_handoff",
+        "notify_orchestrator_scrap_retry"
+      ]
+    },
+    {
+      "from_state": "RED_VERIFIED",
+      "to_state": "RED_VERIFIED_COMPLETE",
+      "trigger": "test_phase_complete",
+      "guards": [
+        "think_completed"
+      ],
+      "actions": [
+        "write_implementation_handoff",
+        "notify_orchestrator_implementation_ready"
+      ],
+      "description": "Mandatory handoff: test-writer coder terminates so a fresh implementation coder can start with clean context (no test internals)."
+    },
+    {
+      "from_state": "IMPLEMENTATION",
+      "to_state": "TDD_GREEN",
+      "trigger": "implementation_complete",
+      "actions": [
+        "run_pytest"
+      ]
+    },
+    {
+      "from_state": "IMPLEMENTATION",
+      "to_state": "APPROACH_ASSESSMENT",
+      "trigger": "approach_concern",
+      "guards": [
+        "approach_concern_flagged"
+      ],
+      "description": "Coder flags a fundamental concern about the approach during implementation."
+    },
+    {
+      "from_state": "TDD_GREEN",
+      "to_state": "GREEN_PROGRESS_CHECK",
+      "trigger": "tests_still_failing",
+      "guards": [
+        "pytest_exit_nonzero"
+      ],
+      "description": "C1 fix: route through progress assessment instead of direct loop with max_occurrences."
+    },
+    {
+      "from_state": "TDD_GREEN",
+      "to_state": "INVARIANT_CHECK",
+      "trigger": "all_tests_passing",
+      "guards": [
+        "pytest_exit_zero"
+      ]
+    },
+    {
+      "from_state": "GREEN_PROGRESS_CHECK",
+      "to_state": "IMPLEMENTATION",
+      "trigger": "progress_confirmed",
+      "guards": [
+        "think_chosen:CONTINUE"
+      ],
+      "description": "Progress is being made \u2014 continue implementation."
+    },
+    {
+      "from_state": "GREEN_PROGRESS_CHECK",
+      "to_state": "APPROACH_ASSESSMENT",
+      "trigger": "stuck_detected",
+      "guards": [
+        "think_chosen:STUCK"
+      ],
+      "description": "No progress \u2014 escalate to approach assessment."
+    },
+    {
+      "from_state": "INVARIANT_CHECK",
+      "to_state": "QUALITY_GATE",
+      "trigger": "invariants_passed",
+      "guards": [
+        "all_invariants_pass"
+      ],
+      "actions": [
+        "run_quality_gate"
+      ]
+    },
+    {
+      "from_state": "INVARIANT_CHECK",
+      "to_state": "INVARIANT_PROGRESS_CHECK",
+      "trigger": "invariant_failed",
+      "guards": [
+        "invariant_failure_exists"
+      ],
+      "description": "C7 fix: route through progress assessment instead of direct loop."
+    },
+    {
+      "from_state": "INVARIANT_PROGRESS_CHECK",
+      "to_state": "IMPLEMENTATION",
+      "trigger": "invariant_fix_continue",
+      "guards": [
+        "think_chosen:CONTINUE"
+      ],
+      "description": "Invariant fix progressing \u2014 continue implementation."
+    },
+    {
+      "from_state": "INVARIANT_PROGRESS_CHECK",
+      "to_state": "APPROACH_ASSESSMENT",
+      "trigger": "invariant_stuck",
+      "guards": [
+        "think_chosen:STUCK"
+      ],
+      "description": "Invariant fix not progressing \u2014 escalate to approach assessment."
+    },
+    {
+      "from_state": "APPROACH_ASSESSMENT",
+      "to_state": "IMPLEMENTATION",
+      "trigger": "assessment_continue",
+      "guards": [
+        "think_chosen:CONTINUE"
+      ],
+      "description": "Approach is sound \u2014 continue implementing."
+    },
+    {
+      "from_state": "APPROACH_ASSESSMENT",
+      "to_state": "SCRAP_RETRY",
+      "trigger": "assessment_scrap",
+      "guards": [
+        "think_chosen:SCRAP"
+      ],
+      "actions": [
+        "write_scrap_handoff",
+        "notify_orchestrator_scrap_retry"
+      ],
+      "description": "Approach fundamentally flawed \u2014 scrap and retry with fresh coder."
+    },
+    {
+      "from_state": "APPROACH_ASSESSMENT",
+      "to_state": "PLAN_ERROR",
+      "trigger": "assessment_escalate",
+      "guards": [
+        "think_chosen:ESCALATE"
+      ],
+      "actions": [
+        "write_plan_error_report",
+        "notify_orchestrator_plan_error"
+      ],
+      "description": "Plan contradiction or impossible requirement \u2014 escalate to orchestrator."
+    },
+    {
+      "from_state": "QUALITY_GATE",
+      "to_state": "TASK_REVIEW_REQUESTED",
+      "trigger": "gate_passed",
+      "guards": [
+        "format_pass",
+        "lint_pass",
+        "typecheck_pass",
+        "tests_pass"
+      ],
+      "actions": [
+        "notify_orchestrator_task_complete"
+      ]
+    },
+    {
+      "from_state": "QUALITY_GATE",
+      "to_state": "IMPLEMENTATION",
+      "trigger": "gate_failed",
+      "guards": [
+        "think_completed",
+        "gate_failures_exist"
+      ]
+    },
+    {
+      "from_state": "TASK_REVIEW_REQUESTED",
+      "to_state": "FIXES",
+      "trigger": "auditor_found_issues",
+      "guards": [
+        "auditor_critique_received"
+      ]
+    },
+    {
+      "from_state": "TASK_REVIEW_REQUESTED",
+      "to_state": "MERGE",
+      "trigger": "auditor_approved",
+      "guards": [
+        "auditor_approval_received"
+      ]
+    },
+    {
+      "from_state": "TASK_REVIEW_REQUESTED",
+      "to_state": "SCRAP_RETRY",
+      "trigger": "auditor_found_test_issues",
+      "guards": [
+        "auditor_found_test_issues"
+      ],
+      "actions": [
+        "write_scrap_handoff",
+        "notify_orchestrator_test_issues"
+      ],
+      "description": "Auditor found test issues. Implementation coder cannot fix tests (context isolation). Orchestrator spawns test-fixer coder."
+    },
+    {
+      "from_state": "FIXES",
+      "to_state": "TASK_REVIEW_REQUESTED",
+      "trigger": "fixes_complete",
+      "actions": [
+        "run_quality_gate",
+        "notify_auditor_fixes_ready"
+      ],
+      "guards": [
+        "think_completed"
+      ]
+    },
+    {
+      "from_state": "MERGE",
+      "to_state": "MERGE_RESOLVED",
+      "trigger": "merge_successful",
+      "guards": [
+        "merge_exit_zero"
+      ]
+    },
+    {
+      "from_state": "MERGE",
+      "to_state": "MERGE_CONFLICT",
+      "trigger": "merge_conflicts_detected",
+      "guards": [
+        "merge_conflicts_exist"
+      ],
+      "description": "C3 fix: route to MERGE_CONFLICT state where Write/Edit are allowed for resolution."
+    },
+    {
+      "from_state": "MERGE_CONFLICT",
+      "to_state": "MERGE_RESOLVED",
+      "trigger": "conflicts_resolved",
+      "guards": [
+        "all_conflicts_resolved"
+      ]
+    },
+    {
+      "from_state": "MERGE_RESOLVED",
+      "to_state": "TASK_COMPLETE",
+      "trigger": "termination",
+      "actions": [
+        "log_task_complete",
+        "release_port",
+        "cleanup_worktree"
+      ]
+    }
+  ]
+}

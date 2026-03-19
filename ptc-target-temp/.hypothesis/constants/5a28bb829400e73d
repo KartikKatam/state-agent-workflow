@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/producer/pipeline.py
+# hypothesis_version: 6.151.5
+
+[0.0, 1000, ',', ':', 'a', 'avg_buffer_ms', 'avg_cropping_ms', 'avg_detection_ms', 'avg_frame_ms', 'avg_quality_ms', 'avg_tracking_ms', 'buffer_ms', 'buffer_updates', 'cfg_conf_threshold', 'cfg_iou_threshold', 'cfg_max_aspect_ratio', 'cfg_max_frames_lost', 'cfg_min_aspect_ratio', 'cfg_min_bbox_height', 'cfg_min_bbox_width', 'cfg_min_hits', 'corner_cnn_ms', 'cropping_ms', 'cum_errors', 'cum_frames_received', 'cum_frames_sampled', 'cum_quality_passed', 'cum_raw_detections', 'cum_tracks_created', 'cum_tracks_lost', 'cum_valid_detections', 'detection_ms', 'error', 'exception', 'frame_idx', 'frame_ms', 'level', 'logger', 'message', 'metrics', 'num_active_tracks', 'num_confirmed_tracks', 'num_crops', 'num_quality_passed', 'num_raw_detections', 'producer', 'quality_ms', 'sampled', 'timestamp', 'timestamp_ms', 'total_ms', 'tracking_ms']

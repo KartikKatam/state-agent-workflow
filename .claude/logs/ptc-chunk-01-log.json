@@ -1,0 +1,121 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-01",
+    "started_at": "2026-02-28T19:00:00Z",
+    "last_updated": "2026-02-28T19:15:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-01-2026-02-28",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "phase_history": [
+    {
+      "phase": "context_loading",
+      "timestamp": "2026-02-28T19:00:00Z",
+      "details": "Loaded plan JSON, test specs, design doc, context packets"
+    },
+    {
+      "phase": "test_writing",
+      "timestamp": "2026-02-28T19:02:00Z",
+      "details": "Wrote 25 tests in test_ipc_protocol.py, 6 factories in conftest.py"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T19:05:00Z",
+      "details": "25 tests failed: all ModuleNotFoundError (ipc_protocol not yet created)"
+    },
+    {
+      "phase": "implementation",
+      "timestamp": "2026-02-28T19:07:00Z",
+      "details": "Created ipc_protocol.py with 8 dataclasses, encode/decode, ID generators, MAX_MESSAGE_SIZE"
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T19:10:00Z",
+      "details": "25/25 tests passing"
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T19:12:00Z",
+      "details": "inv-01-01 PASS (all 8 types importable), inv-01-02 PASS (round-trip), inv-01-03 PASS (all tests)"
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T19:14:00Z",
+      "details": "ruff format PASS, ruff check PASS"
+    }
+  ],
+  "resume_point": "Awaiting user approval",
+  "files_modified": [
+    "tests/ptc/conftest.py",
+    "tests/ptc/test_ipc_protocol.py",
+    "~/.claude/mcp/ptc-server/ipc_protocol.py"
+  ],
+  "tests_written": [
+    {"name": "test_execute_msg_fields", "class": "TestExecuteMsg", "status": "passing"},
+    {"name": "test_execute_msg_round_trip", "class": "TestExecuteMsg", "status": "passing"},
+    {"name": "test_execute_msg_default_type", "class": "TestExecuteMsg", "status": "passing"},
+    {"name": "test_tool_result_msg_fields", "class": "TestToolResultMsg", "status": "passing"},
+    {"name": "test_tool_result_msg_round_trip", "class": "TestToolResultMsg", "status": "passing"},
+    {"name": "test_tool_result_msg_with_error", "class": "TestToolResultMsg", "status": "passing"},
+    {"name": "test_cancel_msg_default_reason", "class": "TestCancelMsg", "status": "passing"},
+    {"name": "test_cancel_msg_round_trip", "class": "TestCancelMsg", "status": "passing"},
+    {"name": "test_ping_msg_type", "class": "TestPingPong", "status": "passing"},
+    {"name": "test_pong_msg_type", "class": "TestPingPong", "status": "passing"},
+    {"name": "test_tool_call_msg_fields", "class": "TestToolCallMsg", "status": "passing"},
+    {"name": "test_tool_call_msg_round_trip", "class": "TestToolCallMsg", "status": "passing"},
+    {"name": "test_complete_msg_defaults", "class": "TestCompleteMsg", "status": "passing"},
+    {"name": "test_complete_msg_full", "class": "TestCompleteMsg", "status": "passing"},
+    {"name": "test_complete_msg_round_trip", "class": "TestCompleteMsg", "status": "passing"},
+    {"name": "test_error_msg_fields", "class": "TestErrorMsg", "status": "passing"},
+    {"name": "test_error_msg_round_trip", "class": "TestErrorMsg", "status": "passing"},
+    {"name": "test_encode_returns_bytes", "class": "TestEncodeDecode", "status": "passing"},
+    {"name": "test_encode_compact_json", "class": "TestEncodeDecode", "status": "passing"},
+    {"name": "test_decode_strips_whitespace", "class": "TestEncodeDecode", "status": "passing"},
+    {"name": "test_encode_decode_unicode", "class": "TestEncodeDecode", "status": "passing"},
+    {"name": "test_new_exec_id_format", "class": "TestIdGeneration", "status": "passing"},
+    {"name": "test_new_call_id_format", "class": "TestIdGeneration", "status": "passing"},
+    {"name": "test_id_uniqueness", "class": "TestIdGeneration", "status": "passing"},
+    {"name": "test_max_message_size", "class": "TestConstants", "status": "passing"}
+  ],
+  "invariants_status": {
+    "inv-01-01": "pass",
+    "inv-01-02": "pass",
+    "inv-01-03": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [],
+  "deviations": [
+    {
+      "type": "task_modification",
+      "description": "Removed direct 'from conftest import ...' in test file — pytest conftest is auto-discovered, not directly importable",
+      "reason": "Python/pytest mechanics: conftest.py cannot be imported as a regular module",
+      "plan_gap": "Test spec listed factory imports but conftest isn't importable via regular import",
+      "impact": "None — factories still available via conftest auto-discovery, tests use direct constructors",
+      "user_approval_needed": false
+    }
+  ],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "Guard ipc_protocol imports in conftest.py with try/except + from __future__ import annotations",
+      "reason": "Prevent breaking existing tests while ipc_protocol.py doesn't exist yet"
+    },
+    {
+      "decision": "Factory functions are plain functions (not fixtures) in conftest.py",
+      "reason": "Matches test spec — factories called directly in test code"
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 1
+  }
+}

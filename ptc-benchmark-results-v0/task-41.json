@@ -1,0 +1,49 @@
+{
+  "function": "ProducerPipeline.process_frame",
+  "file": "producer/pipeline.py",
+  "exit_paths": [
+    {
+      "function_name": "ProducerPipeline.process_frame",
+      "exit_type": "return",
+      "condition": null,
+      "line_number": 368,
+      "stage": "STAGE 1: DETECTION"
+    },
+    {
+      "function_name": "ProducerPipeline.process_frame",
+      "exit_type": "return",
+      "condition": null,
+      "line_number": 422,
+      "stage": "STAGE 2: TRACKING"
+    },
+    {
+      "function_name": "ProducerPipeline.process_frame",
+      "exit_type": "return",
+      "condition": null,
+      "line_number": 450,
+      "stage": "STAGE 2: TRACKING"
+    },
+    {
+      "function_name": "ProducerPipeline.process_frame",
+      "exit_type": "return",
+      "condition": null,
+      "line_number": 490,
+      "stage": "STAGE 3: CROPPING"
+    },
+    {
+      "function_name": "ProducerPipeline.process_frame",
+      "exit_type": "return",
+      "condition": null,
+      "line_number": 568,
+      "stage": "STAGE 5: BUFFER INSERTION"
+    },
+    {
+      "function_name": "ProducerPipeline.process_frame",
+      "exit_type": "return",
+      "condition": null,
+      "line_number": 593,
+      "stage": "STAGE 5: BUFFER INSERTION"
+    }
+  ],
+  "total_exits": 6
+}

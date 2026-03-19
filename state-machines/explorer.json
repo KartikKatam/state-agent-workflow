@@ -1,0 +1,368 @@
+{
+  "name": "explorer",
+  "description": "Codebase context generator. Ephemeral \u2014 one query or related batch per instance. Reads files via sub-agents (Haiku/Sonnet), synthesizes into structured context packets. Never writes source code.",
+  "version": "1.3.0",
+  "agent_role": "explorer",
+  "initial_state": "SPAWNED",
+  "terminal_states": [
+    "TERMINATED",
+    "HANDOFF"
+  ],
+  "universal_transitions": [
+    {
+      "to_state": "HANDOFF",
+      "trigger": "context_pressure_exceeded",
+      "guards": [
+        "context_usage_above_threshold"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "name": "SPAWNED",
+      "description": "Explorer spawned. Loading query and any existing context packets.",
+      "write_allowed": false
+    },
+    {
+      "name": "EXISTING_CONTEXT_CHECK",
+      "description": "Searching existing context packets before dispatching new sub-agents. Prevents duplicate work. Think phase evaluates whether existing packets truly cover the query scope and are fresh enough to reuse.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Do existing context packets cover the full scope of the current query, or only a subset? List which parts of the query are covered and which are not. 2) Have any files referenced in the existing packets been modified since the packet was created? Check git history (git log --since) for the source files the packet covers \u2014 if commits touched those files after the packet timestamp, the packet is stale. 3) Does the query require a different depth or perspective than what existing packets provide (e.g., packet has structure but query needs implementation details)? 4) Does the existing packet type match what the query needs (codebase overview vs feature context vs query result)? CHOSEN: REUSE (transition to PACKET_WRITTEN) or EXPLORE (transition to SCOPE_ANALYSIS)."
+    },
+    {
+      "name": "SCOPE_ANALYSIS",
+      "description": "Analyzing query scope: which directories, files, and patterns to explore. Deciding sub-agent allocation. If scope is ambiguous or underspecified, transition to AWAITING_CLARIFICATION instead of guessing.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Which specific directories and modules are relevant to the query? List them. 2) What depth is needed \u2014 surface-level structure or deep implementation details? Why? 3) How many sub-agents are needed and what should each one cover? Define the split. 4) Are there naming conventions or project patterns that inform where to look? 5) Could the query be interpreted multiple ways? If yes, list the interpretations and whether any are unresolvable without orchestrator input. CHOSEN: DISPATCH (transition to SUB_AGENT_DISPATCH with the sub-agent plan) or CLARIFY (transition to AWAITING_CLARIFICATION with the specific question for the orchestrator)."
+    },
+    {
+      "name": "AWAITING_CLARIFICATION",
+      "description": "Explorer has identified ambiguity in the query scope that cannot be resolved from existing context alone (e.g., 'which pipeline module?', 'include test infrastructure?', 'depth of dependency analysis?'). A clarification request has been sent to the orchestrator. Explorer is blocked until the orchestrator responds. No file reads or writes in this state.",
+      "write_allowed": false
+    },
+    {
+      "name": "SUB_AGENT_DISPATCH",
+      "description": "Haiku/Sonnet sub-agents reading files and directories via PTC. Raw results stay in sandbox. Think phase evaluates sub-agent results completeness before moving to synthesis.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Did every dispatched sub-agent return results? List each sub-agent and whether it returned data or failed. 2) Are any sub-agent results suspiciously empty or shallow (e.g., a sub-agent scoped to a large directory returned only 1-2 files)? 3) Do the combined results cover the full scope defined in SCOPE_ANALYSIS, or are there directories/modules that no sub-agent touched? List any gaps. 4) Are there any contradictions between sub-agent results (e.g., one says a function exists, another implies it doesn't)? CHOSEN: SYNTHESIZE (transition to SYNTHESIS)."
+    },
+    {
+      "name": "SYNTHESIS",
+      "description": "Synthesizing sub-agent results into structured context packet. Writes packet file for validation. Can also be entered from ERROR with partial results \u2014 in that case, synthesizes whatever sub-agent data was successfully collected before the failure. Quality checks are mechanical (schema validation via post_actions), not self-review.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/context/**"
+      ],
+      "post_actions": {
+        "Write": [
+          "validate_context_packet_schema"
+        ],
+        "Edit": [
+          "validate_context_packet_schema"
+        ]
+      }
+    },
+    {
+      "name": "PACKET_VALIDATION",
+      "description": "Validating generated context packet against schema.",
+      "write_allowed": false
+    },
+    {
+      "name": "PACKET_WRITTEN",
+      "description": "Context packet validated and confirmed. Ready for next query or termination.",
+      "write_allowed": false
+    },
+    {
+      "name": "IDLE",
+      "description": "Between queries. Waiting for next exploration request or termination signal.",
+      "write_allowed": false
+    },
+    {
+      "name": "QUERY_RELATEDNESS_ASSESSMENT",
+      "description": "Think phase for evaluating whether a new query is related to the previous exploration scope. The agent must use the think tool to evaluate relatedness against concrete criteria before transitioning. This ensures the reasoning is logged and auditable rather than a subjective snap judgment.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) List the directories and modules the previous exploration covered. List the directories and modules the new query targets. What is the overlap? 2) Is the new query a refinement/extension of the previous scope (e.g., 'now show me the tests for that module'), or an entirely different area (e.g., 'explore the auth system' after exploring the pipeline)? 3) Would reusing the explorer's cached context help the new query, or would stale assumptions from the previous scope actively mislead? 4) If this explorer terminates, does the orchestrator lose any in-context knowledge that would be expensive to rebuild? CHOSEN: RELATED (transition to EXISTING_CONTEXT_CHECK) or UNRELATED (transition to TERMINATED, orchestrator spawns fresh explorer)."
+    },
+    {
+      "name": "TERMINATED",
+      "description": "Explorer terminated. Next unrelated query gets a fresh instance."
+    },
+    {
+      "name": "ERROR",
+      "description": "Sub-agent dispatch failed. Combined diagnosis and recovery decision state. Agent must diagnose the failure (what broke, why, what was salvaged) and choose exactly one recovery path: RETRY, PARTIAL_SYNTHESIS, HANDOFF, or ABORT.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Answer ALL of the following questions to diagnose the failure and choose a recovery path. DIAGNOSIS: 1) Which specific sub-agents failed? List each by scope/target and the error type (timeout, crash, wrong path, permission denied, empty result). 2) Is the failure transient (timeout, network blip, sub-agent OOM) or structural (target paths don't exist, query scope was wrong, files are binary/unparseable)? State your evidence. 3) Which sub-agents returned results successfully before the failure? List them and summarize what data was collected. 4) What percentage of the original scope (from SCOPE_ANALYSIS) is covered by the successful results? RECOVERY DECISION: Evaluate ALL four recovery paths and choose one. 5) RETRY (transition to SCOPE_ANALYSIS): Is the failure transient AND has the retry budget not been used? If yes, what would you do differently on retry? If no, why not? 6) PARTIAL_SYNTHESIS (transition to SYNTHESIS): Do successful sub-agent results exist AND do they cover enough scope to be useful (not misleading)? What is the coverage percentage and which sections would be missing? 7) HANDOFF (transition to HANDOFF): Does exploration progress exist but the explorer cannot continue? What state and partial findings would be passed to the successor? 8) ABORT (transition to TERMINATED): Is there genuinely no salvageable work? CHOSEN: RETRY, PARTIAL_SYNTHESIS, HANDOFF, or ABORT."
+    },
+    {
+      "name": "HANDOFF",
+      "description": "Context pressure exceeded or error recovery chose handoff. Writing handoff summary of exploration progress including any partial findings. Explorer terminates, orchestrator spawns fresh explorer.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from_state": "SPAWNED",
+      "to_state": "EXISTING_CONTEXT_CHECK",
+      "trigger": "query_received",
+      "guards": [
+        "query_text_non_empty"
+      ]
+    },
+    {
+      "from_state": "EXISTING_CONTEXT_CHECK",
+      "to_state": "PACKET_WRITTEN",
+      "trigger": "existing_context_sufficient",
+      "guards": [
+        "think_chosen:REUSE"
+      ],
+      "actions": [
+        "notify_requester_context_ready"
+      ]
+    },
+    {
+      "from_state": "EXISTING_CONTEXT_CHECK",
+      "to_state": "SCOPE_ANALYSIS",
+      "trigger": "new_context_needed",
+      "guards": [
+        "think_chosen:EXPLORE"
+      ]
+    },
+    {
+      "from_state": "SCOPE_ANALYSIS",
+      "to_state": "SUB_AGENT_DISPATCH",
+      "trigger": "scope_determined",
+      "guards": [
+        "think_chosen:DISPATCH"
+      ],
+      "actions": [
+        "spawn_sub_agents"
+      ]
+    },
+    {
+      "from_state": "SCOPE_ANALYSIS",
+      "to_state": "AWAITING_CLARIFICATION",
+      "trigger": "scope_ambiguous",
+      "guards": [
+        "think_chosen:CLARIFY"
+      ],
+      "actions": [
+        "send_clarification_request_to_orchestrator"
+      ],
+      "description": "E3 fix: Explorer cannot determine scope without orchestrator input. Think tool must log what is ambiguous and what specific question is being asked."
+    },
+    {
+      "from_state": "AWAITING_CLARIFICATION",
+      "to_state": "SCOPE_ANALYSIS",
+      "trigger": "clarification_received",
+      "guards": [
+        "orchestrator_response_received",
+        "clarification_resolves_ambiguity"
+      ],
+      "actions": [
+        "incorporate_clarification_into_query"
+      ],
+      "max_occurrences": 2,
+      "description": "Orchestrator provided clarification. Return to scope analysis with refined query. Capped at 2 rounds \u2014 if scope is still ambiguous after 2 clarifications, the query is too ill-defined for this explorer instance."
+    },
+    {
+      "from_state": "AWAITING_CLARIFICATION",
+      "to_state": "TERMINATED",
+      "trigger": "clarification_timeout_or_cancelled",
+      "guards": [
+        "clarification_wait_exceeded_or_orchestrator_cancelled"
+      ],
+      "actions": [
+        "log_exploration_aborted",
+        "notify_requester_failed"
+      ],
+      "description": "Orchestrator did not respond or explicitly cancelled the query."
+    },
+    {
+      "from_state": "SUB_AGENT_DISPATCH",
+      "to_state": "SYNTHESIS",
+      "trigger": "sub_agents_complete",
+      "guards": [
+        "all_sub_agent_results_received"
+      ]
+    },
+    {
+      "from_state": "SUB_AGENT_DISPATCH",
+      "to_state": "ERROR",
+      "trigger": "subagent_failed",
+      "guards": [
+        "sub_agent_error_reported"
+      ],
+      "actions": [
+        "log_error",
+        "snapshot_partial_results"
+      ]
+    },
+    {
+      "from_state": "SYNTHESIS",
+      "to_state": "PACKET_VALIDATION",
+      "trigger": "packet_drafted",
+      "guards": [
+        "context_packet_file_exists",
+        "partial_packet_metadata_consistent"
+      ],
+      "description": "Guard ensures: if packet was produced via error-recovery partial-results path, meta.completeness must be 'partial' with meta.missing_sections populated and meta.coverage_pct set. Complete packets must not carry partial annotations. This lets PACKET_VALIDATION apply appropriate standards \u2014 partial packets validate required fields that were actually collected, not the full schema."
+    },
+    {
+      "from_state": "PACKET_VALIDATION",
+      "to_state": "PACKET_WRITTEN",
+      "trigger": "validation_passed_no_duplicate",
+      "guards": [
+        "packet_schema_valid",
+        "no_duplicate_packet_exists"
+      ],
+      "actions": [
+        "notify_requester_context_ready"
+      ]
+    },
+    {
+      "from_state": "PACKET_VALIDATION",
+      "to_state": "PACKET_WRITTEN",
+      "trigger": "validation_passed_merge_duplicate",
+      "guards": [
+        "packet_schema_valid",
+        "duplicate_packet_exists"
+      ],
+      "actions": [
+        "merge_into_existing_packet",
+        "notify_requester_context_ready"
+      ]
+    },
+    {
+      "from_state": "PACKET_VALIDATION",
+      "to_state": "SYNTHESIS",
+      "trigger": "validation_failed",
+      "guards": [
+        "schema_errors_exist"
+      ],
+      "max_occurrences": 2
+    },
+    {
+      "from_state": "PACKET_WRITTEN",
+      "to_state": "IDLE",
+      "trigger": "delivery_confirmed",
+      "guards": [
+        "requester_acknowledged_receipt"
+      ],
+      "description": "Explorer only goes idle after the orchestrator or requesting agent confirms the context packet was received. Prevents the explorer from idling while the requester never got the packet (e.g., message lost, requester terminated)."
+    },
+    {
+      "from_state": "IDLE",
+      "to_state": "QUERY_RELATEDNESS_ASSESSMENT",
+      "trigger": "new_query_received",
+      "guards": [
+        "query_text_non_empty"
+      ],
+      "description": "E2 fix: Instead of directly guarding with subjective 'query_is_related_to_previous', route through a think phase that evaluates relatedness against concrete criteria."
+    },
+    {
+      "from_state": "QUERY_RELATEDNESS_ASSESSMENT",
+      "to_state": "EXISTING_CONTEXT_CHECK",
+      "trigger": "query_assessed_related",
+      "guards": [
+        "think_chosen:RELATED"
+      ],
+      "description": "E2 fix: Query deemed related based on concrete criteria: (1) overlapping target directories or modules with previous query, (2) falls within the original scope boundary (same feature area, same subsystem). The think tool reasoning is logged for auditability."
+    },
+    {
+      "from_state": "QUERY_RELATEDNESS_ASSESSMENT",
+      "to_state": "TERMINATED",
+      "trigger": "query_assessed_unrelated",
+      "guards": [
+        "think_chosen:UNRELATED"
+      ],
+      "actions": [
+        "notify_orchestrator_unrelated_query"
+      ],
+      "description": "E2 fix: Query is unrelated \u2014 different subsystem, no overlapping directories or modules. Explorer terminates so orchestrator can spawn a fresh instance with clean context for the new scope."
+    },
+    {
+      "from_state": "IDLE",
+      "to_state": "TERMINATED",
+      "trigger": "no_more_queries",
+      "guards": [
+        "no_pending_queries"
+      ]
+    },
+    {
+      "from_state": "PACKET_WRITTEN",
+      "to_state": "TERMINATED",
+      "trigger": "single_query_done",
+      "guards": [
+        "no_pending_queries"
+      ]
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "SCOPE_ANALYSIS",
+      "trigger": "retry_viable",
+      "guards": [
+        "think_chosen:RETRY",
+        "retry_count_under_limit"
+      ],
+      "actions": [
+        "reset_sub_agent_state"
+      ],
+      "max_occurrences": 1,
+      "description": "E1 fix: Retry path \u2014 only if think assessment concludes failure was transient (network timeout, sub-agent crash) and retry budget remains."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "SYNTHESIS",
+      "trigger": "partial_results_salvageable",
+      "guards": [
+        "think_chosen:PARTIAL_SYNTHESIS",
+        "partial_sub_agent_results_exist",
+        "partial_results_meet_minimum_coverage"
+      ],
+      "actions": [
+        "mark_packet_as_partial"
+      ],
+      "description": "E1 fix: Partial synthesis path \u2014 some sub-agents succeeded. Synthesize what we have into a partial context packet (marked as such) rather than losing all work."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "HANDOFF",
+      "trigger": "handoff_with_partial_work",
+      "guards": [
+        "think_chosen:HANDOFF",
+        "exploration_progress_exists"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ],
+      "description": "E1 fix: Handoff path \u2014 explorer has partial work (scope analysis done, some results collected) but cannot continue (non-transient error, context pressure, etc). Pass work to successor rather than discarding."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "TERMINATED",
+      "trigger": "abort_no_salvageable_work",
+      "guards": [
+        "think_chosen:ABORT",
+        "no_partial_results_exist"
+      ],
+      "actions": [
+        "log_exploration_aborted",
+        "notify_requester_failed"
+      ],
+      "description": "E1 fix: Abort path \u2014 only when think assessment confirms no useful partial data exists to save or hand off."
+    }
+  ]
+}

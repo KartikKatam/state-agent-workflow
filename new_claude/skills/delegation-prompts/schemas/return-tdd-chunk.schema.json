@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TDD Chunk Delegation Return",
+  "description": "Return schema for tdd_chunk delegation. The sub-agent returns tests written, pass gate results, and decisions.",
+  "type": "object",
+  "required": ["delegation_type", "status", "tests_written", "pass_gate_results", "decisions_made"],
+  "properties": {
+    "delegation_type": {
+      "const": "tdd_chunk",
+      "description": "Must match the delegation type from the prompt."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "partial", "failed"],
+      "description": "Overall completion status."
+    },
+    "tests_written": {
+      "type": "array",
+      "description": "Names of tests written during implementation.",
+      "items": { "type": "string" }
+    },
+    "pass_gate_results": {
+      "type": "object",
+      "description": "Results of pass gates (pass_a, pass_b, pass_c, quality_gate).",
+      "properties": {
+        "pass_a": { "type": "string" },
+        "pass_b": { "type": "string" },
+        "pass_c": { "type": "string" },
+        "quality_gate": { "type": "string" }
+      }
+    },
+    "decisions_made": {
+      "type": "array",
+      "description": "Decisions made during implementation with rationale.",
+      "items": {
+        "type": "object",
+        "required": ["decision", "reason"],
+        "properties": {
+          "decision": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "unexpected_findings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scope_extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["extended_to", "reason"],
+        "properties": {
+          "extended_to": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "cross_scope_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding", "relevant_to"],
+        "properties": {
+          "finding": { "type": "string" },
+          "relevant_to": { "type": "string" }
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "carry_forward": {
+      "type": "array",
+      "description": "Artifacts or information the parent should carry to subsequent chunks.",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

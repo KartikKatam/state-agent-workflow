@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Claude Code runtime artifacts
+.claude/temp/
+.claude/session-*-prompt.md
+.claude/SESSION_*_HANDOFF.md
+
+# PARSeq / TRT artifacts
+vendor/
+*.engine
+*.onnx
+models/parseq.pt
+
+# Override parent .gitignore patterns that block workflow files
+# Parent has bare "logs" which silently blocks .claude/logs/ from staging
+!.claude/logs/
+
+# Data (images, datasets, annotations — never commit)
+data/
+
+# Training outputs (runs, checkpoints, wandb logs)
+runs/
+sweep_checkpoints/
+wandb/
+
+# Result images (regenerable)
+results/

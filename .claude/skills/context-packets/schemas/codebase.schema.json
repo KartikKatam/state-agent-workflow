@@ -1,0 +1,291 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "codebase.schema.json",
+  "title": "Codebase Overview Packet",
+  "description": "Persistent context about a project's structure, types, and patterns. Updated incrementally, never fully replaced.",
+
+  "type": "object",
+  "required": ["meta", "structure", "types", "configs", "patterns"],
+
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["type", "created", "updated", "schema_version", "project_root"],
+      "properties": {
+        "type": {"const": "codebase"},
+        "created": {"type": "string", "format": "date-time"},
+        "updated": {"type": "string", "format": "date-time"},
+        "schema_version": {"type": "string", "default": "1.0"},
+        "project_root": {"type": "string", "description": "Absolute path to project"},
+        "project_name": {"type": "string"},
+        "update_type": {"enum": ["full", "incremental"]},
+        "update_summary": {"type": "string", "maxLength": 200},
+        "contributors": {
+          "type": "array",
+          "description": "Agents that contributed to this context (for parallel exploration)",
+          "items": {
+            "type": "object",
+            "required": ["agent_id", "sections"],
+            "properties": {
+              "agent_id": {"type": "string", "description": "Unique agent identifier"},
+              "sections": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Which sections this agent owns (e.g., ['structure.blocks[0]', 'types.by_block.producer'])"
+              },
+              "timestamp": {"type": "string", "format": "date-time"},
+              "status": {
+                "type": "string",
+                "enum": ["in_progress", "complete", "handed_off"],
+                "description": "Status of this agent's contribution"
+              }
+            }
+          }
+        },
+        "merge_strategy": {
+          "type": "string",
+          "enum": ["section_ownership", "consolidation", "single_agent"],
+          "default": "single_agent",
+          "description": "How this context was built (single agent vs parallel with merge)"
+        },
+        "last_consolidated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When consolidation pass last ran (deduplication, linking)"
+        }
+      }
+    },
+
+    "structure": {
+      "type": "object",
+      "description": "Project directory structure - hierarchical for compression",
+      "properties": {
+        "blocks": {
+          "type": "array",
+          "description": "Major code blocks/modules",
+          "items": {
+            "type": "object",
+            "required": ["name", "path", "purpose"],
+            "properties": {
+              "name": {"type": "string"},
+              "path": {"type": "string"},
+              "purpose": {"type": "string", "maxLength": 100},
+              "key_files": {
+                "type": "object",
+                "properties": {
+                  "config": {"type": "string"},
+                  "models": {"type": "string"},
+                  "pipeline": {"type": "string"},
+                  "ops": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        },
+        "shared": {
+          "type": "object",
+          "properties": {
+            "path": {"type": "string"},
+            "purpose": {"type": "string", "maxLength": 100},
+            "key_files": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "tests": {
+          "type": "object",
+          "properties": {
+            "location": {"type": "string"},
+            "pattern": {"type": "string", "description": "e.g., test_*.py"}
+          }
+        },
+        "scripts": {
+          "type": "object",
+          "properties": {
+            "gate": {"type": "string", "description": "Path to quality gate script"},
+            "other": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "docs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {"type": "string"},
+              "purpose": {"type": "string", "maxLength": 50},
+              "read_if": {"type": "string", "maxLength": 50}
+            }
+          }
+        }
+      }
+    },
+
+    "types": {
+      "type": "object",
+      "description": "Type definitions organized by source",
+      "properties": {
+        "shared": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/typeEntry"}
+        },
+        "by_block": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {"$ref": "#/$defs/typeEntry"}
+          }
+        },
+        "aliases": {
+          "type": "array",
+          "description": "Type aliases like TrackId = str",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "base": {"type": "string"},
+              "file": {"type": "string"},
+              "usage": {"type": "string", "maxLength": 50}
+            }
+          }
+        }
+      }
+    },
+
+    "configs": {
+      "type": "array",
+      "description": "Configuration dataclasses",
+      "items": {
+        "type": "object",
+        "required": ["name", "file", "fields"],
+        "properties": {
+          "name": {"type": "string"},
+          "file": {"type": "string", "description": "path:line format"},
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "type": {"type": "string"},
+                "default": {"type": ["string", "number", "boolean", "null"]},
+                "description": {"type": "string", "maxLength": 50}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "patterns": {
+      "type": "object",
+      "description": "Coding patterns used in the codebase",
+      "properties": {
+        "error_handling": {
+          "type": "object",
+          "properties": {
+            "style": {"type": "string", "maxLength": 30},
+            "base_class": {"type": "string"},
+            "catch_at": {"type": "string", "maxLength": 50},
+            "examples": {"type": "array", "items": {"type": "string"}},
+            "read_if": {"type": "string"}
+          }
+        },
+        "logging": {
+          "type": "object",
+          "properties": {
+            "library": {"type": "string"},
+            "import": {"type": "string"},
+            "style": {"type": "string", "maxLength": 50},
+            "read_if": {"type": "string"}
+          }
+        },
+        "testing": {
+          "type": "object",
+          "properties": {
+            "framework": {"type": "string"},
+            "style": {"type": "string", "maxLength": 50},
+            "fixtures_in": {"type": "string"},
+            "read_if": {"type": "string"}
+          }
+        },
+        "imports": {
+          "type": "object",
+          "properties": {
+            "style": {"type": "string", "maxLength": 50},
+            "rules": {"type": "array", "items": {"type": "string", "maxLength": 80}}
+          }
+        },
+        "naming": {
+          "type": "object",
+          "properties": {
+            "functions": {"type": "string", "maxLength": 30},
+            "classes": {"type": "string", "maxLength": 30},
+            "files": {"type": "string", "maxLength": 30},
+            "ops_prefix": {"type": "string"}
+          }
+        }
+      }
+    },
+
+    "name_bank": {
+      "type": "object",
+      "description": "Canonical names from docs/name-bank.md",
+      "properties": {
+        "source": {"type": "string"},
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "kind": {"enum": ["type", "class", "function", "module", "constant"]},
+              "file": {"type": "string"},
+              "usage": {"type": "string", "maxLength": 50}
+            }
+          }
+        }
+      }
+    },
+
+    "manual_notes": {
+      "type": "object",
+      "description": "Preserved across updates - add manual observations here",
+      "properties": {
+        "_comment": {"type": "string"},
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "topic": {"type": "string"},
+              "note": {"type": "string"},
+              "added": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "typeEntry": {
+      "type": "object",
+      "required": ["name", "file"],
+      "properties": {
+        "name": {"type": "string"},
+        "file": {"type": "string", "description": "path:line format"},
+        "kind": {"enum": ["dataclass", "class", "protocol", "typeddict", "enum"]},
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "type": {"type": "string"}
+            }
+          }
+        },
+        "usage": {"type": "string", "maxLength": 50},
+        "read_if": {"type": "string", "maxLength": 50}
+      }
+    }
+  }
+}

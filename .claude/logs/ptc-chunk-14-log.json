@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-14",
+    "started_at": "2026-02-28T21:00:00Z",
+    "last_updated": "2026-02-28T21:20:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-14-2026-02-28",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "phase_history": [
+    {
+      "phase": "context_loading",
+      "timestamp": "2026-02-28T21:00:00Z",
+      "details": "Loaded chunk-14 spec from plan JSON + plan text. Read design doc PTC Skill Design (lines 1513-1903). Read ptc-packages-per-agent.md for complete package lists."
+    },
+    {
+      "phase": "test_writing",
+      "timestamp": "2026-02-28T21:01:00Z",
+      "details": "Documentation-only chunk (0 pytest tests per test spec). Verification via 3 existence invariants (shell commands)."
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T21:01:30Z",
+      "details": "Documentation-only chunk: invariant checks fail before files exist. inv-14-01 FAIL (SKILL.md not found), inv-14-02 FAIL (role-specs dir not found), inv-14-03 FAIL (references dir not found). 3/3 invariants failing."
+    },
+    {
+      "phase": "implementation",
+      "timestamp": "2026-02-28T21:02:00Z",
+      "details": "Created directory structure and all 10 markdown files: SKILL.md, 6 role-specs, 2 references, 1 specialization"
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T21:08:00Z",
+      "details": "All 3 invariants passing: inv-14-01 PASS (SKILL.md has 'name: ptc-sandbox'), inv-14-02 PASS (6 role-spec files), inv-14-03 PASS (2 reference docs). global-04: 10 files total."
+    },
+    {
+      "phase": "implementation_continued",
+      "timestamp": "2026-02-28T21:15:00Z",
+      "details": "Read skill-engineering-guide.md for writing principles. Read full sub-agent-delegation skill (SKILL.md, patterns.md, anti-patterns.md, evals). Added PTC delegation section to SKILL.md, PTC patterns to patterns.md, 3 PTC anti-patterns to anti-patterns.md. Updated TOCs in both reference files."
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T21:18:00Z",
+      "details": "Re-verified all 3 invariants after sub-agent-delegation edits: inv-14-01 PASS, inv-14-02 PASS, inv-14-03 PASS."
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T21:19:00Z",
+      "details": "Documentation-only chunk: no Python code to format/lint/typecheck. Invariant existence checks all pass."
+    }
+  ],
+  "resume_point": "All tasks complete, awaiting user approval",
+  "files_modified": [
+    "skills/ptc-sandbox/SKILL.md",
+    "skills/ptc-sandbox/role-specs/explorer.md",
+    "skills/ptc-sandbox/role-specs/coder.md",
+    "skills/ptc-sandbox/role-specs/auditor.md",
+    "skills/ptc-sandbox/role-specs/tester.md",
+    "skills/ptc-sandbox/role-specs/researcher.md",
+    "skills/ptc-sandbox/role-specs/strategist.md",
+    "skills/ptc-sandbox/references/tool-calling-patterns.md",
+    "skills/ptc-sandbox/references/anti-patterns.md",
+    "skills/ptc-sandbox/specializations/robotics-cv.md",
+    "new.claude/skills/sub-agent-delegation/SKILL.md",
+    "new.claude/skills/sub-agent-delegation/references/patterns.md",
+    "new.claude/skills/sub-agent-delegation/references/anti-patterns.md"
+  ],
+  "tests_written": [
+    {"name": "inv-14-01: SKILL.md frontmatter check", "class": "invariant", "status": "passing"},
+    {"name": "inv-14-02: 6 role-spec files exist", "class": "invariant", "status": "passing"},
+    {"name": "inv-14-03: 2 reference docs exist", "class": "invariant", "status": "passing"}
+  ],
+  "invariants_status": {
+    "inv-14-01": "pass",
+    "inv-14-02": "pass",
+    "inv-14-03": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [],
+  "deviations": [
+    {
+      "type": "scope_addition",
+      "description": "Modified 3 files in new.claude/skills/sub-agent-delegation/ (outside scope.touched_files)",
+      "reason": "Plan task #11 explicitly requires adding PTC delegation section. User directed me to read skill-engineering-guide and make the edit.",
+      "plan_gap": "Plan task listed the work but scope.touched_files didn't include these paths",
+      "impact": "Low — additive only, no existing content removed or changed",
+      "user_approval_needed": false
+    }
+  ],
+  "user_interactions": [
+    {
+      "type": "direction",
+      "content": "User directed: read skill-creator skill, then edit sub-agent-delegation. Do not remove or delete anything.",
+      "action_taken": "Read skill-engineering-guide.md, read all 4 sub-agent-delegation files, added PTC content following skill-engineering principles (decision tables, WRONG/RIGHT examples, explained reasoning)"
+    }
+  ],
+  "decisions_made": [
+    {
+      "decision": "Included concrete recipes (code examples) in each role-spec beyond the minimum spec",
+      "reason": "Design doc provides recipe examples for explorer and coder. Extended pattern to all roles for consistency. Recipes make the skill immediately actionable."
+    },
+    {
+      "decision": "PTC content distributed across 3 sub-agent-delegation files (SKILL.md, patterns.md, anti-patterns.md) following existing skill structure",
+      "reason": "Skill-engineering guide principle: SKILL.md is a routing document (<500 lines), detailed content goes in references. Followed the existing pattern of the sub-agent-delegation skill."
+    },
+    {
+      "decision": "Used WRONG/RIGHT examples for PTC anti-patterns, decision table for when to delegate",
+      "reason": "Skill-engineering guide: anti-patterns with examples are more effective than rules. Decision tables parsed more reliably than prose."
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 0
+  }
+}

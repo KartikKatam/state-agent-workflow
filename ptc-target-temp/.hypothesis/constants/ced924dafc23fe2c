@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/consumer/__init__.py
+# hypothesis_version: 6.151.5
+
+['ConsumerConfig', 'OcrQueue', 'OcrQueueItem', 'PostProcessingMeta', 'ProcessorOutput', 'RECIPE_KEYS', 'RecipeRow', 'RichQualityMetrics', 'RoiRichQuality', 'analyze_roi_rich', 'compute_pose_metrics', 'get_next_snapshot', 'load_consumer_config', 'normalize_metric', 'process_batch_gpu']

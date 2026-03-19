@@ -1,0 +1,3 @@
+{"ts": "2026-03-14T13:31:04.265324", "event": "session_started", "agent": "main", "agent_type": "interactive", "session_id": "e1afe360-dcb5-4583-9bb2-04286da8a19d"}
+{"ts": "2026-03-14T13:34:17.749351", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-14T13:34:50.940299", "event": "session_ended", "agent": "main"}

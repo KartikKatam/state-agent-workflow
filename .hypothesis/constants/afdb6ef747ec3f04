@@ -1,0 +1,4 @@
+# file: /ptc_server/sandbox_runtime/executor.py
+# hypothesis_version: 6.151.9
+
+[256, 512, 1024, '<ptc>', '_', '__builtins__', '_ptc_main', 'await ', 'evicted %s (%d KB)', 'exec']

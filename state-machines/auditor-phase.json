@@ -1,0 +1,236 @@
+{
+  "name": "auditor-phase",
+  "description": "Phase auditor. Comprehensive review after all tasks + Pass D testing. Independent exploration, writes full report for user. New instance mandatory at every phase boundary.",
+  "version": "1.4.0",
+  "agent_role": "auditor",
+  "initial_state": "SPAWNED",
+  "terminal_states": [
+    "COMPLETE",
+    "HANDOFF",
+    "TERMINATED"
+  ],
+  "universal_transitions": [
+    {
+      "to_state": "HANDOFF",
+      "trigger": "context_pressure_exceeded",
+      "guards": [
+        "context_usage_above_threshold"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "name": "SPAWNED",
+      "description": "Phase auditor spawned. Loading phase context, plan, and test results.",
+      "write_allowed": false
+    },
+    {
+      "name": "CONTEXT_LOADING",
+      "description": "Loading all phase artifacts: task logs, test results, coder worktrees, scenario reports.",
+      "write_allowed": false
+    },
+    {
+      "name": "ARTIFACT_REVIEW",
+      "description": "Reviewing loaded artifacts against plan. Reading task logs, test results, scenario reports. Fully read-only.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Do task logs show all plan requirements were addressed? 2) Are there discrepancies between the plan specification and the implementation? 3) Did any task auditor flag issues that were resolved with workarounds rather than proper fixes? 4) Are test results comprehensive \u2014 do they cover the critical paths? 5) What areas warrant independent exploration beyond what artifacts show?"
+    },
+    {
+      "name": "INDEPENDENT_EXPLORATION",
+      "description": "Auditor's own codebase investigation. Looking for issues coders and task auditors missed. Reading source, tests, configs independently.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Are there code paths or edge cases that tests and task audits missed? 2) Does the implementation introduce any security, performance, or maintainability concerns? 3) Are there integration issues between tasks that individual reviews couldn't catch? 4) Does the code follow the project's established patterns and conventions? 5) Are there any hardcoded values, missing error handling, or incomplete implementations?"
+    },
+    {
+      "name": "RULING",
+      "description": "Forming adherence rulings on plan vs implementation. Each ruling must cite specific file paths and line ranges as evidence. Rulings without concrete citations must be marked INSUFFICIENT_EVIDENCE.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Is each adherence ruling supported by specific evidence from artifacts and exploration? For each ruling, cite the exact file path and line range. 2) Are any deviations from the plan justified and well-documented? 3) Should any issues block phase approval or are they acceptable technical debt? 4) Is the overall quality level consistent with what the user approved in the plan? 5) Are the rulings fair and balanced \u2014 not over-strict on minor issues or lenient on critical ones? 6) For any ruling where you cannot cite a specific file:line as evidence, mark it INSUFFICIENT_EVIDENCE \u2014 do not fill gaps with assumptions. 7) Are there any rulings marked INSUFFICIENT_EVIDENCE that could be resolved with targeted re-investigation? If yes, list the specific files or code paths you would examine. CHOSEN: FINALIZE (all rulings adequately evidenced, proceed to report writing) or REINVESTIGATE (targeted re-exploration would materially improve ruling quality)."
+    },
+    {
+      "name": "REPORT_WRITING",
+      "description": "Writing phase audit report. Write restricted to reports directory. Report must include file:line citations for every claim. Any INSUFFICIENT_EVIDENCE rulings must be explicitly flagged in the report so the user can see gaps.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/reports/**",
+        ".claude/logs/**"
+      ]
+    },
+    {
+      "name": "COMPLETE",
+      "description": "Report written and submitted. Phase auditor terminates."
+    },
+    {
+      "name": "ERROR",
+      "description": "Artifact loading failed. Agent diagnoses failure and chooses recovery: RETRY (back to CONTEXT_LOADING), HANDOFF (pass partial work to successor), or ABORT (terminate with no results).",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Answer ALL of the following questions to diagnose the failure and choose recovery. DIAGNOSIS: 1) Which artifacts failed to load? List each (task logs, test results, scenario reports, coder worktrees) and the error type. 2) Is the failure transient (file locked, temporary IO error) or structural (files don't exist, data corrupted)? State your evidence. 3) Which artifacts loaded successfully before the failure? RECOVERY DECISION: Evaluate all three recovery paths and choose one. NOTE: RETRY has a budget of 1 attempt. If you have already retried once, RETRY is unavailable \u2014 choose HANDOFF or ABORT instead. 4) RETRY: Is the failure transient AND has retry not been attempted? What would change on retry? If retry was already used, state that and skip to 5. 5) HANDOFF: Do partial findings exist that a successor could use? What would the handoff contain? 6) ABORT: Is there genuinely no salvageable work? CHOSEN: RETRY (only if budget remains), HANDOFF, or ABORT."
+    },
+    {
+      "name": "HANDOFF",
+      "description": "Context pressure exceeded. Writing handoff summary of audit progress including any partial findings. Phase auditor terminates, orchestrator spawns fresh instance.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    },
+    {
+      "name": "TERMINATED",
+      "description": "Phase auditor aborted. No salvageable work from error recovery. Orchestrator notified."
+    }
+  ],
+  "transitions": [
+    {
+      "from_state": "SPAWNED",
+      "to_state": "CONTEXT_LOADING",
+      "trigger": "initialization_complete",
+      "guards": [
+        "phase_implementation_complete"
+      ]
+    },
+    {
+      "from_state": "CONTEXT_LOADING",
+      "to_state": "ARTIFACT_REVIEW",
+      "trigger": "all_artifacts_loaded",
+      "guards": [
+        "task_logs_loaded",
+        "test_results_loaded",
+        "scenario_reports_loaded"
+      ]
+    },
+    {
+      "from_state": "CONTEXT_LOADING",
+      "to_state": "ERROR",
+      "trigger": "artifact_load_failed",
+      "guards": [
+        "artifact_load_error_reported"
+      ],
+      "actions": [
+        "log_error",
+        "snapshot_loaded_artifacts"
+      ],
+      "description": "P2 fix: Artifact loading failed (corrupted logs, missing test results, IO error). Route to ERROR for diagnosis and recovery."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "CONTEXT_LOADING",
+      "trigger": "retry_viable",
+      "guards": [
+        "think_chosen:RETRY",
+        "retry_count_under_limit"
+      ],
+      "max_occurrences": 1,
+      "description": "P2 fix: Retry path \u2014 only if failure was transient and retry budget remains."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "HANDOFF",
+      "trigger": "retry_exhausted_forced_handoff",
+      "guards": [
+        "think_chosen:RETRY",
+        "retry_exhausted"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ],
+      "description": "Structural fix: When agent chose RETRY but the 1-retry budget is exhausted, the normal retry transition is skipped (max_occurrences). Without this fallback, 0 transitions fire and the agent is stuck. Routes to HANDOFF \u2014 a successor can attempt artifact loading fresh."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "HANDOFF",
+      "trigger": "handoff_with_partial_work",
+      "guards": [
+        "think_chosen:HANDOFF"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ],
+      "description": "P2 fix: Handoff path \u2014 some artifacts loaded, pass partial work to successor."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "TERMINATED",
+      "trigger": "abort_no_salvageable_work",
+      "guards": [
+        "think_chosen:ABORT"
+      ],
+      "actions": [
+        "log_audit_aborted",
+        "notify_orchestrator_audit_failed"
+      ],
+      "description": "P2 fix: Abort path \u2014 no salvageable work exists."
+    },
+    {
+      "from_state": "ARTIFACT_REVIEW",
+      "to_state": "INDEPENDENT_EXPLORATION",
+      "trigger": "artifacts_reviewed",
+      "guards": [
+        "think_completed"
+      ]
+    },
+    {
+      "from_state": "INDEPENDENT_EXPLORATION",
+      "to_state": "RULING",
+      "trigger": "exploration_complete",
+      "guards": [
+        "think_completed"
+      ]
+    },
+    {
+      "from_state": "RULING",
+      "to_state": "REPORT_WRITING",
+      "trigger": "rulings_finalized",
+      "guards": [
+        "think_chosen:FINALIZE"
+      ],
+      "actions": [
+        "log_rulings_to_decision_log"
+      ],
+      "description": "Structural fix: Removed all_adherence_rulings_issued guard. RULING is write_allowed=false so the agent cannot create ruling artifact files \u2014 the guard was checking for artifacts the agent cannot produce in this state. The think prompt already instructs the agent to choose FINALIZE only when all rulings are adequately evidenced. The daemon's decision log (written during think validation) serves as the ruling record."
+    },
+    {
+      "from_state": "RULING",
+      "to_state": "INDEPENDENT_EXPLORATION",
+      "trigger": "evidence_gaps_found",
+      "guards": [
+        "think_chosen:REINVESTIGATE"
+      ],
+      "max_occurrences": 2,
+      "description": "P3+P4 fix: Auditor identified INSUFFICIENT_EVIDENCE rulings that targeted re-investigation could resolve. Loops back to exploration. Capped at 2 to prevent infinite cycling."
+    },
+    {
+      "from_state": "RULING",
+      "to_state": "REPORT_WRITING",
+      "trigger": "reinvestigation_exhausted",
+      "guards": [
+        "think_chosen:REINVESTIGATE",
+        "reinvestigation_cycles_exhausted"
+      ],
+      "actions": [
+        "log_forced_finalization"
+      ],
+      "description": "Structural fix: When agent chose REINVESTIGATE but the 2-cycle cap is reached, the normal reinvestigation transition is skipped (max_occurrences). Without this fallback, 0 transitions fire and the agent is stuck. Routes to REPORT_WRITING \u2014 the agent must write their report with whatever evidence they have, flagging INSUFFICIENT_EVIDENCE rulings."
+    },
+    {
+      "from_state": "REPORT_WRITING",
+      "to_state": "COMPLETE",
+      "trigger": "report_submitted",
+      "guards": [
+        "report_file_exists"
+      ],
+      "actions": [
+        "notify_orchestrator_audit_complete"
+      ]
+    }
+  ]
+}

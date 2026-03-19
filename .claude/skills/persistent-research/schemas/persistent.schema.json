@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firefly/schemas/persistent-research.json",
+  "title": "Persistent Research Document",
+  "description": "Long-lived research artifacts for APIs, libraries, and documentation that should be reused across sessions",
+  "type": "object",
+  "required": ["id", "library", "type", "documentation", "sources", "meta"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier (e.g., 'sam2-api', 'pytorch-dataloader')",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "library": {
+      "type": "string",
+      "description": "Library or framework name (e.g., 'sam2', 'torch', 'numpy')"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version or version range (e.g., '2.1.0', '>=2.0.0', 'latest')"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["api_reference", "integration_guide", "best_practices", "troubleshooting"],
+      "description": "Type of persistent research"
+    },
+    "documentation": {
+      "type": "object",
+      "description": "Structured documentation content",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "Brief overview of the library/API (2-3 sentences)"
+        },
+        "installation": {
+          "type": "object",
+          "properties": {
+            "command": {"type": "string"},
+            "requirements": {"type": "array", "items": {"type": "string"}},
+            "notes": {"type": "string"}
+          }
+        },
+        "endpoints": {
+          "type": "array",
+          "description": "API endpoints or functions",
+          "items": {
+            "type": "object",
+            "required": ["name", "signature", "description"],
+            "properties": {
+              "name": {"type": "string"},
+              "signature": {"type": "string"},
+              "description": {"type": "string"},
+              "parameters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"},
+                    "type": {"type": "string"},
+                    "required": {"type": "boolean"},
+                    "description": {"type": "string"},
+                    "default": {"type": "string"}
+                  }
+                }
+              },
+              "returns": {"type": "string"},
+              "raises": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        },
+        "classes": {
+          "type": "array",
+          "description": "Main classes and their methods",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "description": {"type": "string"},
+              "methods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"},
+                    "signature": {"type": "string"},
+                    "description": {"type": "string"}
+                  }
+                }
+              },
+              "attributes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"},
+                    "type": {"type": "string"},
+                    "description": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "examples": {
+          "type": "array",
+          "description": "Code examples with explanations",
+          "items": {
+            "type": "object",
+            "required": ["title", "code"],
+            "properties": {
+              "title": {"type": "string"},
+              "description": {"type": "string"},
+              "code": {"type": "string"},
+              "output": {"type": "string"}
+            }
+          }
+        },
+        "common_patterns": {
+          "type": "array",
+          "description": "Recommended usage patterns",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pattern": {"type": "string"},
+              "when_to_use": {"type": "string"},
+              "example": {"type": "string"}
+            }
+          }
+        },
+        "gotchas": {
+          "type": "array",
+          "description": "Common pitfalls and how to avoid them",
+          "items": {
+            "type": "object",
+            "properties": {
+              "issue": {"type": "string"},
+              "solution": {"type": "string"},
+              "example": {"type": "string"}
+            }
+          }
+        },
+        "integration_points": {
+          "type": "array",
+          "description": "How this integrates with the LPR codebase",
+          "items": {
+            "type": "object",
+            "properties": {
+              "location": {"type": "string", "description": "File path in codebase"},
+              "usage": {"type": "string"},
+              "notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "description": "Source URLs and references",
+      "items": {
+        "type": "object",
+        "required": ["url", "type"],
+        "properties": {
+          "url": {"type": "string", "format": "uri"},
+          "type": {"type": "string", "enum": ["official_docs", "github", "tutorial", "stackoverflow", "blog"]},
+          "title": {"type": "string"},
+          "accessed_at": {"type": "string", "format": "date-time"}
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": ["created_at", "last_updated"],
+      "properties": {
+        "contributors": {
+          "type": "array",
+          "description": "Agents that contributed to this research",
+          "items": {
+            "type": "object",
+            "properties": {
+              "agent_id": {"type": "string"},
+              "sections": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Which sections this agent contributed to (e.g., ['endpoints', 'examples'])"
+              },
+              "timestamp": {"type": "string", "format": "date-time"}
+            }
+          }
+        },
+        "created_at": {"type": "string", "format": "date-time"},
+        "last_updated": {"type": "string", "format": "date-time"},
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in accuracy based on source quality"
+        },
+        "merge_strategy": {
+          "type": "string",
+          "enum": ["section_ownership", "consolidation"],
+          "default": "section_ownership",
+          "description": "How parallel researchers merged their findings"
+        },
+        "related_research": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "IDs of related research documents"
+        }
+      }
+    }
+  }
+}

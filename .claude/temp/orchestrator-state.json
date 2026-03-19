@@ -1,0 +1,122 @@
+{
+  "feature": "ptc",
+  "workflow_status": "implementation_complete",
+  "completed_phases": [
+    "exploration",
+    "planning",
+    "test_architecture",
+    "chunk-01", "chunk-02", "chunk-03", "chunk-04", "chunk-05",
+    "chunk-06", "chunk-07", "chunk-08", "chunk-09", "chunk-10",
+    "chunk-11", "chunk-12", "chunk-13", "chunk-14"
+  ],
+  "current_phase": "stress_testing",
+  "plan_path": ".claude/plans/ptc-plan.json",
+  "context_paths": [
+    ".claude/context/_codebase.json",
+    ".claude/context/ptc-context.json"
+  ],
+  "design_doc": ".claude/designs/ptc.md",
+  "test_specs": ".claude/plans/ptc-test-specs.md",
+  "plan_plaintext": ".claude/plans/plan-plaintext/ptc-plan-text.md",
+  "scribe_commit_history": [],
+  "active_teammates": [],
+  "saved_at": "2026-03-01T04:55:00Z",
+  "next_phase": "stress_testing",
+  "resume_instructions": "All 14 chunks implemented. 255 tests passing. Next: extreme stress testing to validate the system works end-to-end with real Docker containers. Nothing has been committed yet.",
+  "test_status": {
+    "total_passing": 255,
+    "total_failing": 0,
+    "warnings": 20,
+    "duration_seconds": 6.72
+  },
+  "files": {
+    "production": {
+      "new": [
+        "~/.claude/mcp/ptc-server/ipc_protocol.py",
+        "~/.claude/mcp/ptc-server/ipc_host.py",
+        "~/.claude/mcp/ptc-server/ipc_sandbox.py",
+        "~/.claude/mcp/ptc-server/event_logger.py",
+        "~/.claude/mcp/ptc-server/container_manager.py",
+        "~/.claude/mcp/ptc-server/tool_dispatcher.py",
+        "~/.claude/mcp/ptc-server/sandbox_runtime/__init__.py",
+        "~/.claude/mcp/ptc-server/sandbox_runtime/executor.py",
+        "~/.claude/mcp/ptc-server/sandbox_runtime/runtime.py",
+        "~/.claude/mcp/ptc-server/ptc_tools/__init__.py",
+        "~/.claude/mcp/ptc-server/ptc_tools/_base.py",
+        "~/.claude/mcp/ptc-server/ptc_tools/files.py",
+        "~/.claude/mcp/ptc-server/ptc_tools/search.py",
+        "~/.claude/mcp/ptc-server/ptc_tools/tokens.py",
+        "~/.claude/mcp/ptc-server/ptc_tools/testing.py",
+        "~/.claude/mcp/ptc-server/ptc_tools/git.py",
+        "~/.claude/mcp/ptc-server/ptc_tools/network.py",
+        "~/.claude/mcp/ptc-server/Dockerfile",
+        "~/.claude/mcp/ptc-server/build-image.sh"
+      ],
+      "modified": [
+        "~/.claude/mcp/ptc-server/server.py",
+        "~/.claude/mcp/ptc-server/config.json",
+        "~/.claude/mcp/ptc-server/tool_registry.py"
+      ],
+      "cleanup": [
+        "make_kernel_code() removed from all 15 tool_implementations/*.py",
+        "Old test files deleted: test_kernel_manager.py, test_server.py, test_tools.py"
+      ]
+    },
+    "tests": [
+      "tests/ptc/conftest.py",
+      "tests/ptc/test_ipc_protocol.py",
+      "tests/ptc/test_sandbox_runtime.py",
+      "tests/ptc/test_event_logger.py",
+      "tests/ptc/test_ipc_host.py",
+      "tests/ptc/test_container_manager.py",
+      "tests/ptc/test_repl_pool.py",
+      "tests/ptc/test_ptc_tools.py",
+      "tests/ptc/test_tool_dispatcher.py",
+      "tests/ptc/test_tool_registry.py",
+      "tests/ptc/test_ptc_execute.py"
+    ],
+    "skills": [
+      "skills/ptc-sandbox/SKILL.md",
+      "skills/ptc-sandbox/role-specs/explorer.md",
+      "skills/ptc-sandbox/role-specs/coder.md",
+      "skills/ptc-sandbox/role-specs/auditor.md",
+      "skills/ptc-sandbox/role-specs/tester.md",
+      "skills/ptc-sandbox/role-specs/researcher.md",
+      "skills/ptc-sandbox/role-specs/strategist.md",
+      "skills/ptc-sandbox/references/tool-calling-patterns.md",
+      "skills/ptc-sandbox/references/anti-patterns.md",
+      "skills/ptc-sandbox/specializations/robotics-cv.md"
+    ],
+    "workflow_artifacts": [
+      ".claude/designs/ptc.md",
+      ".claude/plans/ptc-plan.json",
+      ".claude/plans/plan-plaintext/ptc-plan-text.md",
+      ".claude/plans/ptc-test-specs.md",
+      ".claude/context/_codebase.json",
+      ".claude/context/ptc-context.json",
+      ".claude/logs/ptc-chunk-01-log.json through ptc-chunk-14-log.json",
+      ".claude/logs/ptc-planning-log.json"
+    ]
+  },
+  "stress_testing_notes": {
+    "what_to_test": [
+      "Build Docker image: cd ~/.claude/mcp/ptc-server && bash build-image.sh",
+      "Start MCP server manually and call ptc_execute with real code",
+      "Test REPL pool: multiple agents sharing one container",
+      "Test handoff: kill REPL, start fresh, verify namespace reset",
+      "Test sub-agent routing: register parent, verify sub-agent gets parent's container",
+      "Test crash recovery: kill container mid-execution, verify error returned",
+      "Test timeout: run infinite loop, verify CancelMsg sent",
+      "Test namespace persistence: set variable in call 1, read in call 2",
+      "Test parallel tool calls: asyncio.gather with multiple tools",
+      "Test output cap: print >64KB, verify truncation",
+      "Test role enforcement: explorer tries run_tests, verify denied",
+      "Test pip install: verify role-specific packages available in container",
+      "Test idle timeout: leave container idle, verify cleanup",
+      "Test all 15 tool functions via ptc_execute await calls",
+      "Load test: rapid-fire ptc_execute calls, verify semaphore backpressure"
+    ],
+    "current_test_coverage": "All 255 tests use mocked Docker. No real Docker integration tests exist yet.",
+    "key_risk": "IPC socket communication between host and container has only been tested with mock sockets. Real Unix socket behavior with Docker bind mounts is untested."
+  }
+}

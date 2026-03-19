@@ -1,0 +1,247 @@
+{
+  "id": "ai-agent-code-testing-methodology",
+  "library": "ai-coding-agents",
+  "version": "2025-2026",
+  "type": "best_practices",
+  "documentation": {
+    "summary": "AI-native coding companies (Cognition/Devin, Vercel/v0, Cursor, Sourcegraph Cody, Amazon Q, Codeium) use a layered evaluation stack combining public benchmark participation (SWE-bench Verified, LiveCodeBench), internal 'golden' benchmark suites held blind to training data, trajectory-based autonomous evaluation at scale, and eval-driven development pipelines (evals-in-CI). Contamination prevention is solved primarily through time-segmented benchmarks and held-out private test splits. Flakiness from non-determinism is managed via parallel trajectory sampling, confidence scoring, and prompt regression suites.",
+    "common_patterns": [
+      {
+        "pattern": "Time-segmented contamination-free benchmarks",
+        "when_to_use": "Primary anti-contamination mechanism — evaluate models only on problems tagged with a release date AFTER the model's training cutoff. Makes memorization impossible.",
+        "example": "LiveCodeBench (ICLR 2025): adds new LeetCode/AtCoder/Codeforces problems monthly. Each model is tested only on problems released after its training cutoff. Detects contamination across GPT-4o, Claude, DeepSeek, Codestral. Dataset: 1,055 problems (May 2023 – April 2025)."
+      },
+      {
+        "pattern": "Private test split with cloud submission",
+        "when_to_use": "Independent verification where the ground-truth tests are never publicly released. Models submit code via API/CLI, receive pass/fail without seeing test inputs.",
+        "example": "SWE-bench Verified test split is kept private. Submission uses sb-cli (cloud-based evaluation). SWE-bench Pro commercial set covers 18 proprietary repositories under formal partnership agreements. Prevents reverse-engineering of test cases."
+      },
+      {
+        "pattern": "Internal golden benchmark with training exclusion",
+        "when_to_use": "Company-internal quality gate — a private benchmark suite explicitly excluded from training data. Evaluated post-training to measure true generalization.",
+        "example": "Cognition 'cognition-golden': Devin's production version achieves 74.2% on this benchmark without ever having seen evaluation tasks during training. Used as primary pre-deployment gate."
+      },
+      {
+        "pattern": "Three-annotator human validation of test tasks",
+        "when_to_use": "Ensuring evaluation tasks are solvable, well-specified, and have appropriate tests before use. Removes ambiguous or broken problems from the eval set.",
+        "example": "SWE-bench Verified: 93 software engineers annotated 500 problems, each reviewed by 3 separate annotators. Checks: issue description quality, unit test appropriateness, absence of major problems. Estimated residual error rate: 5-10%."
+      },
+      {
+        "pattern": "Generator-evaluator separation (independent verification)",
+        "when_to_use": "Preventing the code-generating model from influencing its own evaluation. A separate process — unit test runner, rule-based checker, or a different LLM — evaluates the output.",
+        "example": "SWE-bench: model generates code changes, then a separate unit test runner evaluates the modified repository. Vercel v0: a separate LLM-grader evaluates output quality at scale, independent of the generating model."
+      },
+      {
+        "pattern": "Task-stratified scenario classification",
+        "when_to_use": "Prevent overall scores from masking per-scenario weaknesses. Separate evaluation across task types: bug fixing, feature addition, documentation, refactoring, multi-file work.",
+        "example": "arXiv 2602.08915 study found a 29 percentage-point gap between task categories. Cursor excels in fix tasks (80.4% PR acceptance); Claude Code leads in documentation (92.3%) and features (72.6%). Task type is the dominant factor in agent performance."
+      },
+      {
+        "pattern": "TDD-mode scenario testing",
+        "when_to_use": "Provide the agent with the expected failing tests as part of the problem specification. Tests serve as a precise behavioral contract. Measures whether the agent can satisfy a concrete test oracle.",
+        "example": "Cognition/Devin: standard evaluation success rate was 13.86% on SWE-bench. In TDD mode (final unit tests provided alongside problem statement), success rate rose to 23% on 100 sampled tasks — a 66% relative improvement."
+      },
+      {
+        "pattern": "Parallel trajectory sampling for non-determinism",
+        "when_to_use": "Managing flakiness from non-deterministic AI outputs. Run N independent agent trajectories on the same task; aggregate statistically for reliable pass rates.",
+        "example": "Cognition spawns arbitrarily many parallel evaluation environments to study the long tail of edge cases. Occasional successes on medium-difficulty tasks are used for trajectory-based learning. Statistical aggregation gives reliable measurement even when individual runs vary."
+      },
+      {
+        "pattern": "Evals-in-CI with golden set gates",
+        "when_to_use": "Continuous quality monitoring — treat AI output quality checks as first-class CI gates, analogous to unit tests. Every model update is verified against a golden set before deployment.",
+        "example": "Vercel eval-driven development: evals run as part of CI pipeline, checking GenAI outputs (generated code, summaries) against defined criteria using automated checks, human feedback, and LLM-based grading. Refusal and safety evals maintain a 100% pass rate gate."
+      },
+      {
+        "pattern": "Four-scenario holistic code evaluation",
+        "when_to_use": "Measuring distinct coding agent capabilities separately rather than as a single score.",
+        "example": "LiveCodeBench evaluates: (1) code generation, (2) self-repair (fix broken code), (3) code execution (predict output given code), (4) test output prediction. Isolates each capability dimension."
+      },
+      {
+        "pattern": "AutoFix pass (mid-stream repair)",
+        "when_to_use": "Reduce the rate of broken outputs delivered to users by adding a second model inference pass that detects and repairs generation errors before delivery.",
+        "example": "Vercel v0 uses a composite model architecture with an AutoFix pass that attempts to prevent or repair broken code generations mid-stream. Limitation: reduces but does not eliminate broken output — code review and tests remain necessary."
+      },
+      {
+        "pattern": "Long-horizon multi-step task evaluation",
+        "when_to_use": "Testing agents that must make multiple coherent decisions over time, not just single-pass code generation. Required for autonomous agents like Devin.",
+        "example": "SWE-bench Pro (2025): 1,865 problems from 41 actively maintained repositories. Partitioned into public set, held-out set (12 repositories), and commercial set (18 proprietary repositories). Specifically targets tasks requiring multiple coherent engineering decisions."
+      },
+      {
+        "pattern": "Chain-of-agent integration scenario testing",
+        "when_to_use": "When multiple AI agents are chained — output of one agent becomes input to the next. Per-agent testing is insufficient; end-to-end integration scenarios are required.",
+        "example": "Enterprise multi-agent pipelines: when agents chain across multiple services, errors compound. A bad output three steps deep is harder to attribute and fix. Testing must cover agent interaction patterns, not just individual agent behavior."
+      },
+      {
+        "pattern": "Prompt regression suites",
+        "when_to_use": "Detecting model drift — cases where a model update changes behavior on previously stable prompts. Catch before deployment.",
+        "example": "Maintain a suite of prompts with known expected output characteristics. Run on every model update. A regression in output quality on stable prompts indicates model drift requiring investigation."
+      }
+    ],
+    "gotchas": [
+      {
+        "issue": "Benchmark contamination via training set overlap",
+        "solution": "Use time-segmented benchmarks (LiveCodeBench) or held-out private splits (SWE-bench Verified). Never release test tasks publicly before model training cutoff.",
+        "example": "HumanEval is now saturated (frontier models score 93%) partly due to training set contamination. LiveCodeBench was designed explicitly to avoid this."
+      },
+      {
+        "issue": "Functional correctness does not imply security or efficiency",
+        "solution": "Evaluate correctness, security, and efficiency as separate dimensions using dual-oracle evaluation. Do not conflate pass@k with code quality.",
+        "example": "More than half of AI-generated code samples contain logical or security flaws even when functionally passing tests. Efficiency gap: Eff@k (~0.45) is far below pass@k (>0.8) — models produce correct but slow code. CWEval and SafeGenBench use behavioral monitors for vulnerabilities in addition to unit tests."
+      },
+      {
+        "issue": "AI-generated code introduces more issues than human-written code",
+        "solution": "Treat AI output as draft code requiring human code review, not finished code. Apply the same QA gates as human code plus AI-specific evals.",
+        "example": "AI-generated code introduces 1.7x more total issues than human-written code across production systems (Second Talent, 2026 statistics)."
+      },
+      {
+        "issue": "Non-determinism causes flaky test results",
+        "solution": "Run multiple trajectories per task and aggregate statistically. Use temperature control to reduce variance. Build prompt regression suites and model drift monitoring.",
+        "example": "Agentic testing is sensitive to subtle context changes — a slightly delayed loading state or minor UI shift can cause different agent behavior across runs, failing tests that don't reflect actual bugs."
+      },
+      {
+        "issue": "Single-agent evaluation is insufficient for multi-agent pipelines",
+        "solution": "Add end-to-end integration scenario tests that cover agent interaction patterns. A bad output from one agent becomes the input to the next.",
+        "example": "In enterprise multi-agent automation, errors compound through the chain. Per-agent unit-level testing misses cross-agent failure modes."
+      },
+      {
+        "issue": "SWE-bench Verified still has a 5-10% error rate",
+        "solution": "Do not treat benchmark results as ground truth. Use multiple benchmarks and triangulate. SWE-bench Pro's commercial set has stronger validation via formal partnerships.",
+        "example": "Even with 3-annotator human review of each problem, an estimated 5-10% of SWE-bench Verified samples remain ambiguous or have issues."
+      }
+    ],
+    "examples": [
+      {
+        "title": "Cognition Devin: Evaluation pipeline architecture",
+        "description": "How Cognition evaluates Devin before production deployment",
+        "code": "1. Internal 'cognition-golden' benchmark:\n   - Tasks explicitly excluded from training data\n   - Current score: 74.2% (production model)\n   - Gate: must pass before any deployment\n\n2. Parallel autonomous evaluation environments:\n   - Spawn N isolated environments per task\n   - Run N trajectories independently\n   - Study long-tail edge cases statistically\n   - Compute objective reliability metrics\n\n3. Trajectory learning:\n   - Identify occasional successes on medium-difficulty tasks\n   - Use successful trajectories as learning signal\n   - Improves future performance without overfitting\n\n4. TDD mode evaluation:\n   - Provide final unit tests with the problem statement\n   - Measures: can the agent satisfy a concrete test oracle?\n   - Standard: 13.86% success, TDD mode: 23% success"
+      },
+      {
+        "title": "Vercel v0: Eval-driven development pipeline",
+        "description": "How Vercel evaluates AI-generated code quality in CI",
+        "code": "Evaluation stack (three layers):\n1. Automated code checks\n   - Fast, reliable, deterministic\n   - Rule-based correctness checks\n   - AutoFix pass: second model inference to repair broken generations\n\n2. Human feedback\n   - End-user feedback (production signals)\n   - Internal reviewer feedback\n   - Used to calibrate LLM grader\n\n3. LLM-based grading (at scale)\n   - Separate evaluator LLM grades generator LLM output\n   - Complex qualitative judgments that rule-based checks cannot make\n   - Independent of the generating model\n\nCI gate:\n   - Evals run on every model update\n   - Golden set of expected output quality criteria\n   - Refusal/safety evals: 100% pass rate required\n   - Hard gate: deploy blocked if eval regression detected"
+      },
+      {
+        "title": "LiveCodeBench: Contamination-free evaluation design",
+        "description": "How LiveCodeBench prevents test contamination for any model",
+        "code": "Problem collection:\n   - Sources: LeetCode, AtCoder, Codeforces\n   - Problems collected continuously, each tagged with release date\n   - v6: 1,055 problems (May 2023 – April 2025)\n\nContamination prevention:\n   - Per-model cutoff enforcement: model with training cutoff T\n     is only tested on problems with release_date > T\n   - No model can have been trained on its test set\n   - Rolling updates ensure benchmark stays current\n\nDetection validation:\n   - Successfully detects contamination in: GPT-4o, Claude,\n     DeepSeek, Codestral (as shown in paper)\n\nEvaluation scenarios (four):\n   1. code_generation: write solution from problem statement\n   2. self_repair: fix broken code\n   3. code_execution: predict output given code + input\n   4. test_output_prediction: predict test pass/fail"
+      },
+      {
+        "title": "SWE-bench Verified: Independent verification workflow",
+        "description": "How SWE-bench achieves independent verification of AI code changes",
+        "code": "Problem sourcing:\n   - Real GitHub issues from popular repos\n   - Issues that human engineers already solved\n   - Ground truth: the actual merged fix + its tests\n\nHuman validation (3-annotator process):\n   - 93 software developers annotated 500 problems\n   - Each problem: 3 independent annotators check:\n     a. Issue description is well-specified\n     b. Unit tests are appropriate for the task\n     c. No major evaluation-invalidating problems\n   - Residual error rate: 5-10%\n\nBlind evaluation flow:\n   1. Model receives: repository + issue description\n   2. Model makes code changes (no test access)\n   3. Submission via sb-cli to cloud evaluator\n   4. Cloud runner executes unit tests on modified repo\n   5. Pass/fail returned — model never sees test code\n\nTest isolation:\n   - Test split kept private (never publicly released)\n   - Cloud submission prevents test-set reverse engineering\n   - Model has no access to test inputs during generation"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://cognition.ai/blog/evaluating-coding-agents",
+      "type": "blog",
+      "title": "Cognition: A review of OpenAI's o1 and how we evaluate coding agents",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://cognition.ai/blog/devin-annual-performance-review-2025",
+      "type": "blog",
+      "title": "Cognition: Devin's 2025 Performance Review — Learnings From 18 Months of Agents At Work",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://cognition.ai/blog/swe-bench-technical-report",
+      "type": "blog",
+      "title": "Cognition: SWE-bench technical report",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://vercel.com/blog/eval-driven-development-build-better-ai-faster",
+      "type": "blog",
+      "title": "Vercel: Eval-driven development — Build better AI faster",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://openai.com/index/introducing-swe-bench-verified/",
+      "type": "official_docs",
+      "title": "Introducing SWE-bench Verified (OpenAI)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.swebench.com/",
+      "type": "official_docs",
+      "title": "SWE-bench official site and leaderboards",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://openreview.net/forum?id=chfJJYC3iL",
+      "type": "official_docs",
+      "title": "LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code (ICLR 2025)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://github.com/LiveCodeBench/LiveCodeBench",
+      "type": "github",
+      "title": "LiveCodeBench GitHub repository",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://arxiv.org/pdf/2509.16941",
+      "type": "official_docs",
+      "title": "SWE-Bench Pro: Can AI Agents Solve Long-Horizon Software Engineering Tasks? (arXiv 2509.16941)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://arxiv.org/html/2602.08915",
+      "type": "official_docs",
+      "title": "Comparing AI Coding Agents: A Task-Stratified Analysis of Pull Request Acceptance (arXiv 2602.08915)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://arxiv.org/html/2511.10271v1",
+      "type": "official_docs",
+      "title": "Quality Assurance of LLM-generated Code: Addressing Non-Functional Quality Characteristics (arXiv 2511.10271)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://render.com/blog/ai-coding-agents-benchmark",
+      "type": "blog",
+      "title": "Testing AI coding agents (2025): Cursor vs Claude, OpenAI, Gemini — Render Blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://epoch.ai/benchmarks/swe-bench-verified",
+      "type": "blog",
+      "title": "SWE-bench Verified — Epoch AI analysis",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.secondtalent.com/resources/ai-generated-code-quality-metrics-and-statistics-for-2026/",
+      "type": "blog",
+      "title": "AI-Generated Code Quality Metrics and Statistics for 2026",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.cio.com/article/4135334/does-using-ai-in-qa-testing-increase-risk-for-software-companies.html",
+      "type": "blog",
+      "title": "Does using AI in QA testing increase risk for software companies? (CIO)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://sthenostechnologies.com/blogs/qa-trends/",
+      "type": "blog",
+      "title": "QA Trends for 2026: AI, Agents, and the Future of Testing",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "created_at": "2026-02-28T00:00:00Z",
+    "last_updated": "2026-02-28T00:00:00Z",
+    "confidence": 0.75,
+    "contributors": [
+      {
+        "agent_id": "researcher-sonnet-4-6",
+        "sections": ["common_patterns", "gotchas", "examples"],
+        "timestamp": "2026-02-28T00:00:00Z"
+      }
+    ],
+    "merge_strategy": "consolidation",
+    "related_research": ["agentic-coding-worktree-patterns"]
+  }
+}

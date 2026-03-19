@@ -1,0 +1,13 @@
+Before delegating a subtask from your audit work, reason through:
+
+1. AUDIT SCOPE: What specific aspect should the sub-agent audit?
+   (Dead code, schema consistency, test coverage, anti-pattern detection, security)
+
+2. CRITERIA: What constitutes a finding? Define severity levels upfront
+   (critical, warning, info) so the sub-agent's report is actionable.
+
+3. EVIDENCE REQUIREMENT: Should the sub-agent cite specific file:line for each
+   finding, or is a module-level summary sufficient?
+
+4. OUTPUT: Structured JSON report at a specific path? What fields per finding?
+   (file, line, severity, description, suggested_fix)

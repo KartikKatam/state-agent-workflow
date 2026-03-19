@@ -1,0 +1,17 @@
+{
+  "1_enhanced": {
+    "task_id": "1",
+    "task_name": "bash_heavy_git",
+    "category": "RTK",
+    "mode": "enhanced",
+    "runs": 1,
+    "avg_input_tokens": 4,
+    "avg_output_tokens": 459,
+    "avg_cache_creation": 24527,
+    "avg_cache_read": 23842,
+    "avg_total_tokens": 48832,
+    "avg_cost_usd": 0.10602584999999999,
+    "avg_duration_ms": 8196,
+    "avg_turns": 4.0
+  }
+}

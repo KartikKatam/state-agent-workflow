@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-02-28T00:00:00Z",
+  "entries": [
+    {
+      "id": "resilience-patterns",
+      "path": "resilience-patterns-research.md",
+      "type": "persistent",
+      "topics": [
+        "retry",
+        "exponential-backoff",
+        "circuit-breaker",
+        "graceful-degradation",
+        "timeout",
+        "bulkhead",
+        "tenacity",
+        "pybreaker",
+        "stamina",
+        "production-python",
+        "AI-agents",
+        "error-recovery",
+        "resilience"
+      ],
+      "libraries": ["tenacity", "stamina", "pybreaker", "circuitbreaker", "httpx"],
+      "confidence": 0.88,
+      "source_count": 20,
+      "sources_used": ["websearch", "official-docs"],
+      "completed_at": "2026-02-28T00:00:00Z",
+      "summary": "Five resilience patterns for production Python: retry with exponential backoff (tenacity/stamina), circuit breaker (pybreaker/circuitbreaker), graceful degradation (layered fallback hierarchy), timeout boundaries (asyncio.timeout/httpx), and bulkhead isolation (ThreadPoolExecutor/Semaphore). Includes wrong/right code examples, AI agent anti-patterns, recommended defaults, and a combined production wrapper."
+    }
+  ]
+}

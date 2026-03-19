@@ -1,0 +1,17 @@
+# Claude Code worktrees (created by isolation: worktree subagents)
+.claude/worktrees/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# RTK TEE (runtime key material)
+.rtk-tee

@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/producer/ops_detection.py
+# hypothesis_version: 6.151.5
+
+[0.0, 0.1, 255.0, 1000.0, 114, 1000, 1024, '.engine', 'conf', 'cuda', 'keypoints', 'load_model_ms', 'pose', 'warmup_ms', 'xy']

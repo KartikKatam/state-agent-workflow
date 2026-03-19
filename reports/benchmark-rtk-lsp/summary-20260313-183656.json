@@ -1,0 +1,32 @@
+{
+  "1_baseline": {
+    "task_id": "1",
+    "task_name": "bash_heavy_git",
+    "category": "RTK",
+    "mode": "baseline",
+    "runs": 1,
+    "avg_input_tokens": 4,
+    "avg_output_tokens": 639,
+    "avg_cache_creation": 9574,
+    "avg_cache_read": 38736,
+    "avg_total_tokens": 48953,
+    "avg_cost_usd": 0.05712029999999999,
+    "avg_duration_ms": 10629,
+    "avg_turns": 4.0
+  },
+  "1_enhanced": {
+    "task_id": "1",
+    "task_name": "bash_heavy_git",
+    "category": "RTK",
+    "mode": "enhanced",
+    "runs": 1,
+    "avg_input_tokens": 4,
+    "avg_output_tokens": 541,
+    "avg_cache_creation": 24526,
+    "avg_cache_read": 23841,
+    "avg_total_tokens": 48912,
+    "avg_cost_usd": 0.1072518,
+    "avg_duration_ms": 10151,
+    "avg_turns": 4.0
+  }
+}

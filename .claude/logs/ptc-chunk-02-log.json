@@ -1,0 +1,134 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-02",
+    "started_at": "2026-02-28T19:20:00Z",
+    "last_updated": "2026-02-28T19:35:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-02-2026-02-28",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "phase_history": [
+    {
+      "phase": "context_loading",
+      "timestamp": "2026-02-28T19:20:00Z",
+      "details": "Loaded chunk-02 spec, test specs, design doc Component 3"
+    },
+    {
+      "phase": "test_writing",
+      "timestamp": "2026-02-28T19:22:00Z",
+      "details": "Wrote 20 tests in test_sandbox_runtime.py across 6 test classes"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T19:24:00Z",
+      "details": "20 tests failed: ModuleNotFoundError (sandbox_runtime not yet created)"
+    },
+    {
+      "phase": "implementation",
+      "timestamp": "2026-02-28T19:26:00Z",
+      "details": "Created sandbox_runtime/__init__.py and executor.py"
+    },
+    {
+      "phase": "iteration",
+      "timestamp": "2026-02-28T19:28:00Z",
+      "details": "16/20 pass; 4 async tests failing — compile() rejects bare await before wrapping. Fixed: check for await before compile, route to _execute_async first."
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T19:30:00Z",
+      "details": "20/20 tests passing"
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T19:32:00Z",
+      "details": "inv-02-01 PASS (correct __init__ signature), inv-02-02 PASS (execute returns correct tuple), inv-02-03 PASS (namespace persistence), inv-02-04 PASS (all executor tests)"
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T19:34:00Z",
+      "details": "ruff format PASS, ruff check PASS, pyright PASS (production code), tests PASS"
+    }
+  ],
+  "resume_point": "Awaiting user approval",
+  "files_modified": [
+    "~/.claude/mcp/ptc-server/sandbox_runtime/__init__.py",
+    "~/.claude/mcp/ptc-server/sandbox_runtime/executor.py",
+    "tests/ptc/test_sandbox_runtime.py"
+  ],
+  "tests_written": [
+    {"name": "test_executor_init_creates_namespace", "class": "TestExecutorInit", "status": "passing"},
+    {"name": "test_executor_init_no_tools", "class": "TestExecutorInit", "status": "passing"},
+    {"name": "test_execute_simple_print", "class": "TestExecutorExecute", "status": "passing"},
+    {"name": "test_execute_captures_stderr", "class": "TestExecutorExecute", "status": "passing"},
+    {"name": "test_execute_returns_namespace_keys", "class": "TestExecutorExecute", "status": "passing"},
+    {"name": "test_execute_returns_namespace_size_kb", "class": "TestExecutorExecute", "status": "passing"},
+    {"name": "test_execute_syntax_error", "class": "TestExecutorExecute", "status": "passing"},
+    {"name": "test_execute_runtime_error", "class": "TestExecutorExecute", "status": "passing"},
+    {"name": "test_execute_multiline", "class": "TestExecutorExecute", "status": "passing"},
+    {"name": "test_namespace_persists_across_calls", "class": "TestExecutorNamespacePersistence", "status": "passing"},
+    {"name": "test_namespace_accumulates", "class": "TestExecutorNamespacePersistence", "status": "passing"},
+    {"name": "test_namespace_overwrite", "class": "TestExecutorNamespacePersistence", "status": "passing"},
+    {"name": "test_await_detection", "class": "TestExecutorAwaitWrapping", "status": "passing"},
+    {"name": "test_no_await_runs_sync", "class": "TestExecutorAwaitWrapping", "status": "passing"},
+    {"name": "test_await_with_print", "class": "TestExecutorAwaitWrapping", "status": "passing"},
+    {"name": "test_tool_stub_callable", "class": "TestExecutorToolStubs", "status": "passing"},
+    {"name": "test_tool_stub_calls_ipc", "class": "TestExecutorToolStubs", "status": "passing"},
+    {"name": "test_tool_stub_returns_result", "class": "TestExecutorToolStubs", "status": "passing"},
+    {"name": "test_namespace_size_tracks_growth", "class": "TestExecutorNamespaceSize", "status": "passing"},
+    {"name": "test_namespace_keys_listed", "class": "TestExecutorNamespaceSize", "status": "passing"}
+  ],
+  "invariants_status": {
+    "inv-02-01": "pass",
+    "inv-02-02": "pass",
+    "inv-02-03": "pass",
+    "inv-02-04": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [
+    {
+      "id": "sig-001",
+      "type": "test_fix_cycle",
+      "context": {
+        "test_name": "test_await_detection (and 3 other async tests)",
+        "failure_count": 1,
+        "failure_reason": "compile() rejects 'await' outside function — bare 'await' in code is a SyntaxError at compile time, before the async wrapping can happen",
+        "resolution": "Reordered execute(): check for 'await ' in code BEFORE compile(), route to _execute_async() which wraps in async def first, then compiles"
+      },
+      "timestamp": "2026-02-28T19:29:00Z",
+      "extracted": false
+    }
+  ],
+  "deviations": [],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "execute() is sync, not async — await wrapping uses asyncio.run() internally",
+      "reason": "Design doc shows async but invariant inv-02-02 calls it synchronously. Sync interface is simpler for callers."
+    },
+    {
+      "decision": "Check 'await ' before compile() to avoid SyntaxError on bare await",
+      "reason": "Python compile() rejects 'await' outside async function. Must route to async wrapping before compilation."
+    },
+    {
+      "decision": "Async locals returned via 'return {k:v for k,v in locals().items()}' appended to wrapped code",
+      "reason": "Variables defined inside async def _ptc_main() are local — need explicit return and namespace update to persist them."
+    },
+    {
+      "decision": "Mock fixtures placed in test file, not conftest.py",
+      "reason": "conftest.py is not in chunk-02 scope.touched_files. Fixtures can be moved to conftest later if shared."
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 1
+  }
+}

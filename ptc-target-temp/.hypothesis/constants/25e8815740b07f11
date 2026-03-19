@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/producer/models.py
+# hypothesis_version: 6.151.5
+
+[0.0, 1.0, 150, 'buffer_ms', 'corner_cnn_ms', 'cropping_ms', 'debug', 'detection_ms', 'frame_ms', 'production', 'quality_ms', 'tracking_ms', 'tuning']

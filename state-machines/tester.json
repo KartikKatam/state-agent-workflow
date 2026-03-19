@@ -1,0 +1,336 @@
+{
+  "name": "tester",
+  "description": "Tester lifecycle. Persistent within a phase. Designs scenarios blind to implementation, collaborates with user on scenario planning, executes Pass D eval scenarios after coders merge. Planning and review run as Opus; scenario code implementation delegated to Sonnet sub-agents.",
+  "version": "2.0.0",
+  "agent_role": "tester",
+  "agent_model": "opus",
+  "initial_state": "SPAWNED",
+  "terminal_states": [
+    "PHASE_COMPLETE",
+    "HANDOFF"
+  ],
+  "universal_transitions": [
+    {
+      "to_state": "HANDOFF",
+      "trigger": "context_pressure_exceeded",
+      "guards": [
+        "context_usage_above_threshold"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "name": "SPAWNED",
+      "description": "Tester just spawned. Loading design doc, plan, and context packets.",
+      "write_allowed": false
+    },
+    {
+      "name": "SCENARIO_PLANNING",
+      "description": "Designing eval scenarios with user. Read-only \u2014 no test code yet. Uses Think tool for scenario coverage and tier analysis. If entering from a plan revision (T5), evaluates whether existing scenarios still align with the updated plan.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Do the scenarios cover the most critical user-facing behaviors for this phase? 2) Are scenario tiers (critical, important, edge-case) correctly assigned? 3) Are scenarios independent of implementation details \u2014 testing behavior not internals? 4) Are there cross-task integration scenarios that individual task tests miss? 5) Is the scenario list achievable within the phase timeline? 6) If returning to planning after a plan revision, do the existing approved scenarios still align with the updated plan, or do specific scenarios need to be added, removed, or modified? CHOSEN: READY to indicate deliberation is complete."
+    },
+    {
+      "name": "SCENARIOS_APPROVED",
+      "description": "User approved scenario list. Ready to build test code.",
+      "write_allowed": false
+    },
+    {
+      "name": "SCENARIO_BUILDING",
+      "description": "Implementing scenario test code via Sonnet sub-agents. Write restricted to test/scenario files.",
+      "model": "sonnet",
+      "write_allowed": true,
+      "write_globs": [
+        "tests/scenarios/**/*.py",
+        "tests/eval/**/*.py",
+        "**/conftest.py"
+      ]
+    },
+    {
+      "name": "SCENARIO_VALIDATION",
+      "description": "Dry-run (collect-only) to verify scenarios are importable and discoverable. Opus reviews Sonnet-written test code and fixes issues.",
+      "write_allowed": true,
+      "write_globs": [
+        "tests/scenarios/**/*.py",
+        "tests/eval/**/*.py",
+        "**/conftest.py"
+      ]
+    },
+    {
+      "name": "SCENARIOS_READY",
+      "description": "All scenario code written and validated. Waiting for coders to merge before execution. If a plan revision flag is set, transitions back to SCENARIO_PLANNING instead of proceeding to execution.",
+      "write_allowed": false
+    },
+    {
+      "name": "SCENARIO_EXECUTION",
+      "description": "Running Pass D scenarios against merged code. No file edits \u2014 only pytest execution.",
+      "write_allowed": false,
+      "blocked_tools": [
+        "Write",
+        "Edit"
+      ]
+    },
+    {
+      "name": "SCENARIO_REPORTING",
+      "description": "Scenarios complete. Analyzing results and writing report. Think phase evaluates whether coder made progress (fewer/different failures) or is stalled (same failures repeating). Routes escalation based on progress assessment, not arbitrary cycle counts.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/reports/**",
+        ".claude/logs/**"
+      ],
+      "think_on_exit": true,
+      "think_prompt": "1) How many scenarios passed vs failed? List the counts. 2) If this is the first execution cycle (no previous results to compare), any failures are an informational baseline \u2014 declare PROGRESS. 3) Compare current failures with the previous cycle: which specific failures were resolved? Which persist unchanged? Which are new? 4) Overall assessment: has the coder made measurable progress (fewer total failures, different failure patterns, resolved some previous issues) or is the coder stuck on the same issues (identical or worse failure set)? CHOSEN: ALL_PASSED (every scenario passes), PROGRESS (coder made measurable progress or first execution), or STALLED (same or worse failures as previous cycle)."
+    },
+    {
+      "name": "ERROR",
+      "description": "Infrastructure-level failure during scenario execution (pytest crash, OOM, container error \u2014 NOT test assertion failures, which are normal and route through SCENARIO_REPORTING). Diagnose failure type and choose recovery path.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Answer ALL of the following questions to diagnose the infrastructure failure and choose a recovery path. 1) What type of failure occurred (pytest crash, OOM, container error, dependency missing)? State the error type and pytest exit code. 2) Is the failure transient (container restart needed, temporary resource exhaustion) or structural (critical dependency broken, environment corrupted)? State your evidence. 3) Did any test suites complete successfully before the failure? List what ran and results if available. RECOVERY DECISION: Evaluate each path and choose one. 4) RETRY: Is the failure transient AND has retry not been used? What would you verify before retrying? 5) ESCALATE: Is the infrastructure broken in a way the tester cannot resolve? What should the orchestrator know? 6) HANDOFF: Is this a context pressure issue rather than an infrastructure failure? CHOSEN: RETRY, ESCALATE, or HANDOFF."
+    },
+    {
+      "name": "IDLE",
+      "description": "Between scenario cycles. Waiting for next execution trigger (remediation fixes merged) or phase end.",
+      "write_allowed": false
+    },
+    {
+      "name": "PHASE_COMPLETE",
+      "description": "Phase finished. Tester terminates."
+    },
+    {
+      "name": "HANDOFF",
+      "description": "Context pressure exceeded or error recovery chose handoff. Writing handoff summary of scenario state, approved list, execution results. Tester terminates, orchestrator spawns fresh tester to continue.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from_state": "SPAWNED",
+      "to_state": "SCENARIO_PLANNING",
+      "trigger": "context_loaded",
+      "guards": [
+        "design_doc_loaded",
+        "plan_loaded",
+        "context_packets_loaded"
+      ]
+    },
+    {
+      "from_state": "SCENARIO_PLANNING",
+      "to_state": "SCENARIOS_APPROVED",
+      "trigger": "user_approved_scenarios",
+      "requires_user_approval": true
+    },
+    {
+      "from_state": "SCENARIO_PLANNING",
+      "to_state": "SCENARIO_PLANNING",
+      "trigger": "user_requested_scenario_changes",
+      "requires_user_approval": true,
+      "description": "User requested changes to scenario list. Loops indefinitely until user approves \u2014 no limit on revision cycles."
+    },
+    {
+      "from_state": "SCENARIOS_APPROVED",
+      "to_state": "SCENARIO_BUILDING",
+      "trigger": "building_started",
+      "actions": [
+        "spawn_sonnet_sub_agents"
+      ]
+    },
+    {
+      "from_state": "SCENARIO_BUILDING",
+      "to_state": "SCENARIO_VALIDATION",
+      "trigger": "scenarios_built",
+      "guards": [
+        "scenario_files_exist"
+      ]
+    },
+    {
+      "from_state": "SCENARIO_VALIDATION",
+      "to_state": "SCENARIOS_READY",
+      "trigger": "validation_passed",
+      "guards": [
+        "collect_only_exit_zero",
+        "all_scenarios_discoverable"
+      ]
+    },
+    {
+      "from_state": "SCENARIO_VALIDATION",
+      "to_state": "SCENARIO_BUILDING",
+      "trigger": "validation_failed",
+      "guards": [
+        "import_errors_or_collection_errors"
+      ],
+      "description": "Validation found import or collection errors. Rebuild scenarios. No limit \u2014 iterates until validation passes. Context pressure provides natural bound via universal HANDOFF transition."
+    },
+    {
+      "from_state": "SCENARIOS_READY",
+      "to_state": "SCENARIO_EXECUTION",
+      "trigger": "coders_merged",
+      "guards": [
+        "all_coder_merges_complete",
+        "not_scenario_update_required"
+      ],
+      "actions": [
+        "run_scenario_pytest"
+      ],
+      "description": "All coders merged and no plan revision pending. Proceed to execution."
+    },
+    {
+      "from_state": "SCENARIOS_READY",
+      "to_state": "SCENARIO_PLANNING",
+      "trigger": "scenario_revision_required",
+      "guards": [
+        "scenario_update_required"
+      ],
+      "actions": [
+        "clear_scenario_update_flag"
+      ],
+      "description": "T5 fix: Orchestrator set scenario_update_required flag (a planner ran). Return to planning to evaluate whether scenarios need updating. The tester's SCENARIO_PLANNING think evaluates alignment with the current plan \u2014 if nothing changed, it fast-tracks back through approval."
+    },
+    {
+      "from_state": "SCENARIO_EXECUTION",
+      "to_state": "SCENARIO_REPORTING",
+      "trigger": "execution_complete",
+      "guards": [
+        "scenario_pytest_completed",
+        "not_execution_error_reported"
+      ],
+      "description": "Pytest finished normally (exit code 0 or 1 \u2014 tests passed or had assertion failures). Normal flow to reporting."
+    },
+    {
+      "from_state": "SCENARIO_EXECUTION",
+      "to_state": "ERROR",
+      "trigger": "execution_infrastructure_failure",
+      "guards": [
+        "execution_error_reported"
+      ],
+      "actions": [
+        "log_error"
+      ],
+      "description": "T4 fix: Infrastructure-level failure during execution (pytest exit code >= 2, OOM, container crash). NOT test assertion failures \u2014 those are normal and go through SCENARIO_REPORTING."
+    },
+    {
+      "from_state": "SCENARIO_REPORTING",
+      "to_state": "IDLE",
+      "trigger": "all_passed",
+      "guards": [
+        "think_chosen:ALL_PASSED",
+        "scenario_report_written"
+      ],
+      "actions": [
+        "send_pass_report"
+      ]
+    },
+    {
+      "from_state": "SCENARIO_REPORTING",
+      "to_state": "IDLE",
+      "trigger": "progress_detected",
+      "guards": [
+        "think_chosen:PROGRESS",
+        "scenario_report_written"
+      ],
+      "actions": [
+        "send_failure_info_to_coders",
+        "reset_stall_counter"
+      ],
+      "description": "Coder made measurable progress (fewer or different failures than previous cycle) or this is the first execution. Send informational failure report directly to coders. Reset consecutive stall counter."
+    },
+    {
+      "from_state": "SCENARIO_REPORTING",
+      "to_state": "IDLE",
+      "trigger": "stalled_under_threshold",
+      "guards": [
+        "think_chosen:STALLED",
+        "scenario_report_written",
+        "consecutive_stall_count_lt_5"
+      ],
+      "actions": [
+        "send_detailed_failure_report_to_coders",
+        "increment_stall_counter"
+      ],
+      "description": "Coder stuck on same failures but under escalation threshold. Send detailed failure report with reproduction steps directly to coders."
+    },
+    {
+      "from_state": "SCENARIO_REPORTING",
+      "to_state": "IDLE",
+      "trigger": "stalled_at_threshold",
+      "guards": [
+        "think_chosen:STALLED",
+        "scenario_report_written",
+        "consecutive_stall_count_gte_5"
+      ],
+      "actions": [
+        "send_detailed_failure_report_to_coders",
+        "increment_stall_counter",
+        "flag_escalation_to_orchestrator"
+      ],
+      "description": "Coder stuck on same failures for 5+ consecutive cycles. Escalate to orchestrator for peer coordination or architectural intervention."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "SCENARIO_EXECUTION",
+      "trigger": "retry_viable",
+      "guards": [
+        "think_chosen:RETRY",
+        "retry_count_under_limit"
+      ],
+      "actions": [
+        "run_scenario_pytest"
+      ],
+      "max_occurrences": 1,
+      "description": "T4 fix: Transient infrastructure failure. Retry execution once."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "IDLE",
+      "trigger": "escalate_infrastructure",
+      "guards": [
+        "think_chosen:ESCALATE"
+      ],
+      "actions": [
+        "notify_orchestrator_infrastructure_failure"
+      ],
+      "description": "T4 fix: Structural infrastructure failure the tester cannot resolve. Notify orchestrator and wait in IDLE for resolution."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "HANDOFF",
+      "trigger": "handoff_from_error",
+      "guards": [
+        "think_chosen:HANDOFF"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ],
+      "description": "T4 fix: Context pressure during error handling. Hand off to fresh tester."
+    },
+    {
+      "from_state": "IDLE",
+      "to_state": "SCENARIO_EXECUTION",
+      "trigger": "re_execution_requested",
+      "guards": [
+        "remediation_fixes_merged"
+      ],
+      "actions": [
+        "run_scenario_pytest"
+      ],
+      "description": "T2 documented: Auto-transition via daemon. When system SM sets remediation_fixes_merged flag (after coders merge fixes), this fires automatically. No explicit trigger sender needed \u2014 the guard IS the coordination mechanism."
+    },
+    {
+      "from_state": "IDLE",
+      "to_state": "PHASE_COMPLETE",
+      "trigger": "phase_ended",
+      "guards": [
+        "all_scenarios_passed_or_arbitrated"
+      ]
+    }
+  ]
+}

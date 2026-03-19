@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Implementation Plan",
+  "description": "Phased implementation plan with tasks, dependencies, and test expectations at three levels. Designed for zero-context handoff: a coder receives a task and can implement without design doc access; an auditor receives a task and can verify without plan-level context.",
+  "type": "object",
+  "required": ["schema_version", "feature", "status", "grounding", "phases", "design_tests", "quality_gates"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+-[0-9]+-[0-9]+$",
+      "description": "MODEL-REVISION-ADDITION format. Bump MODEL for breaking changes, REVISION for backward-compatible structural changes, ADDITION for new optional fields."
+    },
+    "feature": {
+      "type": "string",
+      "description": "Feature identifier, matches design doc and context packet naming"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "approved", "in_progress", "completed"],
+      "description": "Plan lifecycle status"
+    },
+    "design_doc": {
+      "type": "string",
+      "description": "Path to the design document this plan implements"
+    },
+    "grounding": {
+      "type": "object",
+      "description": "How the design doc was grounded to the codebase. Persists the full concept map so staleness detection can diff against fresh context packets without repeating Step 1.",
+      "required": ["context_packets", "concept_map", "approach", "approach_rationale"],
+      "additionalProperties": false,
+      "properties": {
+        "context_packets": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Context packet filenames used for grounding. Used for staleness detection — when packets refresh, diff files_analyzed lists against concept_map."
+        },
+        "concept_map": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ConceptMapping" },
+          "description": "Design doc concepts mapped to codebase constructs. Every design doc concept must appear here as grounded or with a resolution. This is the bridge between design intent and implementation reality."
+        },
+        "approach": {
+          "type": "string",
+          "description": "Locked architectural approach"
+        },
+        "approach_rationale": {
+          "type": "string",
+          "description": "Why this approach was chosen, with evidence references. For single-approach features, state why the approach was obvious (e.g., 'follows existing scorer pattern in producer/scoring.py')."
+        },
+        "alternatives_considered": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AlternativeApproach" },
+          "description": "Other approaches evaluated during Step 3 divergent exploration. Empty array if Step 3 was skipped (single clear approach)."
+        }
+      }
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Phase" },
+      "description": "Ordered list of implementation phases. Array index implies execution order. Dependencies between phases form a DAG — no circular dependencies."
+    },
+    "design_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/TestExpectation" },
+      "description": "Design-level integration tests spanning all phases. Cover the design doc's acceptance criteria end-to-end. Runnable only after all phases complete."
+    },
+    "quality_gates": {
+      "type": "object",
+      "required": ["gate_script"],
+      "properties": {
+        "format": { "type": "string" },
+        "lint": { "type": "string" },
+        "typecheck": { "type": "string" },
+        "test": { "type": "string" },
+        "gate_script": { "type": "string", "description": "Comprehensive quality gate script that runs all checks" }
+      },
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "ConceptMapping": {
+      "type": "object",
+      "required": ["design_concept", "codebase_construct", "source", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "design_concept": {
+          "type": "string",
+          "description": "Concept as referenced in the design doc (e.g., 'scoring weights', 'pipeline stage registration')"
+        },
+        "codebase_construct": {
+          "type": "string",
+          "description": "The mapped construct with location (e.g., 'ScoringWeights in producer/config.py:23'). Use '???' if unresolved."
+        },
+        "source": {
+          "type": "string",
+          "description": "Which context packet or exploration provided this mapping (e.g., '_codebase.json types', 'explorer response 2025-02-28')"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["grounded", "resolved", "gap_blocking", "gap_non_blocking"],
+          "description": "grounded=confirmed in context, resolved=was a gap but info_request answered it, gap_blocking=unresolved and blocks planning, gap_non_blocking=can resolve during task detailing"
+        },
+        "resolution": {
+          "type": "string",
+          "description": "How a gap was resolved (e.g., 'Explorer confirmed RegistrationAPI uses decorator pattern in pipeline/registry.py:45'). Required when status is 'resolved'."
+        }
+      }
+    },
+    "AlternativeApproach": {
+      "type": "object",
+      "required": ["name", "summary", "rejected_reason"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Short name for the approach (e.g., 'Polling-based sync')"
+        },
+        "summary": {
+          "type": "string",
+          "description": "What this approach would have looked like"
+        },
+        "rejected_reason": {
+          "type": "string",
+          "description": "Why this approach was not chosen, with evidence"
+        }
+      }
+    },
+    "Phase": {
+      "type": "object",
+      "required": ["id", "name", "capability", "verification", "dependencies", "rationale", "design_doc_sections", "phase_tests", "tasks"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^phase-[0-9]+$",
+          "description": "Unique phase identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Short descriptive name for the phase"
+        },
+        "capability": {
+          "type": "string",
+          "description": "What capability this phase delivers (one sentence, concrete). Must be a verifiable behavior, not a code change description."
+        },
+        "verification": {
+          "type": "string",
+          "description": "How to prove the phase is complete. Must be demonstrable without requiring future phases."
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Phase IDs that must complete before this phase"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why this phase boundary exists (not a different one)"
+        },
+        "design_doc_sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Which design doc sections this phase implements (e.g., '3.2 Batch Selection', '4.1 Constraint Handling'). Enables auditor traceability — every design doc requirement must map to at least one phase."
+        },
+        "phase_tests": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/TestExpectation" },
+          "description": "Phase-level integration tests verifying the capability works end-to-end within phase scope. Runnable at phase completion with no dependency on future phases."
+        },
+        "tasks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Task" }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "completed"],
+          "default": "pending"
+        }
+      }
+    },
+    "Task": {
+      "type": "object",
+      "required": ["id", "name", "phase_context", "target_files", "requirements", "limitations", "considerations", "dependencies", "review_level", "test_expectations"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^task-[0-9]+-[0-9]+$",
+          "description": "Unique task identifier (phase-task format)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Short descriptive name"
+        },
+        "phase_context": {
+          "type": "string",
+          "description": "One-line summary of the phase this task belongs to, so a context-free coder understands the larger goal. Format: 'Phase N: {capability}' (e.g., 'Phase 2: Batch selection with constraints')."
+        },
+        "target_files": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Files the coder will create or modify (e.g., 'producer/ops_batch.py'). Enables orchestrator conflict detection for parallel tasks."
+        },
+        "reference_files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Files the coder should read but not modify (e.g., 'consumer/scoring.py:45-67'). Include line ranges when pointing to specific patterns."
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Exact behaviors the implementation must satisfy. Each requirement should be testable. Use exact types, function signatures, file paths."
+        },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What the task must NOT do. Explicit scope boundaries prevent coder drift."
+        },
+        "considerations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Non-obvious factors: edge cases, existing patterns to follow, performance concerns, thread safety."
+        },
+        "suggestions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Recommended approaches, relevant code references (not mandates — coder may deviate with justification)"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Task IDs that must complete first"
+        },
+        "review_level": {
+          "type": "integer",
+          "enum": [1, 2, 3],
+          "description": "1=no auditor, 2=phase-end audit, 3=full task auditor. Based on risk, not convenience."
+        },
+        "review_focus": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What the auditor should specifically verify beyond standard requirements check. Present on review_level 2-3 tasks. Tells the auditor WHERE to look — the strategist's specific concerns (e.g., 'Verify floating-point precision in weighted sum', 'Confirm no regression in existing score_roi consumers')."
+        },
+        "queries": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Questions the coder must resolve before implementing. Forces uncertainty declaration — prevents strategist from guessing and coder from assuming."
+        },
+        "test_expectations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/TaskTestExpectation" },
+          "description": "What tests must verify for this task. Each expectation maps to at least one test the coder writes during TDD."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "review", "completed", "blocked"],
+          "default": "pending"
+        },
+        "session_log": {
+          "type": "string",
+          "description": "Path to session log for this task (populated during execution)"
+        }
+      }
+    },
+    "TaskTestExpectation": {
+      "type": "object",
+      "required": ["id", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^te-[0-9]+-[0-9]+-[0-9]+$",
+          "description": "Unique test expectation identifier (phase-task-expectation format, e.g., 'te-01-01-01'). Enables auditor to programmatically verify coverage against implemented tests."
+        },
+        "description": {
+          "type": "string",
+          "description": "What this test verifies in plain language (e.g., 'Zero-weight fields excluded from computation')"
+        },
+        "requirement_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Which requirements this expectation verifies (by index or keyword). Ensures every requirement has at least one test expectation covering it."
+        }
+      }
+    },
+    "TestExpectation": {
+      "type": "object",
+      "required": ["description", "scope"],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What the test verifies"
+        },
+        "scope": {
+          "type": "string",
+          "description": "What components/interactions the test covers"
+        },
+        "acceptance_criteria": {
+          "type": "string",
+          "description": "Link to design doc criteria (e.g., 'Design Doc Section 4.2 Acceptance Criteria')"
+        }
+      }
+    }
+  }
+}

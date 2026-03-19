@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/consumer/ops_quality_rich.py
+# hypothesis_version: 6.151.5
+
+[-1.0, 0.0, 1e-06, 0.5, 1.0, 1.4826, 2.0, 40.0, 45.0, 100.0, 5000.0, 'inf']

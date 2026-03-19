@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-06",
+    "started_at": "2026-02-28T20:25:00Z",
+    "last_updated": "2026-02-28T20:35:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-06-2026-02-28",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "resume_point": "Awaiting user approval",
+  "phase_history": [
+    {
+      "phase": "test_design",
+      "timestamp": "2026-02-28T20:25:00Z",
+      "details": "Designed 23 tests across 7 test classes with Docker mock strategy"
+    },
+    {
+      "phase": "test_writing",
+      "timestamp": "2026-02-28T20:26:00Z",
+      "details": "Wrote all 23 tests in tests/ptc/test_container_manager.py"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T20:26:30Z",
+      "details": "23 tests failed: ModuleNotFoundError for container_manager"
+    },
+    {
+      "phase": "implementation",
+      "timestamp": "2026-02-28T20:27:00Z",
+      "details": "Implemented ContainerManager with dataclasses, ROLE_PACKAGES, Docker commands, IPC integration"
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T20:30:00Z",
+      "details": "23/23 tests passing in 0.23s — first GREEN run, 0 iterations needed"
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T20:31:00Z",
+      "details": "All 4 invariants verified: inv-06-01 through inv-06-04"
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T20:32:00Z",
+      "details": "ruff format passed, ruff check passed, pyright 0 errors, 67 total tests pass (chunks 04+05+06)"
+    }
+  ],
+  "files_modified": [
+    {
+      "path": "~/.claude/mcp/ptc-server/container_manager.py",
+      "action": "create",
+      "description": "ContainerManager class with ReplHandle/ContainerInfo dataclasses, ROLE_PACKAGES dict (6 roles), Docker container lifecycle, REPL pool management, code execution via IPC"
+    },
+    {
+      "path": "tests/ptc/test_container_manager.py",
+      "action": "create",
+      "description": "23 tests across 7 classes: dataclasses, container creation, pip install, REPL start, get_or_create_repl, execute_code, stop/cleanup, role packages"
+    }
+  ],
+  "tests_written": [
+    {"name": "test_repl_handle_fields", "class": "TestDataclasses", "status": "pass"},
+    {"name": "test_container_info_defaults", "class": "TestDataclasses", "status": "pass"},
+    {"name": "test_container_info_with_repls", "class": "TestDataclasses", "status": "pass"},
+    {"name": "test_create_container_docker_command", "class": "TestContainerCreation", "status": "pass"},
+    {"name": "test_create_container_mounts_project_ro", "class": "TestContainerCreation", "status": "pass"},
+    {"name": "test_create_container_logs_event", "class": "TestContainerCreation", "status": "pass"},
+    {"name": "test_create_container_returns_container_info", "class": "TestContainerCreation", "status": "pass"},
+    {"name": "test_pip_install_runs_docker_exec", "class": "TestPipInstall", "status": "pass"},
+    {"name": "test_pip_install_logs_events", "class": "TestPipInstall", "status": "pass"},
+    {"name": "test_pip_install_sets_flag", "class": "TestPipInstall", "status": "pass"},
+    {"name": "test_start_repl_docker_exec_command", "class": "TestReplStart", "status": "pass"},
+    {"name": "test_start_repl_creates_ipc_host", "class": "TestReplStart", "status": "pass"},
+    {"name": "test_start_repl_waits_for_health_check", "class": "TestReplStart", "status": "pass"},
+    {"name": "test_get_existing_repl", "class": "TestGetOrCreateRepl", "status": "pass"},
+    {"name": "test_create_new_container_and_repl", "class": "TestGetOrCreateRepl", "status": "pass"},
+    {"name": "test_get_or_create_registers_agent", "class": "TestGetOrCreateRepl", "status": "pass"},
+    {"name": "test_execute_code_delegates_to_ipc", "class": "TestExecuteCode", "status": "pass"},
+    {"name": "test_execute_code_acquires_lock", "class": "TestExecuteCode", "status": "pass"},
+    {"name": "test_stop_container", "class": "TestStopAndCleanup", "status": "pass"},
+    {"name": "test_stop_all", "class": "TestStopAndCleanup", "status": "pass"},
+    {"name": "test_health_check_delegates", "class": "TestStopAndCleanup", "status": "pass"},
+    {"name": "test_role_packages_has_all_roles", "class": "TestRolePackages", "status": "pass"},
+    {"name": "test_role_packages_explorer_count", "class": "TestRolePackages", "status": "pass"}
+  ],
+  "invariants_status": {
+    "inv-06-01": "pass",
+    "inv-06-02": "pass",
+    "inv-06-03": "pass",
+    "inv-06-04": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [],
+  "deviations": [],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "Mock asyncio.create_subprocess_exec for all Docker commands",
+      "reason": "No real Docker in tests — all subprocess calls mocked at the asyncio level"
+    },
+    {
+      "decision": "IpcHost mocked via patch('container_manager.IpcHost') in REPL start tests",
+      "reason": "Tests REPL start logic without needing real socket connections"
+    },
+    {
+      "decision": "execute_code creates lock lazily on first call",
+      "reason": "Avoids needing to pre-create locks for all agents at init"
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 0
+  }
+}

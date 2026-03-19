@@ -1,0 +1,1659 @@
+{
+  "classes": {
+    "ConsumerConfig": {
+      "defined_in": "consumer/config.py",
+      "bases": [],
+      "line_number": 7,
+      "field_annotations": {
+        "max_batch_size": "int",
+        "ocr_score_weight_sharpness": "float",
+        "ocr_score_weight_size": "float",
+        "ocr_score_weight_contrast": "float",
+        "ocr_score_weight_exposure": "float",
+        "ocr_score_weight_noise": "float",
+        "ocr_score_weight_detection": "float",
+        "plate_height_ideal": "int",
+        "tenengrad_ideal": "float",
+        "batch_tenengrad_floor": "float",
+        "batch_enable_signal_floors": "bool",
+        "max_enhance_duplicates": "int",
+        "enhance_upside_weight_contrast": "float",
+        "enhance_upside_weight_exposure": "float",
+        "enhance_upside_weight_sharpness": "float",
+        "enhance_upside_weight_noise": "float",
+        "enhance_excellence_threshold": "float",
+        "enable_batch_selection_logging": "bool",
+        "commit_margin": "float",
+        "enable_staleness": "bool",
+        "max_staleness_ms": "int",
+        "stale_min_score": "float",
+        "diversity_weight_skew": "float",
+        "diversity_weight_quad": "float",
+        "diversity_weight_persp": "float",
+        "diversity_weight_scale": "float",
+        "diversity_min_distance": "float",
+        "diversity_quad_jitter_threshold": "float",
+        "anchor_min_pose_distance": "float",
+        "rich_quality_enabled": "bool",
+        "canonical_crop_width": "int",
+        "canonical_crop_height": "int",
+        "plate_height_min_px": "int",
+        "crop_clip_fraction_max": "float",
+        "keypoint_confidence_min_threshold": "float",
+        "quad_area_min_px": "float",
+        "edge_ratio_max": "float",
+        "aspect_ratio_min": "float",
+        "aspect_ratio_max": "float",
+        "luminance_mean_min": "float",
+        "luminance_mean_max": "float",
+        "black_clip_fraction_max": "float",
+        "white_clip_fraction_max": "float",
+        "white_clip_hard_max": "float",
+        "white_clip_enhance_max": "float",
+        "luminance_black_threshold": "int",
+        "luminance_white_threshold": "int",
+        "global_contrast_min": "float",
+        "local_contrast_min": "float",
+        "local_contrast_min_pixels_per_tile": "int",
+        "tenengrad_floor": "float",
+        "tenengrad_good": "float",
+        "noise_std_max": "float",
+        "tenengrad_h_floor": "float",
+        "tenengrad_v_floor": "float",
+        "flat_region_var_threshold": "float",
+        "flat_region_min_pixels": "int",
+        "target_luma": "float",
+        "target_contrast": "float",
+        "target_sharpness": "float",
+        "target_noise_max": "float",
+        "luma_range": "float",
+        "k_gain": "float",
+        "k_gamma": "float",
+        "k_contrast": "float",
+        "k_denoise": "float",
+        "k_sharpen": "float",
+        "gain_min": "float",
+        "gain_max": "float",
+        "gamma_min": "float",
+        "gamma_max": "float",
+        "contrast_max": "float",
+        "denoise_max": "float",
+        "sharpen_max": "float",
+        "clahe_blend_max": "float",
+        "clahe_clip_min": "float",
+        "clahe_clip_max": "float",
+        "clahe_tiles_min": "int",
+        "clahe_tiles_max": "int",
+        "clahe_max_white_clip": "float",
+        "clahe_min_sharpness": "float",
+        "warp_margin": "float",
+        "recipe_output_width": "int",
+        "recipe_output_height": "int",
+        "contrast_steepness": "float",
+        "agg_quality_q0": "float",
+        "agg_quality_k": "float",
+        "agg_quality_beta": "float",
+        "agg_quality_w_cap": "float",
+        "agg_eps": "float",
+        "agg_lambda_len": "float",
+        "agg_max_positions": "int",
+        "agg_delta_agree_override": "float",
+        "agg_pair_agree_min_p1": "float",
+        "agg_allowed_chars": "str",
+        "agg_alpha_char": "float",
+        "agg_alpha_len": "float",
+        "agg_stale_passes": "int",
+        "agg_replace_margin": "float",
+        "agg_core_confusion_pairs": "tuple[tuple[str, str], ...]",
+        "agg_extended_confusion_pairs": "tuple[tuple[str, str], ...]",
+        "agg_confusion_margin_high": "float",
+        "agg_high_mean_p1": "float",
+        "agg_high_min_margin": "float",
+        "agg_med_mean_p1": "float",
+        "agg_med_mean_margin": "float",
+        "agg_onepass_len_prob": "float",
+        "agg_onepass_min_p1": "float",
+        "agg_onepass_min_margin": "float",
+        "agg_onepass_confusion_margin": "float",
+        "agg_multipass_min_wins": "int",
+        "agg_hyp_gap_done": "float",
+        "agg_tie_score": "float",
+        "agg_enable_debug_payload": "bool",
+        "ocr_queue_capacity": "int",
+        "max_done_metrics": "int",
+        "in_flight_timeout_ms": "int",
+        "parseq_model_path": "str",
+        "parseq_warmup_runs": "int",
+        "parseq_max_batch_size": "int",
+        "parseq_device": "str",
+        "parseq_allowed_chars": "str",
+        "parseq_vocab_path": "str",
+        "parseq_temperature": "float",
+        "parseq_normalize_input": "bool",
+        "parseq_norm_mean": "tuple[float, float, float]",
+        "parseq_norm_std": "tuple[float, float, float]",
+        "parseq_max_plate_chars": "int"
+      },
+      "imported_in": [
+        "consumer/__init__.py",
+        "consumer/ops_batch_select.py",
+        "consumer/ops_ocr_aggregator.py",
+        "consumer/ops_ocr_queue.py",
+        "consumer/ops_parseq.py",
+        "consumer/ops_preprocess_gpu.py",
+        "consumer/ops_quality_rich.py",
+        "consumer/ops_recipe.py",
+        "consumer/ops_scheduler.py",
+        "consumer/queue.py",
+        "scripts/build_golden_fixtures.py",
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py",
+        "scripts/view_golden_crops.py"
+      ]
+    },
+    "RichQualityMetrics": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 16,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "frame_idx": "int",
+        "canonical_width": "int",
+        "canonical_height": "int",
+        "plate_width_px": "float",
+        "plate_height_px": "float",
+        "crop_clip_fraction": "float",
+        "detection_confidence": "float",
+        "keypoints": "list[tuple[float, float]] | None",
+        "keypoint_scores": "list[float] | None",
+        "keypoint_confidence_min": "float | None",
+        "keypoint_confidence_mean": "float | None",
+        "skew_degrees": "float | None",
+        "perspective_score": "float | None",
+        "perspective_direction": "float | None",
+        "luminance_mean": "float",
+        "luminance_p05": "float",
+        "luminance_p95": "float",
+        "black_clip_fraction": "float",
+        "white_clip_fraction": "float",
+        "global_contrast": "float",
+        "local_contrast": "float",
+        "tenengrad": "float",
+        "tenengrad_horizontal": "float",
+        "tenengrad_vertical": "float",
+        "blur_anisotropy": "float",
+        "noise_std": "float",
+        "flat_region_fraction": "float",
+        "too_small": "bool",
+        "clipped": "bool",
+        "very_blurry": "bool",
+        "mildly_soft": "bool",
+        "exposure_bad": "bool",
+        "low_contrast": "bool",
+        "noisy": "bool",
+        "vertical_edges_weak": "bool",
+        "horizontal_edges_weak": "bool",
+        "top8_eligible": "bool",
+        "enhance_eligible": "bool",
+        "homography_eligible": "bool",
+        "bbox_center_x_normalized": "float",
+        "bbox_center_y_normalized": "float",
+        "diversity_signature": "np.ndarray",
+        "quad_area_px": "float | None",
+        "edge_ratio": "float | None"
+      },
+      "imported_in": [
+        "consumer/__init__.py",
+        "consumer/ops_preprocess_gpu.py",
+        "consumer/ops_quality_rich.py",
+        "consumer/ops_recipe.py",
+        "scripts/golden_crops_generator.py",
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py"
+      ]
+    },
+    "RoiRichQuality": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 132,
+      "field_annotations": {
+        "roi_fq": "RoiFastQuality",
+        "metrics": "RichQualityMetrics"
+      },
+      "imported_in": [
+        "consumer/__init__.py",
+        "consumer/ops_batch_select.py",
+        "consumer/ops_quality_rich.py",
+        "consumer/ops_recipe.py",
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py"
+      ]
+    },
+    "EnhancedBatchSelection": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 142,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "version": "int",
+        "base_rois": "list[RoiRichQuality]",
+        "enhance_rois": "list[RoiRichQuality]",
+        "duplicate_groups": "dict[str, list[int]]"
+      },
+      "imported_in": [
+        "consumer/__init__.py",
+        "consumer/ops_batch_select.py",
+        "consumer/ops_ocr_queue.py",
+        "consumer/ops_preprocess_gpu.py",
+        "consumer/ops_recipe.py",
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py"
+      ]
+    },
+    "RecipeRow": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 158,
+      "field_annotations": {
+        "luma_deficit": "float",
+        "contrast_deficit": "float",
+        "sharpness_deficit": "float",
+        "noise_excess": "float",
+        "gates_passed": "list[str]",
+        "gates_failed": "list[str]",
+        "active_ops": "list[str]",
+        "primary_reason": "str"
+      },
+      "imported_in": [
+        "consumer/__init__.py",
+        "consumer/ops_recipe.py"
+      ]
+    },
+    "PostProcessingMeta": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 172,
+      "field_annotations": {
+        "post_luma_mean": "float",
+        "post_global_contrast": "float",
+        "luma_delta": "float",
+        "contrast_delta": "float"
+      },
+      "imported_in": [
+        "consumer/__init__.py",
+        "consumer/ops_preprocess_gpu.py"
+      ]
+    },
+    "ProcessorOutput": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 182,
+      "field_annotations": {
+        "batch_tensor": "torch.Tensor",
+        "is_enhanced": "np.ndarray",
+        "post_meta": "list[PostProcessingMeta]"
+      },
+      "imported_in": [
+        "consumer/__init__.py",
+        "consumer/ops_ocr_queue.py",
+        "consumer/ops_preprocess_gpu.py"
+      ]
+    },
+    "TrackMetrics": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 191,
+      "field_annotations": {
+        "first_seen_ms": "int",
+        "total_candidates_received": "int",
+        "total_commits": "int",
+        "commits_superseded_before_consumption": "int",
+        "total_consumed": "int"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_queue.py"
+      ]
+    },
+    "CommitRecord": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 205,
+      "field_annotations": {
+        "commit_version": "int",
+        "source_bin_version": "int",
+        "commit_score": "float",
+        "batch_tensor": "torch.Tensor",
+        "is_enhanced": "np.ndarray",
+        "base_roi_scores": "list[float]",
+        "created_at_ms": "int",
+        "duplicate_groups": "dict[str, list[int]]",
+        "per_roi_quality": "list[float]"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_queue.py"
+      ]
+    },
+    "InFlightRecord": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 223,
+      "field_annotations": {
+        "commit_version": "int",
+        "dispatched_at_ms": "int",
+        "worker_id": "str"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_queue.py"
+      ]
+    },
+    "TrackState": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 235,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "metrics": "TrackMetrics",
+        "best_commit": "CommitRecord | None",
+        "in_flight": "InFlightRecord | None",
+        "consumed_commit_version": "int",
+        "done": "bool",
+        "done_at_ms": "int | None"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_queue.py"
+      ]
+    },
+    "OcrWorkItem": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 251,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "commit_version": "int",
+        "source_bin_version": "int",
+        "batch_tensor": "torch.Tensor",
+        "is_enhanced": "np.ndarray",
+        "duplicate_groups": "dict[str, list[int]]",
+        "per_roi_quality": "list[float]"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_queue.py",
+        "consumer/ops_parseq.py"
+      ]
+    },
+    "CandidateResult": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 268,
+      "field_annotations": {
+        "string": "str",
+        "score": "float",
+        "char_dists": "np.ndarray",
+        "len_dist": "np.ndarray",
+        "candidate_length": "int",
+        "overridden_positions": "tuple[int, ...]"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_aggregator.py"
+      ]
+    },
+    "HypothesisState": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 284,
+      "field_annotations": {
+        "string": "str",
+        "ema_char_dists": "np.ndarray",
+        "ema_len_dist": "np.ndarray",
+        "win_count": "int",
+        "last_seen_pass": "int",
+        "score": "float",
+        "candidate_length": "int"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_aggregator.py"
+      ]
+    },
+    "EvidenceUnit": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 301,
+      "field_annotations": {
+        "distribution": "np.ndarray",
+        "quality": "float",
+        "agree_mask": "np.ndarray",
+        "agree_char_indices": "np.ndarray",
+        "pair_min_p1": "np.ndarray",
+        "has_enhanced": "bool",
+        "group_id": "str"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_aggregator.py"
+      ]
+    },
+    "OcrQueueItem": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 320,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "version": "int",
+        "batch_tensor": "np.ndarray",
+        "selected": "list[RoiRichQuality]",
+        "recipes": "np.ndarray"
+      },
+      "imported_in": [
+        "consumer/__init__.py",
+        "consumer/queue.py"
+      ]
+    },
+    "ConfidenceBucket": {
+      "defined_in": "consumer/models.py",
+      "bases": [
+        "enum.Enum"
+      ],
+      "line_number": 332,
+      "field_annotations": {},
+      "imported_in": [
+        "consumer/ops_ocr_aggregator.py"
+      ]
+    },
+    "ReasonCode": {
+      "defined_in": "consumer/models.py",
+      "bases": [
+        "enum.Enum"
+      ],
+      "line_number": 340,
+      "field_annotations": {},
+      "imported_in": [
+        "consumer/ops_ocr_aggregator.py"
+      ]
+    },
+    "AggregationDebugPayload": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 355,
+      "field_annotations": {
+        "per_roi_decoded": "list[str]",
+        "per_roi_quality": "list[float]",
+        "per_roi_is_enhanced": "list[bool]",
+        "per_roi_group_id": "list[str]",
+        "per_position_top1": "list[float]",
+        "per_position_top2": "list[float]",
+        "per_position_margin": "list[float]",
+        "per_position_top_k_chars": "list[list[str]]",
+        "length_top2_lengths": "tuple[int, int]",
+        "length_top2_probs": "tuple[float, float]",
+        "quality_weights": "list[float]",
+        "overridden_positions": "list[int]",
+        "dup_agree_fired": "bool",
+        "ca_tiebreak_fired": "bool",
+        "h1_win_count": "int",
+        "h2_win_count": "int | None"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_aggregator.py"
+      ]
+    },
+    "AggregationDecision": {
+      "defined_in": "consumer/models.py",
+      "bases": [],
+      "line_number": 380,
+      "field_annotations": {
+        "best_string": "str",
+        "confidence_bucket": "ConfidenceBucket",
+        "done": "bool",
+        "reason_code": "ReasonCode",
+        "h1_string": "str",
+        "h2_string": "str | None",
+        "pass_num": "int",
+        "debug_payload": "AggregationDebugPayload | None"
+      },
+      "imported_in": [
+        "consumer/ops_ocr_aggregator.py",
+        "consumer/ops_parseq.py"
+      ]
+    },
+    "OcrAggregator": {
+      "defined_in": "consumer/ops_ocr_aggregator.py",
+      "bases": [],
+      "line_number": 521,
+      "field_annotations": {},
+      "imported_in": [
+        "consumer/ops_parseq.py"
+      ]
+    },
+    "OcrReadyQueue": {
+      "defined_in": "consumer/ops_ocr_queue.py",
+      "bases": [],
+      "line_number": 118,
+      "field_annotations": {},
+      "imported_in": [
+        "consumer/ops_parseq.py"
+      ]
+    },
+    "ParseqInferenceResult": {
+      "defined_in": "consumer/ops_parseq.py",
+      "bases": [],
+      "line_number": 36,
+      "field_annotations": {
+        "distributions": "np.ndarray",
+        "vocab_chars": "tuple[str, ...]",
+        "eos_index": "int",
+        "max_seq_len": "int",
+        "inference_time_ms": "float"
+      },
+      "imported_in": []
+    },
+    "ParseqEngine": {
+      "defined_in": "consumer/ops_parseq.py",
+      "bases": [],
+      "line_number": 166,
+      "field_annotations": {},
+      "imported_in": [
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py"
+      ]
+    },
+    "OcrWorkerTickResult": {
+      "defined_in": "consumer/ops_parseq.py",
+      "bases": [],
+      "line_number": 413,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "commit_version": "int",
+        "inference_result": "ParseqInferenceResult",
+        "aggregation_decision": "AggregationDecision",
+        "tick_time_ms": "float"
+      },
+      "imported_in": []
+    },
+    "IdPoolState": {
+      "defined_in": "consumer/ops_scheduler.py",
+      "bases": [],
+      "line_number": 13,
+      "field_annotations": {
+        "last_versions": "dict[TrackId, int]"
+      },
+      "imported_in": []
+    },
+    "OcrQueueStats": {
+      "defined_in": "consumer/queue.py",
+      "bases": [],
+      "line_number": 11,
+      "field_annotations": {
+        "capacity": "int",
+        "size": "int"
+      },
+      "imported_in": []
+    },
+    "OcrQueue": {
+      "defined_in": "consumer/queue.py",
+      "bases": [],
+      "line_number": 20,
+      "field_annotations": {},
+      "imported_in": [
+        "consumer/__init__.py"
+      ]
+    },
+    "IdBufferManager": {
+      "defined_in": "producer/buffer.py",
+      "bases": [],
+      "line_number": 23,
+      "field_annotations": {},
+      "imported_in": [
+        "consumer/ops_scheduler.py",
+        "producer/__init__.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "ProducerConfig": {
+      "defined_in": "producer/config.py",
+      "bases": [],
+      "line_number": 10,
+      "field_annotations": {
+        "yolo_model_path": "str",
+        "plate_class_id": "int",
+        "input_size": "tuple[int, int]",
+        "conf_threshold": "float",
+        "iou_threshold": "float",
+        "device": "str",
+        "max_detections": "int",
+        "warmup_runs": "int",
+        "corner_cnn_enabled": "bool",
+        "corner_cnn_model_path": "str",
+        "corner_cnn_input_h": "int",
+        "corner_cnn_input_w": "int",
+        "corner_cnn_confidence_threshold": "float",
+        "corner_cnn_device": "str",
+        "frame_sample_interval_ms": "float",
+        "tracking_alpha": "float",
+        "tracking_beta": "float",
+        "iou_threshold_confirmed": "float",
+        "iou_threshold_tentative": "float",
+        "min_hits": "int",
+        "max_frames_lost": "int",
+        "min_bbox_width": "int",
+        "min_bbox_height": "int",
+        "min_aspect_ratio": "float",
+        "max_aspect_ratio": "float",
+        "max_velocity_change_ratio": "float",
+        "max_velocity_change_abs": "float",
+        "enable_lk_motion": "bool",
+        "lk_max_corners": "int",
+        "lk_quality_level": "float",
+        "lk_min_distance": "int",
+        "lk_win_size": "tuple[int, int]",
+        "lk_max_level": "int",
+        "lk_max_frame_skip": "int",
+        "lk_reenable_delay_frames": "int",
+        "crop_padding_ratio": "float",
+        "crop_padding_min_px": "int",
+        "crop_adaptive_resize_threshold": "int",
+        "crop_min_width": "int",
+        "crop_min_height": "int",
+        "fast_quality_enabled": "bool",
+        "fast_quality_gradient_histogram_bins": "int",
+        "fast_quality_spatial_quadrants": "int",
+        "fast_quality_h_metrics": "int",
+        "fast_quality_w_metrics": "int",
+        "fast_quality_h_thumb": "int",
+        "fast_quality_w_thumb": "int",
+        "fast_quality_focus_min": "float",
+        "fast_quality_contrast_min": "float",
+        "fast_quality_band_edge_min": "float",
+        "fast_quality_bright_min": "float",
+        "fast_quality_bright_max": "float",
+        "fast_quality_over_exposed_max": "float",
+        "fast_quality_under_exposed_max": "float",
+        "fast_quality_bright_target": "float",
+        "fast_quality_bright_tol": "float",
+        "fast_quality_over_threshold": "float",
+        "fast_quality_under_threshold": "float",
+        "fast_quality_band_top_frac": "float",
+        "fast_quality_band_bottom_frac": "float",
+        "fast_quality_focus_good": "float",
+        "fast_quality_contrast_good": "float",
+        "fast_quality_band_edge_good": "float",
+        "fast_quality_w_focus": "float",
+        "fast_quality_w_contrast": "float",
+        "fast_quality_w_band": "float",
+        "fast_quality_w_bright": "float",
+        "fast_quality_w_exposure": "float",
+        "fast_quality_over_weight": "float",
+        "fast_quality_under_weight": "float",
+        "buffer_bin_capacity": "int",
+        "buffer_bootstrap_k_insertions": "int",
+        "buffer_min_quality": "float",
+        "buffer_bootstrap_discount": "float",
+        "buffer_similarity_threshold": "float",
+        "buffer_novelty_weight_pixel": "float",
+        "buffer_novelty_weight_feature": "float",
+        "buffer_quality_margin_similar": "float",
+        "buffer_quality_margin_worst": "float",
+        "buffer_band_edge_min": "float",
+        "pipeline_frame_budget_ms": "float",
+        "pipeline_skip_on_no_detections": "bool",
+        "pipeline_skip_on_no_confirmed": "bool",
+        "pipeline_logging_mode": "LoggingMode",
+        "logging_queue_size": "int",
+        "pipeline_percentile_window_frames": "int",
+        "production_log_path": "str",
+        "debug_log_path": "str",
+        "tuning_log_path": "str",
+        "production_stats_interval_frames": "int",
+        "production_frame_interval": "int",
+        "debug_frame_interval": "int",
+        "debug_stats_interval_frames": "int",
+        "debug_log_detections": "bool",
+        "debug_log_tracks": "bool",
+        "debug_log_quality": "bool",
+        "tuning_frame_interval": "int",
+        "tuning_stats_interval_frames": "int"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/buffer.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_cropping.py",
+        "producer/ops_detection.py",
+        "producer/ops_quality_fast.py",
+        "producer/ops_tracking.py",
+        "producer/pipeline.py",
+        "scripts/build_golden_fixtures.py"
+      ]
+    },
+    "LoggingMode": {
+      "defined_in": "producer/models.py",
+      "bases": [
+        "Enum"
+      ],
+      "line_number": 13,
+      "field_annotations": {},
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/config.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "Detection": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 28,
+      "field_annotations": {
+        "bbox": "list[float]",
+        "confidence": "float",
+        "class_id": "int",
+        "frame_idx": "int",
+        "keypoints": "list[tuple[float, float]] | None",
+        "keypoint_scores": "list[float] | None"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/ops_detection.py",
+        "producer/ops_tracking.py"
+      ]
+    },
+    "DetectionTimings": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 40,
+      "field_annotations": {
+        "prepare_ms": "float",
+        "inference_ms": "float",
+        "postprocess_ms": "float",
+        "total_ms": "float"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/ops_detection.py"
+      ]
+    },
+    "DetectorOutput": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 50,
+      "field_annotations": {
+        "raw_detections": "list[Detection]",
+        "filtered_detections": "list[Detection]",
+        "filter_reasons": "dict[int, str]",
+        "timings": "DetectionTimings",
+        "sampled": "bool"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/ops_detection.py"
+      ]
+    },
+    "Track": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 65,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "confidence": "float",
+        "position": "list[float]",
+        "velocity": "list[float]",
+        "keypoints": "list[tuple[float, float]] | None",
+        "keypoint_scores": "list[float] | None",
+        "age": "int",
+        "hits": "int",
+        "frames_lost": "int",
+        "last_seen_frame": "int"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/ops_cropping.py",
+        "producer/ops_tracking.py"
+      ]
+    },
+    "TrackingTimings": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 108,
+      "field_annotations": {
+        "lk_motion_ms": "float",
+        "prediction_ms": "float",
+        "matching_ms": "float",
+        "update_ms": "float",
+        "cleanup_ms": "float",
+        "total_ms": "float"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/ops_tracking.py"
+      ]
+    },
+    "TrackerOutput": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 120,
+      "field_annotations": {
+        "tracks": "list[Track]",
+        "confirmed_tracks": "list[Track]",
+        "camera_motion": "tuple[float, float]",
+        "timings": "TrackingTimings",
+        "lost_track_ids": "list[TrackId]",
+        "num_tracks_created": "int",
+        "num_tracks_confirmed": "int",
+        "num_tracks_lost": "int"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/ops_tracking.py"
+      ]
+    },
+    "RoiImage": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 136,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "crop_img": "np.ndarray",
+        "bbox": "list[float]",
+        "padded_bbox": "list[float]",
+        "frame_idx": "int",
+        "confidence": "float",
+        "frame_width": "int",
+        "frame_height": "int",
+        "keypoints": "list[tuple[float, float]] | None",
+        "keypoint_scores": "list[float] | None",
+        "was_resized": "bool",
+        "resize_scale": "float",
+        "crop_width": "int",
+        "crop_height": "int"
+      },
+      "imported_in": [
+        "consumer/ops_quality_rich.py",
+        "producer/__init__.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_cropping.py",
+        "producer/ops_quality_fast.py",
+        "scripts/build_golden_fixtures.py",
+        "scripts/golden_crops_generator.py",
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py"
+      ]
+    },
+    "FastQualityMetrics": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 161,
+      "field_annotations": {
+        "focus_tenengrad": "float",
+        "brightness_mean": "float",
+        "contrast_std": "float",
+        "over_exposed_frac": "float",
+        "under_exposed_frac": "float",
+        "band_edge_mean": "float",
+        "gradient_histogram": "np.ndarray"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/ops_quality_fast.py",
+        "scripts/golden_crops_generator.py",
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py"
+      ]
+    },
+    "RoiFastQuality": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 176,
+      "field_annotations": {
+        "roi": "RoiImage",
+        "metrics": "FastQualityMetrics",
+        "quality_score": "float",
+        "passes_min_quality": "bool",
+        "thumb_gray": "np.ndarray"
+      },
+      "imported_in": [
+        "consumer/models.py",
+        "consumer/ops_quality_rich.py",
+        "producer/__init__.py",
+        "producer/buffer.py",
+        "producer/ops_quality_fast.py",
+        "scripts/golden_crops_generator.py",
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py"
+      ]
+    },
+    "IdBin": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 191,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "entries": "list[RoiFastQuality]",
+        "version": "int",
+        "last_update_frame_idx": "int",
+        "successful_insertions": "int",
+        "attempted_insertions": "int"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/buffer.py"
+      ]
+    },
+    "BinSnapshot": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 212,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "version": "int",
+        "entries": "list[RoiFastQuality]",
+        "last_update_frame_idx": "int"
+      },
+      "imported_in": [
+        "consumer/ops_quality_rich.py",
+        "consumer/ops_scheduler.py",
+        "producer/__init__.py",
+        "producer/buffer.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "BufferStats": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 231,
+      "field_annotations": {
+        "track_id": "TrackId",
+        "total_attempts": "int",
+        "quality_gate_drops": "int",
+        "out_of_order_drops": "int",
+        "appends": "int",
+        "replaces": "int",
+        "similarity_drops": "int",
+        "current_bin_size": "int",
+        "current_version": "int"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/buffer.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "PercentileWindow": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 251,
+      "field_annotations": {
+        "maxlen": "int",
+        "values": "deque[float]"
+      },
+      "imported_in": []
+    },
+    "FrameResult": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 301,
+      "field_annotations": {
+        "frame_idx": "int",
+        "timestamp_ms": "int | None",
+        "num_raw_detections": "int",
+        "num_filtered_detections": "int",
+        "num_rejected_detections": "int",
+        "num_active_tracks": "int",
+        "num_confirmed_tracks": "int",
+        "num_crops": "int",
+        "num_quality_passed": "int",
+        "buffer_updates": "int",
+        "detection_ms": "float",
+        "tracking_ms": "float",
+        "cropping_ms": "float",
+        "quality_ms": "float",
+        "buffer_ms": "float",
+        "total_ms": "float",
+        "sampled": "bool",
+        "corner_cnn_ms": "float",
+        "error": "str | None"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "PipelineStats": {
+      "defined_in": "producer/models.py",
+      "bases": [],
+      "line_number": 337,
+      "field_annotations": {
+        "total_frames_received": "int",
+        "total_frames_sampled": "int",
+        "total_frames_skipped": "int",
+        "total_raw_detections": "int",
+        "total_valid_detections": "int",
+        "total_filtered_detections": "int",
+        "total_tracks_created": "int",
+        "total_tracks_confirmed": "int",
+        "total_tracks_lost": "int",
+        "total_crop_attempts": "int",
+        "total_crop_successes": "int",
+        "total_crop_failures": "int",
+        "total_quality_analyzed": "int",
+        "total_quality_passed": "int",
+        "total_quality_failed": "int",
+        "total_buffer_insertions": "int",
+        "total_buffer_drops": "int",
+        "avg_frame_ms": "float",
+        "max_frame_ms": "float",
+        "min_frame_ms": "float",
+        "frames_over_budget": "int",
+        "avg_detection_ms": "float",
+        "avg_tracking_ms": "float",
+        "avg_cropping_ms": "float",
+        "avg_quality_ms": "float",
+        "avg_buffer_ms": "float",
+        "avg_corner_cnn_ms": "float",
+        "total_corner_cnn_analyzed": "int",
+        "total_errors": "int",
+        "last_error": "str | None",
+        "last_error_frame": "int",
+        "_windows": "dict[str, PercentileWindow]",
+        "_window_size": "int"
+      },
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "CornerCnnOutput": {
+      "defined_in": "producer/ops_corner_cnn.py",
+      "bases": [],
+      "line_number": 43,
+      "field_annotations": {
+        "corners": "list[tuple[float, float]] | None",
+        "corner_confidences": "list[float] | None"
+      },
+      "imported_in": []
+    },
+    "CornerCnnPredictor": {
+      "defined_in": "producer/ops_corner_cnn.py",
+      "bases": [],
+      "line_number": 56,
+      "field_annotations": {},
+      "imported_in": [
+        "producer/pipeline.py"
+      ]
+    },
+    "FrameSampler": {
+      "defined_in": "producer/ops_detection.py",
+      "bases": [],
+      "line_number": 26,
+      "field_annotations": {},
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "YoloDetector": {
+      "defined_in": "producer/ops_detection.py",
+      "bases": [],
+      "line_number": 41,
+      "field_annotations": {},
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "PlateTracker": {
+      "defined_in": "producer/ops_tracking.py",
+      "bases": [],
+      "line_number": 492,
+      "field_annotations": {},
+      "imported_in": [
+        "producer/__init__.py",
+        "producer/pipeline.py"
+      ]
+    },
+    "NonBlockingQueueHandler": {
+      "defined_in": "producer/pipeline.py",
+      "bases": [
+        "logging.handlers.QueueHandler"
+      ],
+      "line_number": 34,
+      "field_annotations": {},
+      "imported_in": []
+    },
+    "JSONLFormatter": {
+      "defined_in": "producer/pipeline.py",
+      "bases": [
+        "logging.Formatter"
+      ],
+      "line_number": 63,
+      "field_annotations": {},
+      "imported_in": []
+    },
+    "ProducerPipeline": {
+      "defined_in": "producer/pipeline.py",
+      "bases": [],
+      "line_number": 266,
+      "field_annotations": {},
+      "imported_in": [
+        "producer/__init__.py"
+      ]
+    },
+    "AnnotationState": {
+      "defined_in": "tools/corner_annotator/annotate.py",
+      "bases": [],
+      "line_number": 136,
+      "field_annotations": {},
+      "imported_in": []
+    },
+    "AugmentationPhase": {
+      "defined_in": "training/efficientnet_b3/config.py",
+      "bases": [
+        "IntEnum"
+      ],
+      "line_number": 7,
+      "field_annotations": {},
+      "imported_in": [
+        "training/augmentations.py",
+        "training/dataset.py",
+        "training/train.py",
+        "training/efficientnet_b3/train.py",
+        "training/regression/dataset.py",
+        "training/regression/train.py",
+        "training/regression/train_ema.py",
+        "training/regression/train_progressive.py",
+        "training/regression/production/train.py",
+        "training/regression/stride2/run.py",
+        "training/regression/variance/train.py"
+      ]
+    },
+    "TrainingConfig": {
+      "defined_in": "training/efficientnet_b3/config.py",
+      "bases": [],
+      "line_number": 16,
+      "field_annotations": {
+        "input_h": "int",
+        "input_w": "int",
+        "pad_color": "tuple[int, int, int]",
+        "stride": "int",
+        "gaussian_sigma": "float",
+        "gaussian_floor": "float",
+        "sigma_schedule": "list[tuple[int, float]] | None",
+        "focal_alpha": "float",
+        "focal_beta": "float",
+        "lambda_offset": "float",
+        "base_lr": "float",
+        "encoder_lr_mult": "float",
+        "weight_decay": "float",
+        "warmup_epochs": "int",
+        "warmup_start_lr": "float",
+        "batch_size": "int",
+        "total_epochs": "int",
+        "grad_clip_max_norm": "float",
+        "device": "str",
+        "freeze_min_epochs": "int",
+        "freeze_max_epochs": "int",
+        "stagnation_window": "int",
+        "stagnation_threshold": "float",
+        "early_stopping_patience": "int",
+        "phase3_pck_threshold": "float",
+        "phase3_sustain_epochs": "int",
+        "hem_weight_floor": "float",
+        "hem_weight_ceiling": "float",
+        "confidence_threshold": "float",
+        "checkpoint_interval": "int",
+        "checkpoint_dir": "str",
+        "vis_interval": "int",
+        "config_poll_interval": "int",
+        "config_override_path": "str",
+        "data_dir": "str",
+        "annotations_path": "str",
+        "split_path": "str",
+        "lighting_labels_path": "str",
+        "wandb_project": "str",
+        "wandb_enabled": "bool",
+        "aug_hflip_prob": "float",
+        "aug_brightness_range": "float",
+        "aug_brightness_prob": "float",
+        "aug_contrast_range": "float",
+        "aug_contrast_prob": "float",
+        "aug_saturation_range": "float",
+        "aug_saturation_prob": "float",
+        "aug_rotation_range_p2": "float",
+        "aug_rotation_prob_p2": "float",
+        "aug_scale_range_p2": "tuple[float, float]",
+        "aug_scale_prob_p2": "float",
+        "aug_noise_sigma_p2": "tuple[float, float]",
+        "aug_noise_prob_p2": "float",
+        "aug_rotation_range_p3": "float",
+        "aug_rotation_prob_p3": "float",
+        "aug_perspective_range": "float",
+        "aug_perspective_prob": "float",
+        "aug_motion_blur_range": "tuple[int, int]",
+        "aug_motion_blur_prob": "float",
+        "aug_gaussian_blur_sigma": "tuple[float, float]",
+        "aug_gaussian_blur_prob": "float",
+        "aug_heavy_brightness_range": "float",
+        "aug_heavy_brightness_prob": "float",
+        "aug_gamma_range": "tuple[float, float]",
+        "aug_jpeg_quality_range": "tuple[int, int]",
+        "aug_jpeg_prob": "float",
+        "aug_heavy_noise_sigma": "tuple[float, float]",
+        "aug_heavy_noise_prob": "float",
+        "aug_occlusion_area_range": "tuple[float, float]",
+        "aug_occlusion_prob": "float",
+        "aug_scale_range_p3": "tuple[float, float]",
+        "aug_scale_prob_p3": "float",
+        "aug_night_brightness": "tuple[float, float]",
+        "aug_night_gamma": "tuple[float, float]",
+        "aug_night_noise_sigma": "tuple[float, float]",
+        "aug_night_prob": "float",
+        "aug_delay_after_unfreeze": "int",
+        "aug_ramp_epochs": "int"
+      },
+      "imported_in": [
+        "training/augmentations.py",
+        "training/dataset.py",
+        "training/evaluate.py",
+        "training/model.py",
+        "training/train.py",
+        "training/efficientnet_b3/model.py",
+        "training/efficientnet_b3/train.py"
+      ]
+    },
+    "PlateCornerDataset": {
+      "defined_in": "training/dataset.py",
+      "bases": [
+        "Dataset"
+      ],
+      "line_number": 223,
+      "field_annotations": {},
+      "imported_in": [
+        "training/train.py",
+        "training/efficientnet_b3/train.py"
+      ]
+    },
+    "CornerHeatmapNet": {
+      "defined_in": "training/efficientnet_b3/model.py",
+      "bases": [
+        "nn.Module"
+      ],
+      "line_number": 17,
+      "field_annotations": {},
+      "imported_in": [
+        "training/train.py",
+        "training/efficientnet_b3/train.py"
+      ]
+    },
+    "RegressionConfig": {
+      "defined_in": "training/regression/config.py",
+      "bases": [],
+      "line_number": 9,
+      "field_annotations": {
+        "input_h": "int",
+        "input_w": "int",
+        "pad_color": "tuple[int, int, int]",
+        "stride": "int",
+        "wing_w": "float",
+        "wing_epsilon": "float",
+        "attention_temperature": "float",
+        "base_lr": "float",
+        "encoder_lr_mult": "float",
+        "weight_decay": "float",
+        "warmup_epochs": "int",
+        "warmup_start_lr": "float",
+        "batch_size": "int",
+        "total_epochs": "int",
+        "grad_clip_max_norm": "float",
+        "device": "str",
+        "freeze_min_epochs": "int",
+        "freeze_max_epochs": "int",
+        "stagnation_window": "int",
+        "stagnation_threshold": "float",
+        "early_stopping_patience": "int",
+        "phase3_pck_threshold": "float",
+        "phase3_sustain_epochs": "int",
+        "hem_weight_floor": "float",
+        "hem_weight_ceiling": "float",
+        "confidence_threshold": "float",
+        "checkpoint_interval": "int",
+        "checkpoint_dir": "str",
+        "vis_interval": "int",
+        "config_poll_interval": "int",
+        "config_override_path": "str",
+        "data_dir": "str",
+        "annotations_path": "str",
+        "split_path": "str",
+        "lighting_labels_path": "str",
+        "wandb_project": "str",
+        "wandb_enabled": "bool",
+        "aug_hflip_prob": "float",
+        "aug_brightness_range": "float",
+        "aug_brightness_prob": "float",
+        "aug_contrast_range": "float",
+        "aug_contrast_prob": "float",
+        "aug_saturation_range": "float",
+        "aug_saturation_prob": "float",
+        "aug_rotation_range_p2": "float",
+        "aug_rotation_prob_p2": "float",
+        "aug_scale_range_p2": "tuple[float, float]",
+        "aug_scale_prob_p2": "float",
+        "aug_noise_sigma_p2": "tuple[float, float]",
+        "aug_noise_prob_p2": "float",
+        "aug_rotation_range_p3": "float",
+        "aug_rotation_prob_p3": "float",
+        "aug_perspective_range": "float",
+        "aug_perspective_prob": "float",
+        "aug_motion_blur_range": "tuple[int, int]",
+        "aug_motion_blur_prob": "float",
+        "aug_gaussian_blur_sigma": "tuple[float, float]",
+        "aug_gaussian_blur_prob": "float",
+        "aug_heavy_brightness_range": "float",
+        "aug_heavy_brightness_prob": "float",
+        "aug_gamma_range": "tuple[float, float]",
+        "aug_jpeg_quality_range": "tuple[int, int]",
+        "aug_jpeg_prob": "float",
+        "aug_heavy_noise_sigma": "tuple[float, float]",
+        "aug_heavy_noise_prob": "float",
+        "aug_occlusion_area_range": "tuple[float, float]",
+        "aug_occlusion_prob": "float",
+        "aug_scale_range_p3": "tuple[float, float]",
+        "aug_scale_prob_p3": "float",
+        "aug_night_brightness": "tuple[float, float]",
+        "aug_night_gamma": "tuple[float, float]",
+        "aug_night_noise_sigma": "tuple[float, float]",
+        "aug_night_prob": "float",
+        "aug_shadow_prob": "float",
+        "aug_shadow_alpha_range": "tuple[float, float]",
+        "aug_glare_prob": "float",
+        "aug_glare_alpha_range": "tuple[float, float]",
+        "aug_color_temp_prob": "float",
+        "aug_color_temp_a_range": "float",
+        "aug_color_temp_b_range": "float",
+        "aug_defocus_prob": "float",
+        "aug_defocus_sigma": "tuple[float, float]",
+        "aug_directional_blur_prob": "float",
+        "aug_directional_blur_kernel": "tuple[int, int]",
+        "aug_poisson_prob": "float",
+        "aug_poisson_peak_range": "tuple[float, float]",
+        "aug_sensor_banding_prob": "float",
+        "aug_sensor_banding_intensity": "tuple[float, float]",
+        "aug_delay_after_unfreeze": "int",
+        "aug_ramp_epochs": "int"
+      },
+      "imported_in": [
+        "training/regression/model.py",
+        "training/regression/run_wingloss_progressive.py",
+        "training/regression/run_wingloss_tight.py",
+        "training/regression/train.py",
+        "training/regression/train_ema.py",
+        "training/regression/train_progressive.py",
+        "training/regression/production/config.py",
+        "training/regression/stride2/model.py",
+        "training/regression/stride2/run.py",
+        "training/regression/variance/model.py",
+        "training/regression/variance/report.py",
+        "training/regression/variance/train.py"
+      ]
+    },
+    "PlateCornerRegressionDataset": {
+      "defined_in": "training/regression/dataset.py",
+      "bases": [
+        "Dataset"
+      ],
+      "line_number": 83,
+      "field_annotations": {},
+      "imported_in": [
+        "training/regression/train.py",
+        "training/regression/train_ema.py",
+        "training/regression/train_progressive.py",
+        "training/regression/stride2/run.py",
+        "training/regression/variance/report.py",
+        "training/regression/variance/train.py"
+      ]
+    },
+    "ModelEMA": {
+      "defined_in": "training/regression/production/train.py",
+      "bases": [],
+      "line_number": 69,
+      "field_annotations": {},
+      "imported_in": [
+        "training/regression/train_ema.py"
+      ]
+    },
+    "CornerRegressionNet": {
+      "defined_in": "training/regression/model.py",
+      "bases": [
+        "nn.Module"
+      ],
+      "line_number": 26,
+      "field_annotations": {
+        "x_grid": "Tensor",
+        "y_grid": "Tensor"
+      },
+      "imported_in": [
+        "training/regression/evaluate.py",
+        "training/regression/train.py",
+        "training/regression/train_ema.py",
+        "training/regression/train_progressive.py",
+        "training/regression/variance/report.py"
+      ]
+    },
+    "ProductionConfig": {
+      "defined_in": "training/regression/production/config.py",
+      "bases": [
+        "RegressionConfig"
+      ],
+      "line_number": 11,
+      "field_annotations": {
+        "ema_enabled": "bool",
+        "ema_decay": "float",
+        "synthetic_data_dir": "str",
+        "synthetic_annotations_path": "str",
+        "synthetic_ratio": "float"
+      },
+      "imported_in": [
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py",
+        "training/regression/production/model.py",
+        "training/regression/production/run_stride2.py",
+        "training/regression/production/run_stride4.py",
+        "training/regression/production/train.py"
+      ]
+    },
+    "ProductionCornerNet": {
+      "defined_in": "training/regression/production/model.py",
+      "bases": [
+        "nn.Module"
+      ],
+      "line_number": 26,
+      "field_annotations": {
+        "x_grid": "Tensor",
+        "y_grid": "Tensor"
+      },
+      "imported_in": [
+        "scripts/run_golden_comparison_grid.py",
+        "scripts/run_golden_ocr_pipeline.py",
+        "scripts/run_golden_parseq.py",
+        "scripts/sweep_photometric_parseq.py",
+        "training/regression/production/train.py"
+      ]
+    },
+    "ProductionDataset": {
+      "defined_in": "training/regression/production/train.py",
+      "bases": [
+        "Dataset"
+      ],
+      "line_number": 93,
+      "field_annotations": {},
+      "imported_in": []
+    },
+    "CornerRegressionNetS2": {
+      "defined_in": "training/regression/stride2/model.py",
+      "bases": [
+        "nn.Module"
+      ],
+      "line_number": 32,
+      "field_annotations": {
+        "x_grid": "Tensor",
+        "y_grid": "Tensor"
+      },
+      "imported_in": [
+        "training/regression/stride2/run.py"
+      ]
+    },
+    "CornerRegressionNetWithVariance": {
+      "defined_in": "training/regression/variance/model.py",
+      "bases": [
+        "nn.Module"
+      ],
+      "line_number": 26,
+      "field_annotations": {
+        "x_grid": "Tensor",
+        "y_grid": "Tensor"
+      },
+      "imported_in": [
+        "training/regression/variance/evaluate.py",
+        "training/regression/variance/report.py",
+        "training/regression/variance/train.py"
+      ]
+    },
+    "YoloTrainingConfig": {
+      "defined_in": "training/yolo/config.py",
+      "bases": [],
+      "line_number": 63,
+      "field_annotations": {
+        "data_yaml": "str",
+        "checkpoint_path": "str",
+        "project_dir": "str",
+        "run_name": "str",
+        "epochs": "int",
+        "batch_size": "int",
+        "imgsz": "int",
+        "device": "str",
+        "optimizer": "str",
+        "lr0": "float",
+        "lrf": "float",
+        "warmup_epochs": "float",
+        "patience": "int",
+        "weight_decay": "float",
+        "cos_lr": "bool",
+        "seed": "int",
+        "workers": "int",
+        "warm_end": "float",
+        "peak_start": "float",
+        "refine_start": "float",
+        "refine_floor": "float",
+        "warm_aug": "dict[str, float]",
+        "ramp_aug": "dict[str, float]",
+        "refine_aug": "dict[str, float]",
+        "drone_aug_enabled": "bool",
+        "drone_affine_shear_x": "tuple[int, int]",
+        "drone_affine_shear_y": "tuple[int, int]",
+        "drone_affine_rotate": "tuple[int, int]",
+        "drone_affine_prob": "float",
+        "drone_perspective_limit": "float",
+        "drone_perspective_prob": "float",
+        "drone_scale_limit": "float",
+        "drone_scale_prob": "float",
+        "drone_occlusion_max_holes": "int",
+        "drone_occlusion_max_h_frac": "float",
+        "drone_occlusion_max_w_frac": "float",
+        "drone_occlusion_prob": "float",
+        "drone_distortion_limit": "float",
+        "drone_distortion_prob": "float",
+        "drone_motion_blur_limit": "int",
+        "drone_motion_blur_prob": "float",
+        "drone_defocus_radius": "tuple[int, int]",
+        "drone_defocus_prob": "float",
+        "drone_noise_var_limit": "tuple[float, float]",
+        "drone_noise_prob": "float",
+        "drone_compression_quality": "tuple[int, int]",
+        "drone_compression_prob": "float",
+        "drone_fog_coef": "tuple[float, float]",
+        "drone_fog_prob": "float",
+        "drone_brightness_limit": "float",
+        "drone_brightness_prob": "float",
+        "mining_enabled": "bool",
+        "mining_min_epoch": "int",
+        "mining_interval": "int",
+        "mining_top_fraction": "float",
+        "mining_oversample_factor": "float",
+        "freeze_backbone": "bool",
+        "freeze_layers": "int",
+        "freeze_epochs": "int",
+        "wandb_enabled": "bool",
+        "wandb_project": "str",
+        "export_onnx": "bool",
+        "export_trt": "bool",
+        "export_half": "bool"
+      },
+      "imported_in": [
+        "training/yolo/curriculum.py",
+        "training/yolo/drone_augmentations.py",
+        "training/yolo/export.py",
+        "training/yolo/run_experiments.py",
+        "training/yolo/train.py",
+        "training/yolo/trainer.py"
+      ]
+    },
+    "CurriculumScheduler": {
+      "defined_in": "training/yolo/curriculum.py",
+      "bases": [],
+      "line_number": 26,
+      "field_annotations": {},
+      "imported_in": [
+        "training/yolo/run_experiments.py",
+        "training/yolo/train.py"
+      ]
+    },
+    "YOLOWeightedDataset": {
+      "defined_in": "training/yolo/dataset.py",
+      "bases": [
+        "YOLODataset"
+      ],
+      "line_number": 18,
+      "field_annotations": {},
+      "imported_in": [
+        "training/yolo/trainer.py"
+      ]
+    },
+    "HardNegativeMiner": {
+      "defined_in": "training/yolo/mining.py",
+      "bases": [],
+      "line_number": 21,
+      "field_annotations": {},
+      "imported_in": [
+        "training/yolo/run_experiments.py",
+        "training/yolo/train.py"
+      ]
+    },
+    "LPRDetectionTrainer": {
+      "defined_in": "training/yolo/trainer.py",
+      "bases": [
+        "DetectionTrainer"
+      ],
+      "line_number": 27,
+      "field_annotations": {},
+      "imported_in": [
+        "training/yolo/run_experiments.py",
+        "training/yolo/train.py"
+      ]
+    }
+  },
+  "total_classes": 73,
+  "total_modules": 97,
+  "cross_module_types": 63
+}

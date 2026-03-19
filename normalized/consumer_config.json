@@ -1,0 +1,519 @@
+{
+  "class_name": "ConsumerConfig",
+  "source_file": "consumer/config.py",
+  "fields": {
+    "max_batch_size": {
+      "type": "int",
+      "default": "8"
+    },
+    "ocr_score_weight_sharpness": {
+      "type": "float",
+      "default": "0.35"
+    },
+    "ocr_score_weight_size": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "ocr_score_weight_contrast": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "ocr_score_weight_exposure": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "ocr_score_weight_noise": {
+      "type": "float",
+      "default": "0.05"
+    },
+    "ocr_score_weight_detection": {
+      "type": "float",
+      "default": "0.02"
+    },
+    "plate_height_ideal": {
+      "type": "int",
+      "default": "100"
+    },
+    "tenengrad_ideal": {
+      "type": "float",
+      "default": "5000.0"
+    },
+    "batch_tenengrad_floor": {
+      "type": "float",
+      "default": "0.0"
+    },
+    "batch_enable_signal_floors": {
+      "type": "bool",
+      "default": "False"
+    },
+    "max_enhance_duplicates": {
+      "type": "int",
+      "default": "4"
+    },
+    "enhance_upside_weight_contrast": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "enhance_upside_weight_exposure": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "enhance_upside_weight_sharpness": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "enhance_upside_weight_noise": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "enhance_excellence_threshold": {
+      "type": "float",
+      "default": "0.85"
+    },
+    "enable_batch_selection_logging": {
+      "type": "bool",
+      "default": "True"
+    },
+    "commit_margin": {
+      "type": "float",
+      "default": "0.04"
+    },
+    "enable_staleness": {
+      "type": "bool",
+      "default": "True"
+    },
+    "max_staleness_ms": {
+      "type": "int",
+      "default": "1200"
+    },
+    "stale_min_score": {
+      "type": "float",
+      "default": "0.55"
+    },
+    "diversity_weight_skew": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "diversity_weight_quad": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "diversity_weight_persp": {
+      "type": "float",
+      "default": "0.1"
+    },
+    "diversity_weight_scale": {
+      "type": "float",
+      "default": "0.1"
+    },
+    "diversity_min_distance": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "diversity_quad_jitter_threshold": {
+      "type": "float",
+      "default": "0.05"
+    },
+    "anchor_min_pose_distance": {
+      "type": "float",
+      "default": "0.07"
+    },
+    "rich_quality_enabled": {
+      "type": "bool",
+      "default": "True"
+    },
+    "canonical_crop_width": {
+      "type": "int",
+      "default": "256"
+    },
+    "canonical_crop_height": {
+      "type": "int",
+      "default": "128"
+    },
+    "plate_height_min_px": {
+      "type": "int",
+      "default": "40"
+    },
+    "crop_clip_fraction_max": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "keypoint_confidence_min_threshold": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "quad_area_min_px": {
+      "type": "float",
+      "default": "1000.0"
+    },
+    "edge_ratio_max": {
+      "type": "float",
+      "default": "6.0"
+    },
+    "aspect_ratio_min": {
+      "type": "float",
+      "default": "1.3"
+    },
+    "aspect_ratio_max": {
+      "type": "float",
+      "default": "4.0"
+    },
+    "luminance_mean_min": {
+      "type": "float",
+      "default": "40.0"
+    },
+    "luminance_mean_max": {
+      "type": "float",
+      "default": "220.0"
+    },
+    "black_clip_fraction_max": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "white_clip_fraction_max": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "white_clip_hard_max": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "white_clip_enhance_max": {
+      "type": "float",
+      "default": "0.1"
+    },
+    "luminance_black_threshold": {
+      "type": "int",
+      "default": "5"
+    },
+    "luminance_white_threshold": {
+      "type": "int",
+      "default": "250"
+    },
+    "global_contrast_min": {
+      "type": "float",
+      "default": "30.0"
+    },
+    "local_contrast_min": {
+      "type": "float",
+      "default": "8.0"
+    },
+    "local_contrast_min_pixels_per_tile": {
+      "type": "int",
+      "default": "10"
+    },
+    "tenengrad_floor": {
+      "type": "float",
+      "default": "500.0"
+    },
+    "tenengrad_good": {
+      "type": "float",
+      "default": "3000.0"
+    },
+    "noise_std_max": {
+      "type": "float",
+      "default": "12.0"
+    },
+    "tenengrad_h_floor": {
+      "type": "float",
+      "default": "500.0"
+    },
+    "tenengrad_v_floor": {
+      "type": "float",
+      "default": "50.0"
+    },
+    "flat_region_var_threshold": {
+      "type": "float",
+      "default": "100.0"
+    },
+    "flat_region_min_pixels": {
+      "type": "int",
+      "default": "100"
+    },
+    "target_luma": {
+      "type": "float",
+      "default": "128.0"
+    },
+    "target_contrast": {
+      "type": "float",
+      "default": "60.0"
+    },
+    "target_sharpness": {
+      "type": "float",
+      "default": "3000.0"
+    },
+    "target_noise_max": {
+      "type": "float",
+      "default": "12.0"
+    },
+    "luma_range": {
+      "type": "float",
+      "default": "255.0"
+    },
+    "k_gain": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "k_gamma": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "k_contrast": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "k_denoise": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "k_sharpen": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "gain_min": {
+      "type": "float",
+      "default": "0.75"
+    },
+    "gain_max": {
+      "type": "float",
+      "default": "1.25"
+    },
+    "gamma_min": {
+      "type": "float",
+      "default": "0.7"
+    },
+    "gamma_max": {
+      "type": "float",
+      "default": "1.5"
+    },
+    "contrast_max": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "denoise_max": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "sharpen_max": {
+      "type": "float",
+      "default": "0.35"
+    },
+    "clahe_blend_max": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "clahe_clip_min": {
+      "type": "float",
+      "default": "1.5"
+    },
+    "clahe_clip_max": {
+      "type": "float",
+      "default": "4.0"
+    },
+    "clahe_tiles_min": {
+      "type": "int",
+      "default": "6"
+    },
+    "clahe_tiles_max": {
+      "type": "int",
+      "default": "12"
+    },
+    "clahe_max_white_clip": {
+      "type": "float",
+      "default": "0.1"
+    },
+    "clahe_min_sharpness": {
+      "type": "float",
+      "default": "500.0"
+    },
+    "warp_margin": {
+      "type": "float",
+      "default": "0.04"
+    },
+    "recipe_output_width": {
+      "type": "int",
+      "default": "128"
+    },
+    "recipe_output_height": {
+      "type": "int",
+      "default": "32"
+    },
+    "contrast_steepness": {
+      "type": "float",
+      "default": "10.0"
+    },
+    "agg_quality_q0": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "agg_quality_k": {
+      "type": "float",
+      "default": "2.0"
+    },
+    "agg_quality_beta": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "agg_quality_w_cap": {
+      "type": "float",
+      "default": "1.3"
+    },
+    "agg_eps": {
+      "type": "float",
+      "default": "1e-10"
+    },
+    "agg_lambda_len": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "agg_max_positions": {
+      "type": "int",
+      "default": "9"
+    },
+    "agg_delta_agree_override": {
+      "type": "float",
+      "default": "0.06"
+    },
+    "agg_pair_agree_min_p1": {
+      "type": "float",
+      "default": "0.6"
+    },
+    "agg_allowed_chars": {
+      "type": "str",
+      "default": "'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'"
+    },
+    "agg_alpha_char": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "agg_alpha_len": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "agg_stale_passes": {
+      "type": "int",
+      "default": "3"
+    },
+    "agg_replace_margin": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "agg_core_confusion_pairs": {
+      "type": "tuple[tuple[str, str], ...]",
+      "default": "(('O', '0'), ('Q', '0'), ('D', '0'), ('B', '8'), ('Z', '7'), ('I', '1'), ('S', '5'), ('G', '6'))"
+    },
+    "agg_extended_confusion_pairs": {
+      "type": "tuple[tuple[str, str], ...]",
+      "default": "(('2', 'Z'), ('T', '7'), ('J', '1'), ('5', '2'), ('E', 'F'), ('L', 'T'), ('A', '4'), ('V', 'Y'), ('M', 'W'))"
+    },
+    "agg_confusion_margin_high": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "agg_high_mean_p1": {
+      "type": "float",
+      "default": "0.9"
+    },
+    "agg_high_min_margin": {
+      "type": "float",
+      "default": "0.1"
+    },
+    "agg_med_mean_p1": {
+      "type": "float",
+      "default": "0.75"
+    },
+    "agg_med_mean_margin": {
+      "type": "float",
+      "default": "0.05"
+    },
+    "agg_onepass_len_prob": {
+      "type": "float",
+      "default": "0.7"
+    },
+    "agg_onepass_min_p1": {
+      "type": "float",
+      "default": "0.9"
+    },
+    "agg_onepass_min_margin": {
+      "type": "float",
+      "default": "0.12"
+    },
+    "agg_onepass_confusion_margin": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "agg_multipass_min_wins": {
+      "type": "int",
+      "default": "2"
+    },
+    "agg_hyp_gap_done": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "agg_tie_score": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "agg_enable_debug_payload": {
+      "type": "bool",
+      "default": "False"
+    },
+    "ocr_queue_capacity": {
+      "type": "int",
+      "default": "64"
+    },
+    "max_done_metrics": {
+      "type": "int",
+      "default": "10000"
+    },
+    "in_flight_timeout_ms": {
+      "type": "int",
+      "default": "30000"
+    },
+    "parseq_model_path": {
+      "type": "str",
+      "default": "'models/parseq.pt'"
+    },
+    "parseq_warmup_runs": {
+      "type": "int",
+      "default": "3"
+    },
+    "parseq_max_batch_size": {
+      "type": "int",
+      "default": "12"
+    },
+    "parseq_device": {
+      "type": "str",
+      "default": "'cuda:0'"
+    },
+    "parseq_allowed_chars": {
+      "type": "str",
+      "default": "'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'"
+    },
+    "parseq_vocab_path": {
+      "type": "str",
+      "default": "'models/parseq_vocab.txt'"
+    },
+    "parseq_temperature": {
+      "type": "float",
+      "default": "1.2"
+    },
+    "parseq_normalize_input": {
+      "type": "bool",
+      "default": "True"
+    },
+    "parseq_norm_mean": {
+      "type": "tuple[float, float, float]",
+      "default": "(0.485, 0.456, 0.406)"
+    },
+    "parseq_norm_std": {
+      "type": "tuple[float, float, float]",
+      "default": "(0.229, 0.224, 0.225)"
+    },
+    "parseq_max_plate_chars": {
+      "type": "int",
+      "default": "8"
+    }
+  },
+  "field_count": 128
+}

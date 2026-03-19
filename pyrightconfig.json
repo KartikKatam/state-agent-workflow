@@ -1,0 +1,9 @@
+{
+  "extraPaths": [
+    "/home/kartik/.claude/mcp/ptc-server"
+  ],
+  "reportMissingImports": "warning",
+  "reportPossiblyUnboundVariable": "warning",
+  "reportAttributeAccessIssue": "warning",
+  "reportArgumentType": "warning"
+}

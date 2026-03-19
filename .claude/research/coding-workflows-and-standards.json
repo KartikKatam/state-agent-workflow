@@ -1,0 +1,786 @@
+{
+  "research_metadata": {
+    "topic": "Popular coding workflows, coding style/structure documentation practices, and developer workflow repositories",
+    "date": "2026-02-28",
+    "search_queries_executed": 24,
+    "web_pages_fetched": 12,
+    "confidence": 0.95
+  },
+
+  "section_1_ai_instruction_files": {
+    "title": "AI Agent Instruction Files (Emerging Standard)",
+    "summary": "The pattern of providing AI coding agents with project-specific instruction files has become a major trend in 2025-2026. Three major formats have emerged: CLAUDE.md, .cursorrules/.cursor/rules, and .github/copilot-instructions.md. A unification effort (amplified.dev, aicodingrules.org) is underway.",
+
+    "claude_md": {
+      "description": "Special file read by Claude Code at start of every conversation. Provides persistent context about project conventions.",
+      "official_docs": "https://code.claude.com/docs/en/best-practices",
+      "best_practices_sources": [
+        "https://claude.com/blog/using-claude-md-files",
+        "https://www.builder.io/blog/claude-md-guide",
+        "https://dometrain.com/blog/creating-the-perfect-claudemd-for-claude-code/",
+        "https://www.humanlayer.dev/blog/writing-a-good-claude-md"
+      ],
+      "recommended_sections": [
+        "Project context/overview (1-liner about what the project is)",
+        "Code style guidelines (formatting, conventions differing from defaults)",
+        "Commands (build, test, lint, deploy)",
+        "Architecture & directory structure",
+        "Important notes & gotchas",
+        "Workflow rules (branching, PR conventions)",
+        "Developer environment quirks (required env vars)"
+      ],
+      "what_to_include": [
+        "Bash commands Claude can't guess",
+        "Code style rules that differ from defaults",
+        "Testing instructions and preferred test runners",
+        "Repository etiquette (branch naming, PR conventions)",
+        "Architectural decisions specific to your project",
+        "Developer environment quirks (required env vars)",
+        "Common gotchas or non-obvious behaviors"
+      ],
+      "what_to_exclude": [
+        "Anything Claude can figure out by reading code",
+        "Standard language conventions Claude already knows",
+        "Detailed API documentation (link to docs instead)",
+        "Information that changes frequently",
+        "Long explanations or tutorials",
+        "File-by-file descriptions of the codebase",
+        "Self-evident practices like 'write clean code'"
+      ],
+      "size_guidelines": "Under 150-300 lines. Shorter is better. Every line should answer: 'Would removing this cause Claude to make mistakes?'",
+      "file_locations": [
+        "~/.claude/CLAUDE.md (global, all sessions)",
+        "./CLAUDE.md (project root, shared via git)",
+        "./CLAUDE.local.md (local, gitignored)",
+        "Parent directories (monorepo pattern)",
+        "Child directories (on-demand loading)"
+      ],
+      "advanced_features": {
+        "imports": "@path/to/file syntax to reference other files",
+        "skills": ".claude/skills/ directories with SKILL.md for on-demand knowledge",
+        "subagents": ".claude/agents/ for specialized assistants with isolated context",
+        "hooks": "Deterministic scripts at lifecycle events (PreToolUse, PostToolUse, etc.)"
+      },
+      "example_repos": [
+        {
+          "name": "shanraisshan/claude-code-best-practice",
+          "url": "https://github.com/shanraisshan/claude-code-best-practice",
+          "notes": "Example CLAUDE.md with Weather System, Skill Definitions, Hooks. Recommends <150 lines."
+        },
+        {
+          "name": "ChrisWiles/claude-code-showcase",
+          "url": "https://github.com/ChrisWiles/claude-code-showcase",
+          "notes": "Comprehensive .claude/ directory: hooks, skills, agents, commands, GitHub Actions."
+        },
+        {
+          "name": "ArthurClune/claude-md-examples",
+          "url": "https://github.com/ArthurClune/claude-md-examples",
+          "notes": "Collection of CLAUDE.md examples for different project types."
+        }
+      ]
+    },
+
+    "cursorrules": {
+      "description": "Configuration files (.cursorrules or .cursor/rules/*.mdc) that enhance Cursor AI editor with custom rules and behaviors.",
+      "format": "Markdown with YAML frontmatter (description, globs, alwaysApply)",
+      "best_practices_sources": [
+        "https://github.com/PatrickJS/awesome-cursorrules",
+        "https://dotcursorrules.com/",
+        "https://docs.cursor.com/context/rules-for-ai"
+      ],
+      "recommended_content": [
+        "Planning and context instructions (understand system before coding)",
+        "Code quality standards (bullet plan before execution, no unnecessary logic)",
+        "Error handling conventions (guard clauses, early returns)",
+        "Framework/library-specific patterns",
+        "Testing conventions"
+      ],
+      "key_patterns": [
+        "Keep rules under 500 lines",
+        "Use .cursor/*.mdc files for composable rules (reduces token usage)",
+        "Give rules concrete names and descriptions",
+        "Use examples and code snippets",
+        "Be specific and actionable, not vague",
+        "Legacy .cursorrules still supported but deprecated in favor of .cursor/rules/"
+      ],
+      "popular_categories": [
+        "Frontend: React, Vue, Next.js, Angular, Svelte, Astro",
+        "Backend: Node.js, Python, Go, Laravel, Rails",
+        "Mobile: React Native, Flutter, SwiftUI",
+        "CSS: Tailwind, shadcn/ui, Chakra UI",
+        "Testing: Jest, Vitest, Cypress, Playwright",
+        "Language-specific: TypeScript, Python, Rust, Solidity"
+      ],
+      "example_repos": [
+        {
+          "name": "PatrickJS/awesome-cursorrules",
+          "url": "https://github.com/PatrickJS/awesome-cursorrules",
+          "notes": "The main curated list. Hundreds of examples organized by technology."
+        }
+      ]
+    },
+
+    "copilot_instructions": {
+      "description": "GitHub Copilot custom instructions file (.github/copilot-instructions.md) that guides Copilot across chat, code review, and editing.",
+      "official_docs": "https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot",
+      "best_practices_sources": [
+        "https://github.blog/ai-and-ml/github-copilot/5-tips-for-writing-better-custom-instructions-for-copilot/",
+        "https://github.com/github/awesome-copilot"
+      ],
+      "recommended_content": [
+        "Summary of what the app does",
+        "Tech stack in use",
+        "Coding guidelines",
+        "Project structure",
+        "Existing tools and resources",
+        "Build and test instructions",
+        "Output format preferences",
+        "Commit message style",
+        "PR description template"
+      ],
+      "key_patterns": [
+        "Keep under ~1000 lines max",
+        "Use distinct headings and bullet points",
+        "Short imperative directives, not long narratives",
+        "Include reasoning behind rules (helps edge cases)",
+        "Use code examples for preferred/avoided patterns",
+        "Skip conventions linters already enforce",
+        "Version control the file",
+        "Iterate based on real results"
+      ],
+      "file_organization": [
+        ".github/copilot-instructions.md (workspace-level)",
+        ".github/instructions/*.instructions.md (task-specific, with glob patterns)"
+      ],
+      "example_repos": [
+        {
+          "name": "github/awesome-copilot",
+          "url": "https://github.com/github/awesome-copilot",
+          "notes": "Official community collection: agents, instructions, hooks, skills, plugins organized by domain."
+        },
+        {
+          "name": "SebastienDegodez/copilot-instructions",
+          "url": "https://github.com/SebastienDegodez/copilot-instructions",
+          "notes": "DDD, Clean Architecture, testing, commit conventions for .NET."
+        }
+      ]
+    },
+
+    "unification_efforts": {
+      "amplified_dev": {
+        "url": "https://amplified.dev",
+        "description": "A philosophical manifesto by Continue about the future of developer work with AI. Not a technical spec but a community statement: 'A way of working where AI handles the volume and you handle the signal.'",
+        "key_thesis": "Developer roles expand (not shrink) as each layer becomes automated. AI is the next layer."
+      },
+      "aicodingrules_org": {
+        "url": "https://aicodingrules.org/",
+        "description": "Proposed vendor-agnostic standard for AI coding agent rules. Combines YAML metadata + Markdown guidance.",
+        "specification_elements": [
+          "Unique identifiers and descriptions",
+          "Natural language guidance instructions",
+          "Context activation triggers (applies_when)",
+          "Code examples (good/bad patterns)",
+          "Tool permissions (tools_allowed)",
+          "Priority values for conflict resolution"
+        ],
+        "hierarchy": "Organization Rules > User Global Rules > User Project/Workspace Rules",
+        "supported_tools": ["Cursor", "Windsurf", "GitHub Copilot", "Augment Code", "Sourcegraph", "Claude Code"]
+      },
+      "continuedev_awesome_rules": {
+        "url": "https://github.com/continuedev/awesome-rules",
+        "description": "Community collection of markdown rules with YAML frontmatter, compatible across AI coding assistants.",
+        "categories": ["General", "Language Specific", "Framework Specific", "Code Quality", "Documentation", "Testing", "DevOps"],
+        "rule_count_by_category": {
+          "general": 6,
+          "language_specific": 8,
+          "framework_specific": 11,
+          "code_quality": 6,
+          "documentation": 5,
+          "testing": 9,
+          "devops": 4
+        },
+        "rules_cli": {
+          "url": "https://github.com/continuedev/rules",
+          "description": "CLI for managing rules across any AI IDE"
+        }
+      }
+    }
+  },
+
+  "section_2_coding_style_guides": {
+    "title": "Coding Style Documentation Practices",
+    "summary": "Top open source projects document coding standards through style guides, CONTRIBUTING.md files, and automated tooling.",
+
+    "awesome_lists": [
+      {
+        "name": "Kristories/awesome-guidelines",
+        "url": "https://github.com/Kristories/awesome-guidelines",
+        "stars": "10.6k",
+        "description": "Curated list of high-quality coding style conventions covering 40+ languages including C++, Java, JavaScript, Go, Python, Rust, TypeScript.",
+        "notable_guides_linked": [
+          "Google Style Guides (C++, Java, Python, JavaScript, Shell, etc.)",
+          "Airbnb JavaScript Style Guide",
+          "Effective Go",
+          "PEP 8 for Python",
+          "The Hitchhiker's Guide to Python"
+        ]
+      },
+      {
+        "name": "kciter/awesome-style-guide",
+        "url": "https://github.com/kciter/awesome-style-guide",
+        "description": "Divided into Programming Languages, Architecture, Platforms, and Frameworks."
+      },
+      {
+        "name": "SalGnt/cscs",
+        "url": "https://github.com/SalGnt/cscs",
+        "description": "Curated list of Coding Style Conventions and Standards."
+      },
+      {
+        "name": "RichardLitt/awesome-styleguides",
+        "url": "https://github.com/RichardLitt/awesome-styleguides",
+        "description": "Includes meta-resources like 'A Maintainable Style Guide' advocating Style Guide Driven Development."
+      }
+    ],
+
+    "major_style_guides": {
+      "google_styleguide": {
+        "url": "https://github.com/google/styleguide",
+        "description": "Copies of Google's internal style guides for open-source projects. Covers C++, Java, Python, JavaScript, Shell, Objective-C, XML, HTML/CSS.",
+        "structure": "Separate guide per language, hosted via gh-pages at google.github.io/styleguide",
+        "contribution_policy": "External contributions NOT accepted. Internal-first process.",
+        "key_insight": "Very prescriptive. Each guide covers naming, formatting, commenting, imports, and language-specific patterns in exhaustive detail."
+      },
+      "airbnb_javascript": {
+        "url": "https://github.com/airbnb/javascript",
+        "description": "One of the most popular JavaScript style guides. Covers types, references, objects, arrays, destructuring, strings, functions, classes, modules, iterators, properties, variables, hoisting, comparison, blocks, comments, whitespace, commas, semicolons, type casting, naming, accessors, events, testing.",
+        "structure": "Single massive README with numbered rules, each with code examples (good/bad).",
+        "enforcement": "eslint-config-airbnb npm package",
+        "key_insight": "Encourages forking and customizing. Available in 30+ languages."
+      },
+      "python_pep8": {
+        "url": "https://peps.python.org/pep-0008/",
+        "description": "The definitive Python style guide. Covers indentation, maximum line length, blank lines, imports, module-level dunder names, string quotes, whitespace, trailing commas, comments, naming conventions.",
+        "enforcement": "ruff, flake8, pycodestyle, autopep8, black, yapf"
+      },
+      "rust_style_guide": {
+        "url": "https://doc.rust-lang.org/style-guide/index.html",
+        "description": "Official Rust style guide. 4-space indentation, 100-char line width.",
+        "enforcement": "rustfmt, clippy"
+      }
+    },
+
+    "contributing_md_best_practices": {
+      "key_sources": [
+        "https://contributing.md/how-to-build-contributing-md/",
+        "https://contributing.md/best-practices-for-maintainers-of-open-source-projects/",
+        "https://gist.github.com/briandk/3d2e8b3ec8daf5a27a62",
+        "https://gist.github.com/PurpleBooth/b24679402957c63ec426"
+      ],
+      "recommended_sections": [
+        "Welcoming note / introduction",
+        "Table of contents",
+        "Code of Conduct reference",
+        "How to report bugs and suggest features",
+        "Development setup (environment, dependencies, tools)",
+        "Pull request process (branching strategy, review)",
+        "Coding standards (style guides, linting rules)",
+        "Testing requirements",
+        "Documentation guidelines",
+        "Commit message conventions",
+        "Recognition / attribution"
+      ],
+      "commit_message_conventions": {
+        "format": "Imperative mood, present tense ('Fix bug' not 'Fixed bug')",
+        "subject_line": "50 characters max, capitalized, no period",
+        "body": "72 character wrap, explain what and why not how",
+        "blank_line": "Required between subject and body"
+      },
+      "key_insight": "Style guides and linters should be used to standardize contributions. Contributors should follow existing patterns for consistency."
+    },
+
+    "project_guidelines_template": {
+      "source": "https://github.com/elsewhencode/project-guidelines",
+      "description": "Comprehensive JavaScript project guidelines covering 11 areas",
+      "sections": [
+        "1. Git workflow (feature branches, interactive rebase, PRs)",
+        "2. Documentation (README template, code comments)",
+        "3. Environments (dev/test/prod, env vars, .env.example)",
+        "4. Dependencies management (evaluation, security, updates)",
+        "5. Testing (file naming, pure functions, co-located tests)",
+        "6. Project structure (organize by feature not role)",
+        "7. Code style (ESLint, Prettier, EditorConfig, Husky)",
+        "8. Logging (no console.logs in production, use libraries)",
+        "9. API design (security, documentation, versioning)",
+        "10. Accessibility (WCAG compliance)",
+        "11. Licensing"
+      ],
+      "key_insight": "Organize by feature (product/, user/) not by role (controllers/, models/). Use lint-staged + Husky for pre-commit hooks."
+    }
+  },
+
+  "section_3_architecture_decision_records": {
+    "title": "Architecture Decision Records (ADRs)",
+    "summary": "ADRs capture important architectural decisions with context and consequences. Multiple templates and tools exist.",
+
+    "key_repos": [
+      {
+        "name": "joelparkerhenderson/architecture-decision-record",
+        "url": "https://github.com/joelparkerhenderson/architecture-decision-record",
+        "description": "Comprehensive ADR resource with templates, examples, and best practices."
+      },
+      {
+        "name": "npryce/adr-tools",
+        "url": "https://github.com/npryce/adr-tools",
+        "description": "Command-line tools for working with ADRs as Markdown files."
+      },
+      {
+        "name": "adr/madr",
+        "url": "https://github.com/adr/madr",
+        "description": "Markdown Architectural Decision Records (MADR) - emphasizes options and pros/cons."
+      },
+      {
+        "name": "thomvaill/log4brains",
+        "url": "https://github.com/thomvaill/log4brains",
+        "description": "ADR management and publication tool - generates static website from ADR files."
+      },
+      {
+        "name": "zircote/git-adr",
+        "url": "https://github.com/zircote/git-adr",
+        "description": "ADRs stored in git notes (no files, no merge conflicts). AI-powered drafting."
+      }
+    ],
+    "templates": [
+      "Michael Nygard's Template (simple and popular)",
+      "Jeff Tyree and Art Akerman's Template (more sophisticated)",
+      "Alexandrian Pattern Template (context specifics)",
+      "Business Case Template (costs, SWOT analysis)",
+      "MADR Project Template (options with pros/cons)",
+      "Planguage Template (quality assurance oriented)"
+    ],
+    "best_practices": [
+      "Include clear rationale explaining reasoning",
+      "Keep each record focused on one decision",
+      "Add timestamps to track when recorded",
+      "Maintain immutability or clearly mark amendments",
+      "Use present-tense imperative verbs in filenames (choose-database.md)",
+      "Store in adr/ directory, commit to version control",
+      "Plan after-action reviews (typically one month later)",
+      "Reference subsequent ADRs triggered by decisions"
+    ],
+    "lifecycle": "Initiating > Researching > Evaluating > Implementing > Maintaining > Sunsetting",
+    "complementary_tools": [
+      "ArchUnit (Java architecture rule checks)",
+      "ArchUnitTS (TypeScript/JS architecture rule checks)",
+      "arc42 (comprehensive architecture documentation framework)",
+      "C4 Model (hierarchical diagramming approach)"
+    ]
+  },
+
+  "section_4_project_structure_conventions": {
+    "title": "Project Structure Conventions",
+    "summary": "Common patterns for organizing code in repositories, with emphasis on Python monorepos and feature-based organization.",
+
+    "python_monorepo_patterns": {
+      "sources": [
+        "https://github.com/niqodea/python-monorepo",
+        "https://www.tweag.io/blog/2023-04-04-python-monorepo-1/",
+        "https://github.com/matanby/python-monorepo-template",
+        "https://github.com/carderne/postmodern-mono"
+      ],
+      "common_structures": [
+        {
+          "name": "Libs and Apps Split",
+          "description": "Split packages into libs (importable, no entry points) and apps (runnable services)"
+        },
+        {
+          "name": "Src-layout with namespace packages",
+          "description": "Each project has src/, tests/, pyproject.toml. Namespace packages for shared hierarchy."
+        },
+        {
+          "name": "Top-level categorization",
+          "description": "Two top-level folders: one for projects, one for shared libraries."
+        }
+      ],
+      "best_practices": [
+        "Each project has its own pyproject.toml",
+        "All packages installed in editable mode",
+        "Virtual environments per library/project",
+        "Use uv, poetry, or pip for dependency management"
+      ],
+      "modern_tools": ["uv (astral-sh)", "poetry", "pants", "pip with pyproject.toml"]
+    },
+
+    "general_conventions": {
+      "organize_by_feature_not_role": {
+        "description": "Instead of controllers/, models/, views/, use product/, user/, auth/ each containing their own code, tests, and config.",
+        "source": "https://github.com/elsewhencode/project-guidelines",
+        "benefits": "Easier navigation, encapsulated modules, clearer dependencies"
+      },
+      "standard_config_files": [
+        {
+          "file": ".editorconfig",
+          "purpose": "Standardizes editor behavior (encoding, indentation, line endings) across teams",
+          "source": "https://editorconfig.org"
+        },
+        {
+          "file": ".gitignore",
+          "purpose": "Prevents unwanted files from being committed",
+          "source": "https://github.com/github/gitignore"
+        },
+        {
+          "file": ".gitattributes",
+          "purpose": "Controls line ending normalization, diff/merge drivers, language detection",
+          "source": "https://github.com/gitattributes/gitattributes"
+        },
+        {
+          "file": "pyproject.toml / package.json",
+          "purpose": "Project metadata, dependencies, tool configuration"
+        },
+        {
+          "file": ".pre-commit-config.yaml",
+          "purpose": "Pre-commit hook configuration"
+        }
+      ]
+    }
+  },
+
+  "section_5_developer_experience_and_workflow": {
+    "title": "Developer Experience & Workflow Automation",
+    "summary": "DX tools and practices focus on reducing friction, automating quality checks, and streamlining development workflows.",
+
+    "dx_resources": [
+      {
+        "name": "workos/awesome-developer-experience",
+        "url": "https://github.com/workos/awesome-developer-experience",
+        "description": "Curated list of DX resources."
+      }
+    ],
+
+    "branching_strategies": {
+      "trunk_based_development": {
+        "url": "https://trunkbaseddevelopment.com/",
+        "description": "Developers commit to main branch multiple times a day with small, incremental updates.",
+        "key_practices": [
+          "Short-lived feature branches (if any)",
+          "Direct-to-trunk for very small teams",
+          "PR workflow for larger teams",
+          "Feature flags instead of long-lived branches",
+          "Delete branches after merging",
+          "Immediate code review (not async)",
+          "Keep number of active branches minimal"
+        ],
+        "benefits": "Quick feedback loops, fewer merge conflicts, continuously releasable state",
+        "ci_integration": "Every push triggers automated tests, builds, security scans"
+      },
+      "git_flow": {
+        "description": "Feature branches, develop branch, release branches, hotfixes",
+        "best_for": "Projects with scheduled releases"
+      },
+      "github_flow": {
+        "description": "Main branch + feature branches + pull requests",
+        "best_for": "Continuous deployment projects"
+      }
+    },
+
+    "pre_commit_hooks": {
+      "framework": {
+        "url": "https://pre-commit.com/",
+        "description": "Multi-language package manager for pre-commit hooks. Manages installation and execution of hooks in any language.",
+        "config_file": ".pre-commit-config.yaml"
+      },
+      "popular_hooks_python": [
+        {"name": "ruff", "purpose": "Linter + formatter (replaces flake8, isort, black). Written in Rust, 200x faster.", "url": "https://github.com/astral-sh/ruff-pre-commit"},
+        {"name": "mypy/pyright", "purpose": "Static type checking"},
+        {"name": "black", "purpose": "Opinionated code formatter (being superseded by ruff format)"},
+        {"name": "isort", "purpose": "Import sorting (being superseded by ruff)"}
+      ],
+      "popular_hooks_javascript": [
+        {"name": "eslint", "purpose": "Linting for JS/TS"},
+        {"name": "prettier", "purpose": "Opinionated code formatter"},
+        {"name": "husky", "purpose": "Git hooks made easy for Node.js projects"},
+        {"name": "lint-staged", "purpose": "Run linters only on staged files"}
+      ],
+      "github_actions_integration": "Create .github/workflows/pre-commit.yml to run pre-commit checks in CI",
+      "key_insight": "Pre-commit transforms code quality from reactive to proactive by catching issues before they enter the repository."
+    },
+
+    "quality_gates": {
+      "description": "Automated quality checks that must pass before code is merged.",
+      "typical_components": [
+        "Code formatting (ruff format, prettier, gofmt)",
+        "Linting (ruff check, eslint, clippy)",
+        "Type checking (pyright, mypy, tsc)",
+        "Unit tests (pytest, jest, go test)",
+        "Security scanning (bandit, npm audit, snyk)",
+        "Code coverage thresholds",
+        "Documentation checks"
+      ],
+      "enforcement_mechanisms": [
+        "Pre-commit hooks (local)",
+        "CI/CD pipelines (GitHub Actions, GitLab CI)",
+        "Branch protection rules",
+        "Required status checks before merge",
+        "Automated code review (GitHub Copilot, CodeRabbit)"
+      ]
+    }
+  },
+
+  "section_6_ai_coding_workflows": {
+    "title": "AI Coding Workflows and Tools",
+    "summary": "Multiple paradigms have emerged for AI-assisted development: spec-driven development, agentic workflows, and context engineering.",
+
+    "spec_driven_development": {
+      "url": "https://github.com/github/spec-kit",
+      "stars": "72.9k",
+      "description": "Methodology where formal specifications serve as executable blueprints for AI code generation.",
+      "workflow": "Constitution > Specify > Clarify > Plan > Tasks > Implement",
+      "commands": [
+        "/speckit.constitution (establish project principles)",
+        "/speckit.specify (define what to build)",
+        "/speckit.plan (create technical plan)",
+        "/speckit.tasks (generate task list)",
+        "/speckit.implement (execute implementation)",
+        "/speckit.clarify (resolve ambiguities)",
+        "/speckit.analyze (validate consistency)"
+      ],
+      "supported_agents": "Claude Code, GitHub Copilot, Cursor, Windsurf, Gemini, 16+ total",
+      "key_insight": "Most powerful for adding features to existing codebases. Forces clarity on system interactions.",
+      "sources": [
+        "https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/",
+        "https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html",
+        "https://www.thoughtworks.com/en-us/insights/blog/agile-engineering-practices/spec-driven-development-unpacking-2025-new-engineering-practices"
+      ]
+    },
+
+    "github_agentic_workflows": {
+      "url": "https://github.github.io/gh-aw/",
+      "description": "Write workflows in plain Markdown in .github/workflows/. AI handles decision-making for issue triage, PR reviews, CI failure analysis.",
+      "key_features": [
+        "Markdown instead of YAML",
+        "Read-only permissions by default",
+        "Preapproved safe outputs for write operations",
+        "Pull requests never merged automatically",
+        "Supports Claude Code, OpenAI Codex, GitHub Copilot"
+      ],
+      "use_cases": [
+        "Issue triage",
+        "Documentation updates",
+        "Code improvement identification",
+        "Test coverage monitoring",
+        "CI failure investigation",
+        "Repository health reports"
+      ],
+      "sources": [
+        "https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/",
+        "https://github.blog/changelog/2026-02-13-github-agentic-workflows-are-now-in-technical-preview/"
+      ]
+    },
+
+    "context_engineering": {
+      "description": "The discipline of curating what the model sees to optimize desired outcomes. The most important factor in AI coding agent effectiveness.",
+      "anthropic_guide": {
+        "url": "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents",
+        "key_principles": [
+          "Treat context as finite with diminishing returns",
+          "Find the smallest set of high-signal tokens that maximize desired outcomes",
+          "System prompts: specific enough to guide, flexible enough for heuristics",
+          "Start minimal, add instructions based on failure modes"
+        ],
+        "techniques": [
+          "System prompt design (XML tags, Markdown headers, distinct sections)",
+          "Tool development (self-contained, unambiguous, token-efficient)",
+          "Few-shot prompting (diverse canonical examples)",
+          "Just-in-time context retrieval (lightweight identifiers, dynamic loading)",
+          "Compaction (summarize history, preserve critical details)",
+          "Structured note-taking (persistent notes outside context window)",
+          "Sub-agent architectures (isolated contexts, condensed summaries)"
+        ]
+      },
+      "martin_fowler_guide": {
+        "url": "https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html",
+        "context_categories": [
+          "Reusable prompts (instructions + guidance)",
+          "Context interfaces (tools, MCP servers, skills)"
+        ],
+        "decision_authority_models": [
+          "LLM-driven (autonomous loading, less predictable)",
+          "Human-driven (manual triggers, more control)",
+          "Deterministic (lifecycle hooks, guaranteed)"
+        ]
+      },
+      "key_insight": "Context files over a few thousand tokens cause critical rules to get lost in the middle. Context engineering is the most important skill for AI-assisted development.",
+      "sources": [
+        "https://www.faros.ai/blog/context-engineering-for-developers",
+        "https://www.kubiya.ai/blog/context-engineering-ai-agents",
+        "https://latitude-blog.ghost.io/blog/context-engineering-guide-coding-agents/"
+      ]
+    },
+
+    "claude_code_ecosystem": {
+      "awesome_lists": [
+        {
+          "name": "hesreallyhim/awesome-claude-code",
+          "url": "https://github.com/hesreallyhim/awesome-claude-code",
+          "stars": "25.6k",
+          "categories": [
+            "Agent Skills (AgentSys, Book Factory, cc-devops-skills, Security Skills)",
+            "Workflows & Knowledge (AB Method, RIPER Workflow, Agentic Workflow Patterns)",
+            "Tooling (claudekit with 20+ subagents, cc-tools, Claude Code Templates)",
+            "IDE Integrations (Emacs, Neovim, VSCode)",
+            "Usage Monitors (dashboards, cost tracking)",
+            "Orchestrators (Auto-Claude, Claude Squad, Claude Task Master, sudocode)",
+            "Config Managers (claude-rules-doctor, ClaudeCTX)",
+            "Hooks (Britfix, CC Notify, cchooks Python SDK)",
+            "Slash Commands (version control, testing, documentation, CI/deployment)",
+            "CLAUDE.md Files (language and domain-specific templates)",
+            "Alternative Clients"
+          ]
+        },
+        {
+          "name": "VoltAgent/awesome-claude-code-subagents",
+          "url": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+          "description": "127+ specialized subagents across 10 categories",
+          "categories": [
+            "Core Development",
+            "Language Specialists",
+            "Infrastructure (DevOps, cloud)",
+            "Quality & Security",
+            "Data & AI",
+            "Developer Experience",
+            "Specialized Domains",
+            "Business & Product",
+            "Meta & Orchestration",
+            "Research & Analysis"
+          ]
+        }
+      ],
+      "best_practices_official": {
+        "url": "https://code.claude.com/docs/en/best-practices",
+        "core_workflow": "Explore (Plan Mode) > Plan > Implement (Normal Mode) > Commit",
+        "highest_leverage": "Give Claude a way to verify its work (tests, screenshots, expected outputs)",
+        "context_management": [
+          "/clear between unrelated tasks",
+          "Use subagents for investigation (separate context)",
+          "/compact with custom instructions",
+          "/rewind to checkpoint states",
+          "Track context usage with custom status line"
+        ],
+        "common_failure_patterns": [
+          "Kitchen sink session (unrelated tasks mixed)",
+          "Correcting over and over (polluted context)",
+          "Over-specified CLAUDE.md (rules get lost)",
+          "Trust-then-verify gap (no tests)",
+          "Infinite exploration (unscoped investigation)"
+        ]
+      }
+    },
+
+    "multi_agent_patterns": {
+      "description": "Emerging pattern of multiple AI agents working together on development tasks.",
+      "examples": [
+        "Writer/Reviewer pattern (separate sessions for implementation and review)",
+        "Test-first pattern (one agent writes tests, another implements)",
+        "Fan-out pattern (distribute work across parallel claude -p invocations)",
+        "Agent Teams (lead orchestrator + specialized teammates)"
+      ],
+      "tools": [
+        {"name": "Claude Squad", "description": "Terminal app managing multiple agents simultaneously"},
+        {"name": "Auto-Claude", "description": "Multi-agent SDLC framework with kanban UI"},
+        {"name": "Claude Task Master", "description": "Task management system for AI-driven development"},
+        {"name": "sudocode", "description": "Lightweight agent orchestration living in repo"}
+      ]
+    }
+  },
+
+  "section_7_company_practices": {
+    "title": "How Companies Document Standards",
+    "summary": "Most large companies keep internal standards proprietary, but some patterns are visible through public artifacts and blog posts.",
+
+    "known_patterns": {
+      "stripe": {
+        "approach": "Specification-first development. Every API endpoint begins with comprehensive OpenAPI documentation.",
+        "observability": "Writes metrics to both old and new services simultaneously during migrations. Internal documentation, office hours, and internal champions.",
+        "source": "https://medium.com/@sylvesterranjithfrancis/why-stripe-and-netflix-build-differently-and-what-spec-based-development-has-to-do-with-it-a996d9d19db2"
+      },
+      "google": {
+        "approach": "Exhaustive internal style guides that are periodically published as open source (google/styleguide). Internal-first: external contributions not accepted.",
+        "url": "https://github.com/google/styleguide",
+        "covers": "C++, Java, Python, JavaScript, Shell, Objective-C, XML, HTML/CSS, Go"
+      },
+      "python_cpython": {
+        "approach": "Comprehensive developer guide (devguide.python.org). PEP 8 style guide. PEP process for proposals.",
+        "url": "https://devguide.python.org/",
+        "key_insight": "Separate devguide site rather than in-repo CONTRIBUTING.md. Checklist-based contribution process."
+      },
+      "rust_lang": {
+        "approach": "Official style guide enforced by rustfmt. rustc-dev-guide for compiler contributors.",
+        "url": "https://doc.rust-lang.org/style-guide/index.html",
+        "enforcement": "rustfmt (formatter), clippy (linter)"
+      }
+    },
+    "key_insight": "The most effective standards are enforced by tooling (linters, formatters, CI checks), not just documentation."
+  },
+
+  "section_8_key_patterns_and_templates": {
+    "title": "Reusable Patterns and Templates",
+    "summary": "Cross-cutting patterns that appear across all sources.",
+
+    "what_makes_good_coding_standards_docs": [
+      "Concise and scannable (headings, bullet points, tables)",
+      "Code examples for every rule (good AND bad patterns)",
+      "Reasoning behind each rule (the 'why')",
+      "Enforced by tooling (not just documentation)",
+      "Version controlled and treated as living documents",
+      "Iterated based on actual mistakes (not theoretical)",
+      "Progressive disclosure (core rules first, details on demand)",
+      "Machine-readable where possible (for AI agents and linters)"
+    ],
+
+    "universal_sections_for_any_project": [
+      "Project overview / what it does",
+      "Tech stack",
+      "Getting started / development setup",
+      "Build, test, lint commands",
+      "Code style conventions (only non-obvious ones)",
+      "Git workflow (branching, commit messages, PR process)",
+      "Architecture overview / directory structure",
+      "Testing conventions",
+      "Important gotchas / non-obvious behaviors",
+      "How to contribute"
+    ],
+
+    "ai_instruction_file_common_patterns": [
+      "Tech stack declaration",
+      "Code style preferences that differ from defaults",
+      "Build/test/lint commands",
+      "Architecture description and key directories",
+      "Error handling conventions",
+      "Naming conventions",
+      "Import/module patterns",
+      "Testing patterns and preferred frameworks",
+      "Do/don't lists with examples",
+      "Commit message format",
+      "PR conventions"
+    ],
+
+    "enforcement_layers": {
+      "layer_1_editor": [".editorconfig", "IDE settings", "AI instruction files"],
+      "layer_2_pre_commit": ["pre-commit hooks", "husky + lint-staged", "formatters", "linters"],
+      "layer_3_ci": ["GitHub Actions", "GitLab CI", "required status checks", "automated code review"],
+      "layer_4_review": ["PR templates", "Code review checklists", "AI-powered review (Copilot, CodeRabbit)"],
+      "layer_5_monitoring": ["Dependency audits", "Security scanning", "Technical debt tracking"]
+    },
+
+    "emerging_trends_2025_2026": [
+      "AI instruction files becoming standard project artifacts",
+      "Spec-driven development (spec-kit) gaining rapid adoption",
+      "Context engineering as a core developer skill",
+      "Unified rule standards across AI tools (aicodingrules.org)",
+      "GitHub Agentic Workflows (Markdown-based CI/CD)",
+      "Multi-agent development patterns",
+      "Skills and progressive context loading",
+      "Deterministic hooks for guaranteed actions vs advisory rules",
+      "Sub-agent architectures for context isolation"
+    ]
+  }
+}

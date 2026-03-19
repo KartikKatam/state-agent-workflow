@@ -1,0 +1,322 @@
+Simplified Design of LPR Module
+
+High Level Responsobilities:
+
+Producer:
+  - Yolo Detection
+    - TensorRT and FP16 optimization (explore fp8 performance as well)
+    - Samples from video stream at 15 frame cadence
+
+  - Tracking
+    - IOU greedy tracking + alpha/beta light kalman filter using center and size + velocity
+    - Toggle-able LK assist if jittery
+
+  - ROI Cropping
+    - Crop around license plate + frame buffer for additional information
+    - Cropped object and original frame meta-data is the only data from the frame that travels
+      through the rest of the system
+
+  - Cheap Quality Analysis
+    - Compute on greyscaled and downsampled version of the cropped image test
+      - Laplacian variance - Tenengrand variant check both vertical and horizontal blur
+      - Mean brightness
+      - Simple contrast
+
+  - ID ROI object Management
+    - 32 Object capacity for buffer (maybe smaller)
+      - ROI Image, or a pointer to its location
+      - Quick quality score
+      - Downsampled verison for difference check
+      - Frame index
+    - Check against all objects in that ID buffer (max 32 is negligable) and replace highest similarity + better
+      quality. The goal is having passable quality with diverse positions
+    - Append only if quality and difference is high enough.
+
+    - Batch versioning
+      - Consumer is only allowed to pull from Producer if last used batch for that id is less than current batch
+        version.
+      - Batch version is incremented when a replacement or appending is made. Only used to show consumer that this
+        ID has changed and can be looked at again without wasting on repeatedly looking at 1 ID.
+
+
+
+Consumer:
+
+  Consumer-Side Quality Analyzer:
+    - Role: To perform a detailed, granular analysis on candidate ROIs provided by the Producer.
+    - Input: A pool of candidate ROIs for a given license plate ID.
+    - Process: Runs a heavier analysis on the full-resolution ROI, generating a rich quality metrics object for each one.
+    - Output: A list of ROI objects, each annotated with its detailed quality metrics, such as:
+        - Brightness/Contrast Histograms (to identify clipped highlights/shadows).
+        - Gradient distribution (to better understand blur characteristics).
+        - Other advanced metrics as needed.
+
+  Batch Filter:
+    - Role: To select the most optimal batch of ROIs (from 1 to 8) that will likely maximize OCR confidence and accuracy.
+    - Input: The list of ROIs annotated with rich quality metrics from the Quality Analyzer.
+    - Output: A final, ordered batch of 1-8 ROI objects, ready for preprocessing.
+    - Logic:
+      - (TBD: The logic for selecting the optimal combination of diverse and high-quality images will be defined here.)
+
+  Preprocessor Tuner:
+    - Role: To convert the final, filtered batch of ROIs into a "recipe" tensor for the GPU Preprocessor.
+    - Input: The final batch of ROI objects, each with its rich quality metrics.
+    - Output: A "recipe" tensor for the batch. Each row corresponds to an ROI and contains floating-point
+      values (0.0-1.0) for each tunable operation (e.g., `illum_amount`, `sharpen_amount`). This tensor is
+      the input for the Uber-Kernel.
+
+    - Design Philosophy: Decouple Tuning from Code
+      - All tuning parameters (thresholds, weights, curve exponents) will be stored in an external configuration file (e.g., YAML).
+      - The tuner code reads these parameters at runtime. Tuning is achieved by modifying the config file, not by rewriting code.
+
+    - Core Logic: Parameter-Driven Mapping from Rich Metrics
+      - The logic will map the rich quality object to the recipe values.
+      - This allows for more sophisticated rules defined in the configuration, for example:
+        - `sharpen_amount` could be a function of both gradient distribution and image size.
+        - `illum_amount` could be determined by the percentage of pixels in the lowest and highest bins of the brightness histogram.
+      - This moves beyond a simple `score -> amount` mapping to a more holistic `quality_state -> recipe` transformation.
+
+  Preprocessor:
+    Geometric
+      1. Homography using Yolov11-Pose Keypoints - gated if keypoints don't follow keypoint logic + confidence threshold
+        - If Homography gate fails: rotation only deskewing
+      2. Letterbox Padding to preserve Aspect Ratio
+      3. Bicubic interpolation to resize to PARSeq input - 32x128 pixels
+    Photometric
+      1. Perform gamma correction to stabalize the image exposure
+      2. Convert BGR image to LAB and on luminance (L) use CLAHE gated by a low contrast threshold (do only if low enough)
+      3. Denoise using guided filter with a gate depending on the amount of noise present - this is only done on the luminance channel
+      4. Unsharp masking - gated based on computed image sharpness
+          Mild unsharp masking - used only when tenengrand computes sharpness but slightly below satisfactory, and after denoising is done
+          noise is generally below a certain threshold.
+        a) Off
+        b) light
+        c) medium
+
+* System works as follows: Batch of up to 8 is processed using geometric + minimal risk photometric processing. Using the quality anlysis the 4
+  best candidates (up to 4 if batch size is less than 4 and gated at 4) that have quality metrics that suggest photometric sucess are done as duplicates
+  such that they get the full riskier photometric processing. The entire batch of up to 12 images is then sent to the OCR and then aggregated, with some
+  acceptance logic between the duplicated (choosing the higher confidence readouts such that they don't dominate the aggregation) before aggregating with the
+  rest of the batch.
+
+
+Optical Character Recognition:
+
+  Processed Batch Queue:
+    - Processed batch enters queue, handled using a first in first out system because the Consumer has a priority based selection already. Objects are 
+      coalecsed such that the most recent version of the batch for any track replaces the previous batch's location in line if they overlap, to ensure the most recent
+      and best quality batches are sent through the OCR. 
+    - Mainly a buffer system for the OCR to pull asynchronously from.
+
+  PARSeq OCR
+    - OCR with any order reading to help with rotation and image quality issues. Using full model (server level) as robustness is the priority. 
+  
+  Aggregtaion: 
+    - Upon output, first the 4 duplicates with full processing and not full processing are aggregated, ensuring the highest confidence version is pushed through for
+      each image. 
+    - Then the final verison of those 4 (by selecting wether to use the full or minimal processed version) are aggregated with the remaining 4 minimal risk processed
+      images. This aggregation is done per character (PARSeq already outputs per character confidence), aggregates the different readout answers and their respective
+      confidence and chooses the highest confidence final string. This is done by weighting how many of the batch agree and comparing the total confidence of all readout
+      outions to find the highest likelihood answer. Regex corrections are used to discard trash readouts and help with confidence ties. 
+
+
+*********************************
+Implement graceful degredation when back logged - maybe the processor batch queue has a trigger that filters out the most recent version of
+each ID's batch to be processed with the best selected frames.
+
+Traget System Architecture:
+┌─────────────────────────────────────────────────────────────┐
+│                         PRODUCER                             │
+│  ┌──────────┐    ┌─────────┐    ┌──────────┐    ┌─────────┐ │
+│  │ Detector │───▶│ Tracker │───▶│ Cropper  │───▶│ Scorer  │ │
+│  └──────────┘    └─────────┘    └──────────┘    └─────────┘ │
+│                                                      │       │
+│                                              ┌───────▼─────┐ │
+│                                              │ ID Buffer   │ │
+│                                              │ Manager     │ │
+│                                              └───────┬─────┘ │
+└──────────────────────────────────────────────────────┼───────┘
+                                                       │
+                                          ┌────────────▼────────────┐
+                                          │    HANDOFF INTERFACE    │
+                                          │  (Pull-based + Version) │
+                                          └────────────┬────────────┘
+                                                       │
+┌──────────────────────────────────────────────────────┼───────┐
+│                         CONSUMER                     │       │
+│  ┌────────────┐    ┌─────────────┐    ┌─────────────▼─────┐ │
+│  │ Batch      │◀───│ Rich        │◀───│ ID Pool           │ │
+│  │ Selector   │    │ Analyzer    │    │ Fetcher           │ │
+│  └─────┬──────┘    └─────────────┘    └───────────────────┘ │
+│        │                                                     │
+│  ┌─────▼──────┐    ┌─────────────┐    ┌───────────────────┐ │
+│  │ Recipe     │───▶│ Preprocessor│───▶│ OCR Queue         │ │
+│  │ Generator  │    │ (GPU Batch) │    │                   │ │
+│  └────────────┘    └─────────────┘    └─────────┬─────────┘ │
+└─────────────────────────────────────────────────┼───────────┘
+                                                  │
+┌─────────────────────────────────────────────────▼───────────┐
+│                           OCR                                │
+│  ┌──────────┐    ┌─────────────┐    ┌───────────────────┐   │
+│  │ TrOCR    │───▶│ Result      │───▶│ ID State          │   │
+│  │ Engine   │    │ Evaluator   │    │ Controller        │   │
+│  └──────────┘    └─────────────┘    └───────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+
+*********************************
+
+ID Life Cycle State Machine:
+                    ┌─────────┐
+                    │ tracking│◀──────────────────┐
+                    └────┬────┘                   │
+                         │ buffer has candidates  │
+                         ▼                        │
+                  ┌─────────────┐                 │
+                  │ pending_ocr │                 │
+                  └──────┬──────┘                 │
+                         │ OCR complete           │
+              ┌──────────┼──────────┐             │
+              ▼          ▼          ▼             │
+        ┌──────────┐ ┌────────┐ ┌───────────┐    │
+        │ confident│ │complete│ │needs_retry│────┘
+        └────┬─────┘ └────────┘ └───────────┘
+             │ timeout or           (If complete, the Consumer is notified that the ID is complete, and batches related to that ID are
+             |                        purged and no longer fed through the pipeline)
+             │ better result
+             ▼
+        ┌──────────┐
+        │ complete │
+        └──────────┘
+
+*********************************
+
+Replace perspective warp with simple rotation correction:
+
+# In Rich Analyzer or as separate step
+def estimate_rotation(roi):
+    """Estimate plate rotation from edge detection."""
+    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 150)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, minLineLength=30, maxLineGap=10)
+
+    if lines is None:
+        return 0.0
+
+    # Find dominant horizontal angle
+    angles = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
+        # Normalize to [-45, 45] range (plates are wider than tall)
+        if angle > 45:
+            angle -= 90
+        elif angle < -45:
+            angle += 90
+        angles.append(angle)
+
+    return np.median(angles)
+
+# Apply rotation (this IS batchable on GPU)
+def rotate_batch(batch, angles):
+    """Batch rotation using grid_sample."""
+    B = batch.shape[0]
+    theta = angles * np.pi / 180
+
+    # Build rotation matrices
+    cos_t = torch.cos(theta)
+    sin_t = torch.sin(theta)
+
+    # Affine matrix for rotation
+    rot_matrix = torch.zeros(B, 2, 3)
+    rot_matrix[:, 0, 0] = cos_t
+    rot_matrix[:, 0, 1] = -sin_t
+    rot_matrix[:, 1, 0] = sin_t
+    rot_matrix[:, 1, 1] = cos_t
+
+    grid = F.affine_grid(rot_matrix, batch.shape, align_corners=False)
+    return F.grid_sample(batch, grid, align_corners=False)
+This is:
+Simpler than full homography (1 parameter vs 8)
+Batchable on GPU
+Sufficient for your use case
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test for Downsample fingerpting size:
+Pick 2–3 candidate sizes with the same aspect ratio as your plate crops, e.g.:
+
+32×8
+
+64×16
+
+96×24
+
+Take a small set of real plate crops (sharp, slightly blurred, very blurred, different poses).
+
+For each size:
+
+Downsample all crops.
+
+Compute:
+
+your sharpness metric (Tenengrad / LapVar),
+
+brightness/contrast,
+
+similarity between pairs (MSE).
+
+Check qualitatively:
+
+Do sharp images consistently get higher sharpness scores than blurred ones?
+
+Do obviously different poses/crops give clearly larger MSE than near-duplicates?
+
+Does going smaller (32×8) make things clearly worse vs 64×16?
+
+If 32×8 behaves almost the same as 64×16 in terms of ordering and separation, pick the smaller one.
+If 32×8 starts to “flatten out” differences, stick with 64×16.
+
+After that: freeze one size and don’t keep re-opening this question unless profiling or accuracy experiments
+give you a reason.
+
+
+
+
+
+
+
+
+
+Consumer:

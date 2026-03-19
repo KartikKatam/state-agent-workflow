@@ -1,0 +1,319 @@
+{
+  "class_name": "TrainingConfig",
+  "source_file": "training/efficientnet_b3/config.py",
+  "fields": {
+    "input_h": {
+      "type": "int",
+      "default": "80"
+    },
+    "input_w": {
+      "type": "int",
+      "default": "256"
+    },
+    "pad_color": {
+      "type": "tuple[int, int, int]",
+      "default": "(114, 114, 114)"
+    },
+    "stride": {
+      "type": "int",
+      "default": "4"
+    },
+    "gaussian_sigma": {
+      "type": "float",
+      "default": "1.5"
+    },
+    "gaussian_floor": {
+      "type": "float",
+      "default": "0.0001"
+    },
+    "sigma_schedule": {
+      "type": "list[tuple[int, float]] | None",
+      "default": "None"
+    },
+    "focal_alpha": {
+      "type": "float",
+      "default": "2.0"
+    },
+    "focal_beta": {
+      "type": "float",
+      "default": "4.0"
+    },
+    "lambda_offset": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "base_lr": {
+      "type": "float",
+      "default": "0.0001"
+    },
+    "encoder_lr_mult": {
+      "type": "float",
+      "default": "0.05"
+    },
+    "weight_decay": {
+      "type": "float",
+      "default": "0.0005"
+    },
+    "warmup_epochs": {
+      "type": "int",
+      "default": "5"
+    },
+    "warmup_start_lr": {
+      "type": "float",
+      "default": "1e-06"
+    },
+    "batch_size": {
+      "type": "int",
+      "default": "16"
+    },
+    "total_epochs": {
+      "type": "int",
+      "default": "300"
+    },
+    "grad_clip_max_norm": {
+      "type": "float",
+      "default": "10.0"
+    },
+    "device": {
+      "type": "str",
+      "default": "'cuda'"
+    },
+    "freeze_min_epochs": {
+      "type": "int",
+      "default": "20"
+    },
+    "freeze_max_epochs": {
+      "type": "int",
+      "default": "80"
+    },
+    "stagnation_window": {
+      "type": "int",
+      "default": "15"
+    },
+    "stagnation_threshold": {
+      "type": "float",
+      "default": "0.01"
+    },
+    "early_stopping_patience": {
+      "type": "int",
+      "default": "0"
+    },
+    "phase3_pck_threshold": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "phase3_sustain_epochs": {
+      "type": "int",
+      "default": "5"
+    },
+    "hem_weight_floor": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "hem_weight_ceiling": {
+      "type": "float",
+      "default": "3.0"
+    },
+    "confidence_threshold": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "checkpoint_interval": {
+      "type": "int",
+      "default": "10"
+    },
+    "checkpoint_dir": {
+      "type": "str",
+      "default": "'checkpoints'"
+    },
+    "vis_interval": {
+      "type": "int",
+      "default": "10"
+    },
+    "config_poll_interval": {
+      "type": "int",
+      "default": "30"
+    },
+    "config_override_path": {
+      "type": "str",
+      "default": "'training_config.json'"
+    },
+    "data_dir": {
+      "type": "str",
+      "default": "'data/crops'"
+    },
+    "annotations_path": {
+      "type": "str",
+      "default": "'data/annotations.json'"
+    },
+    "split_path": {
+      "type": "str",
+      "default": "'data/split.json'"
+    },
+    "lighting_labels_path": {
+      "type": "str",
+      "default": "''"
+    },
+    "wandb_project": {
+      "type": "str",
+      "default": "'corner-cnn-training'"
+    },
+    "wandb_enabled": {
+      "type": "bool",
+      "default": "True"
+    },
+    "aug_hflip_prob": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "aug_brightness_range": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "aug_brightness_prob": {
+      "type": "float",
+      "default": "0.8"
+    },
+    "aug_contrast_range": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "aug_contrast_prob": {
+      "type": "float",
+      "default": "0.8"
+    },
+    "aug_saturation_range": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "aug_saturation_prob": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "aug_rotation_range_p2": {
+      "type": "float",
+      "default": "5.0"
+    },
+    "aug_rotation_prob_p2": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "aug_scale_range_p2": {
+      "type": "tuple[float, float]",
+      "default": "(0.9, 1.1)"
+    },
+    "aug_scale_prob_p2": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "aug_noise_sigma_p2": {
+      "type": "tuple[float, float]",
+      "default": "(5.0, 10.0)"
+    },
+    "aug_noise_prob_p2": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "aug_rotation_range_p3": {
+      "type": "float",
+      "default": "15.0"
+    },
+    "aug_rotation_prob_p3": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "aug_perspective_range": {
+      "type": "float",
+      "default": "15.0"
+    },
+    "aug_perspective_prob": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "aug_motion_blur_range": {
+      "type": "tuple[int, int]",
+      "default": "(3, 7)"
+    },
+    "aug_motion_blur_prob": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "aug_gaussian_blur_sigma": {
+      "type": "tuple[float, float]",
+      "default": "(0.5, 1.5)"
+    },
+    "aug_gaussian_blur_prob": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "aug_heavy_brightness_range": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "aug_heavy_brightness_prob": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "aug_gamma_range": {
+      "type": "tuple[float, float]",
+      "default": "(0.5, 1.5)"
+    },
+    "aug_jpeg_quality_range": {
+      "type": "tuple[int, int]",
+      "default": "(30, 70)"
+    },
+    "aug_jpeg_prob": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "aug_heavy_noise_sigma": {
+      "type": "tuple[float, float]",
+      "default": "(10.0, 25.0)"
+    },
+    "aug_heavy_noise_prob": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "aug_occlusion_area_range": {
+      "type": "tuple[float, float]",
+      "default": "(0.05, 0.15)"
+    },
+    "aug_occlusion_prob": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "aug_scale_range_p3": {
+      "type": "tuple[float, float]",
+      "default": "(0.8, 1.2)"
+    },
+    "aug_scale_prob_p3": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "aug_night_brightness": {
+      "type": "tuple[float, float]",
+      "default": "(0.2, 0.4)"
+    },
+    "aug_night_gamma": {
+      "type": "tuple[float, float]",
+      "default": "(1.5, 2.0)"
+    },
+    "aug_night_noise_sigma": {
+      "type": "tuple[float, float]",
+      "default": "(15.0, 30.0)"
+    },
+    "aug_night_prob": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "aug_delay_after_unfreeze": {
+      "type": "int",
+      "default": "0"
+    },
+    "aug_ramp_epochs": {
+      "type": "int",
+      "default": "0"
+    }
+  },
+  "field_count": 78
+}

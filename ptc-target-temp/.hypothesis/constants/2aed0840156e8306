@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/consumer/ops_recipe.py
+# hypothesis_version: 6.151.5
+
+[0.0, 0.1, 0.35, 0.4, 0.7, 0.75, 1.0, 1.25, 1.5, 2.0, 4.0, 6.0, 8.0, 12.0, ', ', 'adequate_sharpness', 'clahe', 'clahe_clip', 'clahe_tiles', 'contrast', 'denoise', 'enhance_eligible', 'gain', 'gamma', 'is_enhanced', 'low_contrast', 'noisy', 'none', 'not_noisy', 'not_very_blurry', 'perspective', 'reserved', 'sharpen', 'soft', 'tight_crop_enable', 'underexposed', 'warp_enable', 'warp_margin', 'white_clip']

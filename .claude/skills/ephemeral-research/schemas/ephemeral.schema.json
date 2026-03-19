@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firefly/schemas/ephemeral-research.json",
+  "title": "Ephemeral Research Query",
+  "description": "Short-lived research for specific questions that don't warrant persistent storage. Auto-expires after 7 days.",
+  "type": "object",
+  "required": ["id", "query", "answer", "meta"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique query identifier (e.g., 'query-001-sam2-batch-optimization')",
+      "pattern": "^query-[0-9]+-[a-z0-9-]+$"
+    },
+    "query": {
+      "type": "string",
+      "description": "The original question or search query"
+    },
+    "answer": {
+      "type": "string",
+      "description": "Synthesized answer to the query"
+    },
+    "answer_type": {
+      "type": "string",
+      "enum": ["factual", "opinion", "comparison", "troubleshooting", "how_to"],
+      "description": "Type of answer provided"
+    },
+    "key_points": {
+      "type": "array",
+      "description": "Bullet points extracting main insights",
+      "items": {"type": "string"}
+    },
+    "sources": {
+      "type": "array",
+      "description": "Sources consulted for this query",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["url", "relevance"],
+        "properties": {
+          "url": {"type": "string", "format": "uri"},
+          "title": {"type": "string"},
+          "snippet": {"type": "string", "description": "Relevant excerpt from source"},
+          "relevance": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "How relevant this source was to answering the query"
+          }
+        }
+      }
+    },
+    "related_persistent": {
+      "type": "array",
+      "description": "IDs of persistent research docs that partially answer this query",
+      "items": {"type": "string"}
+    },
+    "should_promote": {
+      "type": "boolean",
+      "description": "Flag: Should this be promoted to persistent research? (e.g., frequently re-queried)",
+      "default": false
+    },
+    "meta": {
+      "type": "object",
+      "required": ["agent_id", "created_at", "expires_at"],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "description": "Which researcher agent created this"
+        },
+        "created_at": {"type": "string", "format": "date-time"},
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Auto-delete after this timestamp (default: created_at + 7 days)"
+        },
+        "access_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many times this has been accessed (triggers promotion if >3)"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in answer accuracy"
+        },
+        "context": {
+          "type": "object",
+          "description": "Context of the original query",
+          "properties": {
+            "feature": {"type": "string"},
+            "chunk": {"type": "string"},
+            "requestor": {"type": "string", "description": "Agent that requested this research"}
+          }
+        }
+      }
+    }
+  }
+}

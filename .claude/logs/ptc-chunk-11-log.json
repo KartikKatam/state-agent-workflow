@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-11",
+    "started_at": "2026-02-28T21:20:00Z",
+    "last_updated": "2026-02-28T21:35:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-11-20260228",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "phase_history": [
+    {
+      "phase": "test_design",
+      "timestamp": "2026-02-28T21:22:00Z",
+      "details": "Designed 13 new tests across 5 classes for chunk-11, extending existing test_tool_registry.py"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T21:24:00Z",
+      "details": "12 tests failed (Dockerfile missing, config missing sections, registry missing get_strategy). 1 new test (denies_unlisted_tool) passed with old config. 14 existing tests pass."
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T21:30:00Z",
+      "details": "27/27 tests passing in test_tool_registry.py. Fixed 2 downstream failures in test_server.py caused by config.json rewrite."
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T21:32:00Z",
+      "details": "All 4 invariants verified (inv-11-01 through inv-11-04)"
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T21:34:00Z",
+      "details": "ruff format + ruff check + pyright (0 errors) passing. 298/298 PTC tests pass (no regressions)."
+    }
+  ],
+  "resume_point": "Awaiting user approval",
+  "files_modified": [
+    {"file": "~/.claude/mcp/ptc-server/Dockerfile", "action": "created"},
+    {"file": "~/.claude/mcp/ptc-server/build-image.sh", "action": "created"},
+    {"file": "~/.claude/mcp/ptc-server/config.json", "action": "rewritten"},
+    {"file": "~/.claude/mcp/ptc-server/tool_registry.py", "action": "modified"},
+    {"file": "tests/ptc/test_tool_registry.py", "action": "extended"},
+    {"file": "tests/ptc/test_server.py", "action": "modified"}
+  ],
+  "tests_written": [
+    {"name": "test_dockerfile_exists", "class": "TestDockerfile", "status": "pass"},
+    {"name": "test_dockerfile_base_image", "class": "TestDockerfile", "status": "pass"},
+    {"name": "test_build_script_exists", "class": "TestBuildImageScript", "status": "pass"},
+    {"name": "test_config_has_all_sections", "class": "TestConfigSchema", "status": "pass"},
+    {"name": "test_config_role_tools_has_execute", "class": "TestConfigSchema", "status": "pass"},
+    {"name": "test_config_tool_strategies_complete", "class": "TestConfigSchema", "status": "pass"},
+    {"name": "test_config_resource_limits", "class": "TestConfigSchema", "status": "pass"},
+    {"name": "test_config_repl_pool", "class": "TestConfigSchema", "status": "pass"},
+    {"name": "test_registry_allows_execute_all_roles", "class": "TestRegistryExecutePermission", "status": "pass"},
+    {"name": "test_registry_denies_unlisted_tool", "class": "TestRegistryExecutePermission", "status": "pass"},
+    {"name": "test_get_strategy_read_file", "class": "TestRegistryGetStrategy", "status": "pass"},
+    {"name": "test_get_strategy_run_tests", "class": "TestRegistryGetStrategy", "status": "pass"},
+    {"name": "test_get_strategy_write_file", "class": "TestRegistryGetStrategy", "status": "pass"}
+  ],
+  "invariants_status": {
+    "inv-11-01": "pass",
+    "inv-11-02": "pass",
+    "inv-11-03": "pass",
+    "inv-11-04": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [],
+  "deviations": [
+    {
+      "type": "scope_addition",
+      "description": "Modified tests/ptc/test_server.py (not in scope.touched_files) to fix 2 tests broken by config.json rewrite",
+      "reason": "Pre-existing tests hardcoded old config values (memory_mb=512, max_kernels=8, timeout_seconds=30, 15 tools). Config.json rewrite changed these to new design doc values (memory_mb=1024, max_containers=8, timeout_seconds=60, 16 tools including 'execute').",
+      "plan_gap": "Plan didn't account for pre-existing tests in test_server.py that load config.json from disk",
+      "impact": "Low - updated 2 assertions to match new config values, no behavioral change",
+      "user_approval_needed": false
+    }
+  ],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "Kept existing conftest.py 'config' fixture unchanged (old schema without execute/tool_strategies)",
+      "reason": "Existing tests in TestRolePermissions and TestToolListing depend on old fixture values. New tests use separate 'ptc_config' fixture that loads from actual config.json file."
+    },
+    {
+      "decision": "Preserved output_formats section in new config.json",
+      "reason": "Not in design doc Component 10 but used by existing ToolRegistry.get_output_format() and tested in test_tool_registry.py"
+    },
+    {
+      "decision": "get_strategy() raises KeyError for unknown tools",
+      "reason": "Fail-fast on unknown tools rather than returning a default. Matches ToolDispatcher's expectation of valid strategy values."
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 1
+  }
+}

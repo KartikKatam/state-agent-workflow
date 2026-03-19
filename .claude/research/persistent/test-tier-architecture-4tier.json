@@ -1,0 +1,567 @@
+{
+  "id": "test-tier-architecture-4tier",
+  "library": "testing-architecture",
+  "version": "2025-2026",
+  "type": "best_practices",
+  "documentation": {
+    "summary": "The 4-tier test system (golden path, edge cases, adversarial, property-based) is a test TECHNIQUE classification layered orthogonally over the classic scope-based pyramid (unit/integration/E2E). Industry giants (Google, Netflix, Spotify) evolved from the traditional 3-layer pyramid toward models emphasizing integration tests as the largest tier (Spotify honeycomb, Netflix chaos+canary). The 4-tier technique classification maps directly onto the tester agent workflow: Tier 1 verifies core contract; Tier 2 exhausts equivalence partitions and boundaries; Tier 3 breaks invariants with hostile inputs and stress; Tier 4 proves universal invariants via generated input spaces. Each tier has distinct execution cost, tooling, and CI schedule.",
+
+    "key_insight": "The 4-tier system is orthogonal to scope (unit/integration/E2E). A golden-path test can be a unit test OR a scenario test. An adversarial test can target a single function OR a full API. The tier describes the TEST TECHNIQUE (what kind of verification), not the test scope (what size of system is exercised).",
+
+    "industry_testing_shapes": {
+      "test_pyramid_google": {
+        "origin": "Mike Cohn (2009), widely adopted at Google",
+        "shape": "Triangle: wide base (unit) → middle (integration) → narrow top (E2E/UI)",
+        "allocation": {
+          "unit": "70%",
+          "integration": "20%",
+          "e2e": "10%"
+        },
+        "google_specific": "Google classifies tests by SIZE (not scope): Small (one thread, one process, one machine), Medium (multiple processes, localhost only), Large (real external systems). Small = unit-equivalent; Medium = integration-equivalent; Large = E2E-equivalent.",
+        "google_sre_addition": "Google SRE adds disaster resilience testing (can the service survive faults?) and production tests (black-box testing against live production). These sit ABOVE the E2E tier.",
+        "strengths": "Fast feedback loop. Most failures caught cheaply at unit level.",
+        "weaknesses": "Does not reflect microservice architectures where there is no single 'unit' to test meaningfully."
+      },
+      "spotify_honeycomb": {
+        "origin": "Spotify engineering team, 2018",
+        "shape": "Hexagon: narrow bottom (unit) → wide center (integration) → narrow top (E2E/UI)",
+        "allocation": {
+          "unit": "small minority — only pure business logic",
+          "integration": "majority — realistic fixtures, actual service dependencies",
+          "e2e": "small — critical user journeys only"
+        },
+        "rationale": "In microservices, each service is small and its unit tests have little value without testing inter-service contracts. Integration tests using realistic fixtures catch the most production bugs. Spotify's honeycomb places integration at the center because network calls and contract failures dominate production incidents.",
+        "strengths": "Matches microservice failure modes. Realistic integration tests catch contract regressions before deployment.",
+        "weaknesses": "Integration tests are slower. Requires good test infrastructure (service mocks, realistic data fixtures)."
+      },
+      "netflix_testing_in_production": {
+        "origin": "Netflix engineering, evolved 2010s–2025",
+        "layers": [
+          {
+            "name": "Unit + Integration",
+            "role": "Standard pre-commit CI: unit tests and smoke integration tests validate code before push to production pipeline."
+          },
+          {
+            "name": "Canary",
+            "role": "A new version is deployed to a small fraction of production traffic (canary cluster) alongside the baseline. Automated Canary Analysis (ACA) compares metrics between canary and baseline. If metrics deviate beyond thresholds, canary is automatically rolled back. As of 2026, Netflix integrates chaos experiments INTO the canary phase — injecting faults into the canary cluster while monitoring steady-state metrics."
+          },
+          {
+            "name": "Chaos Engineering (Simian Army / ChAP)",
+            "role": "Deliberately inject faults (Chaos Monkey: random instance termination; Chaos Kong: full AZ failure; ChAP: automated chaos in canary deployments). Tests resilience at production scale. Validates that the system degrades gracefully and recovers to steady state. Not a pre-commit gate — runs continuously in production."
+          },
+          {
+            "name": "Production Testing / A/B Testing",
+            "role": "Sequential A/B testing on actual user cohorts. Validates product quality (recommendation quality, stream quality) in production — cannot be replicated in a staging environment."
+          }
+        ],
+        "key_principle": "Netflix does not try to simulate production — they TEST IN PRODUCTION using canary deployments, feature flags, and chaos engineering with safety guards (automated rollback on metric deviation).",
+        "strengths": "Catches production-specific failure modes (scale, real traffic distribution, CDN behavior). Chaos engineering continuously validates resilience.",
+        "weaknesses": "Requires sophisticated infrastructure (automated canary analysis, circuit breakers, instant rollback). Not viable for small teams or early-stage products."
+      },
+      "kent_dodds_testing_trophy": {
+        "origin": "Kent C. Dodds (2018), popular in frontend/React communities",
+        "shape": "Trophy: static analysis (base) → unit → integration (widest) → E2E (top)",
+        "allocation": {
+          "static_analysis": "free — linting, type checking, runs on every save",
+          "unit": "small — pure logic only",
+          "integration": "majority — render components with real dependencies, test API contracts",
+          "e2e": "few — critical user paths only"
+        },
+        "addition_vs_pyramid": "Adds static analysis as a foundation tier. Emphasizes integration over unit for frontend code."
+      },
+      "modern_consensus_2025": {
+        "summary": "No single shape is universally correct. The right shape depends on architecture (monolith vs microservices), team size, and failure modes. Common consensus in 2025: unit tests for pure logic; integration tests for the bulk of behavioral verification; E2E/scenario tests for critical user journeys; production testing (canary, chaos) for resilience.",
+        "warning": "The 'ice cone' (inverted pyramid with E2E at base) is an anti-pattern: heavy reliance on E2E tests creates slow, flaky CI and poor debugging signal. Avoid."
+      }
+    },
+
+    "four_tier_technique_system": {
+      "overview": "This system classifies tests by VERIFICATION TECHNIQUE, not by scope. Each tier answers a different question about the system under test. A complete test suite for any function or module should include tests from all 4 tiers.",
+
+      "tier_1_golden_path": {
+        "name": "Tier 1: Golden Path (Core Contract Verification)",
+        "also_known_as": ["happy path", "sunny day scenario", "smoke tests", "core functionality tests"],
+        "question_answered": "Does the system do what it is designed to do under ideal conditions?",
+        "scope": "Primary use cases. The most common paths users/callers actually take (80-90% of production traffic).",
+        "what_belongs_here": [
+          "Nominal inputs that produce correct outputs",
+          "Core user journeys end-to-end",
+          "Primary API contract verification",
+          "Return value correctness for typical inputs",
+          "State transitions for normal operations"
+        ],
+        "what_does_NOT_belong": [
+          "Error handling paths",
+          "Empty/null/zero inputs (those are edge cases)",
+          "Invalid input rejection",
+          "Performance under load"
+        ],
+        "tooling": {
+          "primary": "pytest with standard assertions",
+          "pattern": "Explicit, readable test cases with named fixtures. Each test verifies one behavior.",
+          "example": "def test_user_login_success():\n    result = auth.login('valid@email.com', 'correctpassword')\n    assert result.token is not None\n    assert result.user.email == 'valid@email.com'"
+        },
+        "execution_schedule": "Every commit. These must be the fastest tests. If Tier 1 fails, nothing else runs.",
+        "completion_criteria": "All primary use cases documented in the spec/requirements are covered. Every public API surface has at least one golden path test.",
+        "cost_profile": {
+          "write_time": "low-medium",
+          "execution_time": "low (ms to seconds)",
+          "maintenance": "low — only changes when the contract changes"
+        }
+      },
+
+      "tier_2_edge_cases": {
+        "name": "Tier 2: Edge Cases (Boundary and Degenerate Input Coverage)",
+        "also_known_as": ["boundary value analysis", "equivalence partitioning", "negative testing", "error path testing"],
+        "question_answered": "Does the system handle the extremes and degenerate inputs correctly?",
+        "scope": "Boundary conditions, empty/null/zero inputs, maximum values, type coercion, encoding issues, off-by-one conditions.",
+        "what_belongs_here": [
+          "Empty inputs (empty string, empty list, null/None)",
+          "Single-element inputs (list with 1 item)",
+          "Maximum size inputs (max integer, max-length string)",
+          "Minimum inputs (zero, negative numbers where applicable)",
+          "Off-by-one boundaries (n-1, n, n+1 around size limits)",
+          "Invalid type coercions (string where int expected)",
+          "Unicode/encoding edge cases",
+          "Precision boundaries (floating point limits)",
+          "Concurrent/race condition edge cases (two simultaneous requests)"
+        ],
+        "what_does_NOT_belong": [
+          "Malicious/crafted inputs designed to exploit (those are Tier 3)",
+          "Randomly generated inputs (those are Tier 4)",
+          "Normal inputs (Tier 1)"
+        ],
+        "technique_boundary_value_analysis": "Test at n-1, n, and n+1 of every defined boundary. Example: if a function accepts lengths 1-100, test with 0, 1, 2, 99, 100, 101.",
+        "technique_equivalence_partitioning": "Divide all possible inputs into equivalence classes (valid, invalid, boundary). Test one representative from each class. Reduces test count while maintaining coverage.",
+        "tooling": {
+          "primary": "pytest.mark.parametrize",
+          "secondary": "hypothesis st.integers(min_value=0, max_value=100) for systematic boundary generation",
+          "pattern": "@pytest.mark.parametrize('input,expected', [\n    ([], ValueError),\n    ([1], [1]),\n    ([1, 1], [1]),  # deduplication edge case\n    (list(range(10000)), ...),  # max size\n])\ndef test_deduplicate_edge_cases(input, expected):\n    ..."
+        },
+        "execution_schedule": "Every commit (they are still fast tests). May run as a separate step after Tier 1 to preserve fast-fail ordering.",
+        "completion_criteria": "Every input dimension has at least 3 equivalence classes tested (valid, invalid, boundary). All documented constraints have explicit boundary tests. Boundary Value Analysis completed for every range parameter.",
+        "cost_profile": {
+          "write_time": "medium — requires systematic analysis of input space",
+          "execution_time": "low-medium (parametrized tests are still fast)",
+          "maintenance": "medium — must update when constraints change"
+        }
+      },
+
+      "tier_3_adversarial": {
+        "name": "Tier 3: Adversarial (Hostile Input and Stress Testing)",
+        "also_known_as": ["negative testing", "security testing", "stress testing", "fault injection", "robustness testing"],
+        "question_answered": "Can the system be broken by a motivated attacker, by unexpected load, or by hostile inputs it was never designed to receive?",
+        "scope": "Security vulnerabilities, injection attacks, resource exhaustion, malformed data, protocol violations, authentication bypass, privilege escalation.",
+        "what_belongs_here": [
+          "SQL/NoSQL injection payloads",
+          "XSS/template injection strings",
+          "Path traversal payloads (../../../etc/passwd)",
+          "Oversized inputs designed to trigger buffer overflows or OOM",
+          "Malformed data that exploits parser assumptions",
+          "Authentication tokens with manipulated claims (JWT tampering)",
+          "Request flooding / rate limit bypass",
+          "Concurrent access patterns that violate ACID assumptions",
+          "Deserializing crafted payloads (pickle bombs, YAML bombs)",
+          "Inputs that exploit third-party library behavior (e.g., regex DoS / ReDoS)",
+          "Chaos-style fault injection (service dependencies returning errors, timeouts, wrong types)"
+        ],
+        "what_does_NOT_belong": [
+          "Normal boundary values (Tier 2)",
+          "Randomly generated inputs without adversarial intent (Tier 4)"
+        ],
+        "adversarial_vs_edge": "Edge cases are accidental extremes — inputs a legitimate user might submit. Adversarial inputs are INTENTIONAL attacks — inputs crafted specifically to break, exploit, or destabilize the system. The intent is different; the tooling overlaps.",
+        "tooling": {
+          "primary_custom": "hypothesis with custom adversarial strategies",
+          "primary_security": "bandit (static), safety (dependency scanning), OWASP ZAP (API security)",
+          "custom_generators": "from hypothesis import strategies as st\n\n# Adversarial string generator\nadversarial_strings = st.one_of(\n    st.just(\"'; DROP TABLE users; --\"),  # SQL injection\n    st.just(\"<script>alert(1)</script>\"),  # XSS\n    st.just('../' * 50 + 'etc/passwd'),  # path traversal\n    st.just('\\x00' * 1000),  # null bytes\n    st.just('A' * 100000),  # buffer oversize\n    st.just('{' * 10000),  # JSON depth bomb\n    st.text(alphabet=st.characters(blacklist_categories=['Cc']), min_size=1000),  # large unicode\n)",
+          "stress_testing": "locust (load testing), pytest-benchmark (performance regression)",
+          "fault_injection": "monkeypatch + custom exception injection, pytest-randomly + concurrent test execution"
+        },
+        "execution_schedule": "NOT every commit. Options:\n  - Nightly CI run (full adversarial suite)\n  - Pre-release gate (must pass before tagging a release)\n  - On schedule for security: weekly or monthly full security scan\n  - On PR for security-sensitive modules (auth, input parsing, file handling)",
+        "completion_criteria": "OWASP Top 10 categories covered for any user-facing input surface. All known injection vectors tested. Resource exhaustion tests cover every configurable limit. Stress tests validate behavior under 10x expected peak load.",
+        "cost_profile": {
+          "write_time": "high — requires security and attack pattern knowledge",
+          "execution_time": "high (stress tests, fuzzing can run for minutes to hours)",
+          "maintenance": "medium-high — new attack patterns emerge, must update generators"
+        }
+      },
+
+      "tier_4_property_based": {
+        "name": "Tier 4: Property-Based (Invariant and Universal Correctness Verification)",
+        "also_known_as": ["invariant testing", "generative testing", "QuickCheck-style testing", "fuzz testing (structured)"],
+        "question_answered": "Are there universal truths about this system's behavior that hold for ALL valid inputs, not just the ones we thought to test?",
+        "scope": "Mathematical invariants, algebraic properties, roundtrip properties, idempotency, commutativity, monotonicity — any truth that should hold across the entire valid input space.",
+        "what_belongs_here": [
+          "Roundtrip properties: encode(decode(x)) == x",
+          "Idempotency: f(f(x)) == f(x) (sorting, normalization)",
+          "Commutativity: f(a, b) == f(b, a) (set union)",
+          "Monotonicity: if a <= b then f(a) <= f(b) (sorting comparison functions)",
+          "Size invariants: len(f(x)) == len(x) (bijective transformations)",
+          "Reference implementation equivalence: new_impl(x) == reference_impl(x) for all x",
+          "Type invariants: output is always the declared type",
+          "Consistency invariants: two implementations of the same spec agree on all inputs",
+          "No-crash invariant: f(x) never raises an unexpected exception for valid x"
+        ],
+        "distinction_from_tier_3": "Tier 4 generates inputs from the VALID input space to find invariant violations. Tier 3 generates inputs from OUTSIDE the valid space or with adversarial intent. A Tier 4 test might generate random valid user objects; a Tier 3 test might generate users with SQL in their names.",
+        "tooling": {
+          "primary": "hypothesis (Python)",
+          "mutation_validation": "cosmic-ray or mutmut to verify property tests have actual fault detection power",
+          "structured_fuzzing": "atheris for low-level input surfaces",
+          "key_strategies": {
+            "basic_invariant": "from hypothesis import given, strategies as st\n\n@given(st.lists(st.integers()))\ndef test_sort_is_idempotent(lst):\n    assert sorted(sorted(lst)) == sorted(lst)\n\n@given(st.text())\ndef test_encode_decode_roundtrip(s):\n    assert decode(encode(s)) == s",
+            "composite_strategy": "from hypothesis import given, strategies as st\nfrom hypothesis.strategies import builds\n\nvalid_user = builds(\n    User,\n    name=st.text(min_size=1, max_size=100),\n    age=st.integers(min_value=0, max_value=150),\n    email=st.emails()\n)\n\n@given(valid_user)\ndef test_user_serialization_roundtrip(user):\n    assert User.from_dict(user.to_dict()) == user",
+            "stateful_testing": "from hypothesis.stateful import RuleBasedStateMachine, rule, initialize\n\nclass QueueMachine(RuleBasedStateMachine):\n    @initialize()\n    def init_queue(self):\n        self.queue = Queue()\n        self.model = []\n\n    @rule(item=st.integers())\n    def enqueue(self, item):\n        self.queue.enqueue(item)\n        self.model.append(item)\n\n    @rule()\n    def dequeue(self):\n        if self.model:\n            expected = self.model.pop(0)\n            assert self.queue.dequeue() == expected"
+          }
+        },
+        "hypothesis_effectiveness": "Each property-based test finds ~50x as many mutations as the average unit test (OOPSLA 2025 empirical study). Hypothesis shrinks failures to minimal reproducible examples automatically and saves them to .hypothesis/examples/ for deterministic replay in CI.",
+        "execution_schedule": "Every commit for fast properties (simple invariants, < 5 seconds). Nightly for deep properties (max_examples=1000+). Pre-release for stateful machine testing. Long-running property tests (stress + invariant combined) weekly.",
+        "completion_criteria": "Every public function with a definable invariant has at least one property test. All encode/decode, serialize/deserialize pairs have roundtrip tests. Mutation score >= 80% on the property test suite (verify properties actually detect bugs).",
+        "cost_profile": {
+          "write_time": "high — requires identifying universal truths about behavior",
+          "execution_time": "variable — simple properties: fast; stateful + max_examples=1000: slow",
+          "maintenance": "low — properties don't change when implementation changes, only when the CONTRACT changes"
+        }
+      }
+    },
+
+    "tier_interactions_and_complementarity": {
+      "how_tiers_complement": [
+        {
+          "pair": "Tier 1 + Tier 2",
+          "relationship": "Tier 1 proves the system works for the common case. Tier 2 proves it works at the extremes. Together they cover the entire documented input domain.",
+          "analogy": "Tier 1 = 'the bridge holds for a car'. Tier 2 = 'the bridge holds at maximum weight and with minimum clearance'."
+        },
+        {
+          "pair": "Tier 2 + Tier 4",
+          "relationship": "Tier 2 tests specific boundary values you identified. Tier 4 generates boundaries you never thought of. Property tests find the edge cases that slip through manual boundary analysis.",
+          "analogy": "Tier 2 = 'I tested at index 0, 1, and max'. Tier 4 = 'Hypothesis found index 2147483647 fails because of integer overflow in the hash function'."
+        },
+        {
+          "pair": "Tier 3 + Tier 4",
+          "relationship": "Tier 3 uses adversarial generators (you craft the attacks). Tier 4 uses structured random generators (Hypothesis explores the valid space). They overlap in tooling (both use Hypothesis strategies) but differ in intent.",
+          "analogy": "Tier 3 = 'can an attacker break this?'. Tier 4 = 'is there any input that breaks this?'"
+        },
+        {
+          "pair": "All 4 tiers",
+          "relationship": "A feature is 'fully tested' only when: (1) it works for intended use cases, (2) it handles all boundary conditions, (3) it resists hostile inputs, (4) it satisfies universal invariants. No single tier provides this alone."
+        }
+      ],
+      "decision_matrix": {
+        "when_to_write_tier_1": "Always. Every feature needs golden path tests. No tier can replace Tier 1 — property tests don't document intended behavior.",
+        "when_to_write_tier_2": "Always for functions with defined input constraints. If a function accepts a list, test empty list. If it accepts integers, test 0 and max_int.",
+        "when_to_write_tier_3": "For any code that: accepts external user input, processes network data, handles file uploads, manages authentication/authorization, or has performance SLAs. Skip for pure utility functions with no external surface.",
+        "when_to_write_tier_4": "For any function where you can state a universal truth: roundtrips, idempotency, commutativity, reference equivalence. Most non-trivial functions have at least one property. Skip for code that is purely side-effectful with no testable invariant."
+      }
+    },
+
+    "scenario_vs_integration_distinction": {
+      "summary": "Scenario tests and integration tests answer different questions. Integration tests verify TECHNICAL communication between components. Scenario tests verify BUSINESS BEHAVIOR across user journeys. Both are necessary; neither is a substitute for the other.",
+      "integration_tests": {
+        "question": "Do component A and component B communicate correctly?",
+        "scope": "Two or more components — typically an API client + server, a service + database, or two microservices",
+        "focus": "Interface contract, data format, error propagation, response status codes",
+        "what_success_looks_like": "ServiceA sends request X; ServiceB receives it, processes it, and returns the expected response format",
+        "language": "Technical: HTTP status codes, JSON schema, SQL queries, gRPC messages",
+        "example": "test_order_service_returns_404_for_unknown_order() — verifies the technical contract",
+        "tooling": "pytest + requests/httpx, pact (contract testing), testcontainers (real DB), pytest-mock"
+      },
+      "scenario_tests": {
+        "question": "Does the system support this user story end-to-end?",
+        "scope": "The entire system from user action to observable outcome — multiple components, multiple hops",
+        "focus": "Business outcome: did the user accomplish their goal? Was the business rule enforced?",
+        "what_success_looks_like": "A user submits an order → receives confirmation email → order appears in their account → inventory is decremented",
+        "language": "Business: user stories, Given/When/Then, outcome terms",
+        "example": "test_user_can_place_order_and_receive_confirmation() — verifies the business journey",
+        "tooling": "behave / pytest-bdd (Gherkin), selenium/playwright (UI), approval testing (output snapshot)"
+      },
+      "when_scenario_adds_value": [
+        "When the business behavior spans multiple technical components (order → payment → inventory → email — no single integration test covers this)",
+        "When stakeholder communication is needed — Gherkin feature files readable by PO/QA without code",
+        "When regression-testing user journeys after refactors (the technical path changes; the business behavior must stay the same)",
+        "When acceptance criteria are defined in user story format and must be machine-verifiable"
+      ],
+      "when_integration_test_is_sufficient": [
+        "When verifying a single service API contract (no cross-service journey needed)",
+        "When testing a database adapter in isolation (does the SQL execute and return the right shape?)",
+        "When doing contract testing between two services that communicate directly (Pact handles this better than BDD scenarios)"
+      ],
+      "tier_mapping": {
+        "integration_tests": "Typically Tier 1 (golden path) or Tier 2 (edge cases) in scope, at integration scope level",
+        "scenario_tests": "Typically Tier 1 (golden path user journeys) — the user's happy path is the scenario; edge cases and adversarial scenarios are secondary"
+      }
+    },
+
+    "test_allocation_guidelines": {
+      "classic_pyramid_percentages": {
+        "unit": "70%",
+        "integration": "20%",
+        "e2e": "10%",
+        "note": "These are volume percentages by test count, not by execution time"
+      },
+      "four_tier_percentages_by_technique": {
+        "note": "These percentages are independent of scope. They describe what fraction of your tests should use each technique.",
+        "tier_1_golden_path": "40-50% of all tests. Every feature needs these; they are the foundation.",
+        "tier_2_edge_cases": "30-40% of all tests. Systematic boundary analysis generates many tests per function.",
+        "tier_3_adversarial": "5-15% of all tests. Targeted: only for externally-facing surfaces.",
+        "tier_4_property_based": "5-15% of all tests. High leverage — each replaces many manual tests."
+      },
+      "execution_schedule": {
+        "every_commit": [
+          "All Tier 1 (golden path)",
+          "All Tier 2 (edge cases) — they are fast parametrized tests",
+          "Tier 4 property tests with default max_examples (100) — fast invariant checks"
+        ],
+        "every_pr_or_on_schedule_nightly": [
+          "Tier 3 adversarial suite (full)",
+          "Tier 4 property tests with max_examples=1000 (deep exploration)",
+          "Tier 4 stateful machine tests"
+        ],
+        "pre_release_gate": [
+          "All tiers — full run",
+          "Tier 3 security scan (OWASP, bandit, safety)",
+          "Tier 4 with max_examples=10000",
+          "Mutation testing (verify tier 4 tests actually detect faults)"
+        ],
+        "nightly_or_weekly": [
+          "Chaos engineering / fault injection scenarios",
+          "Long-running stress tests (Tier 3)",
+          "Coverage-guided fuzzing (atheris) — 60-300 second fuzz runs"
+        ]
+      },
+      "tier_completion_criteria": {
+        "tier_1": "Every public function/method has at least one golden path test. Every documented use case in the spec has a corresponding test. 100% of tests pass.",
+        "tier_2": "Boundary Value Analysis completed for every input with a defined range/constraint. Equivalence partitioning: at least valid class, invalid class, and boundary class tested for each input dimension. Empty/null/zero cases tested for all container and nullable inputs.",
+        "tier_3": "OWASP Top 10 coverage for all user-facing input surfaces. All authentication/authorization paths have adversarial tests. Performance SLAs validated under 10x expected load. All known injection vectors in the domain have explicit tests.",
+        "tier_4": "Every function with a stateable invariant has at least one property test. Roundtrip tests for all serialization/encoding pairs. Mutation score >= 80% on the property test suite itself. Hypothesis database populated with at least one interesting shrunk failure."
+      }
+    },
+
+    "tier_specific_tooling": {
+      "tier_1": {
+        "tools": ["pytest", "unittest", "standard Python assert"],
+        "patterns": ["explicit named fixtures", "one behavior per test", "descriptive test names"],
+        "install": "pip install pytest"
+      },
+      "tier_2": {
+        "tools": ["pytest.mark.parametrize", "hypothesis (boundary strategies)", "faker (realistic boundary data)"],
+        "patterns": ["parametrize over equivalence classes", "BVA: test n-1, n, n+1", "test empty/single/max"],
+        "install": "pip install pytest hypothesis faker"
+      },
+      "tier_3": {
+        "tools": {
+          "custom_generators": "hypothesis with adversarial strategies",
+          "static_security": "bandit",
+          "dependency_security": "safety / pip-audit",
+          "api_security": "OWASP ZAP",
+          "load_testing": "locust",
+          "performance": "pytest-benchmark"
+        },
+        "install": "pip install hypothesis bandit safety locust pytest-benchmark"
+      },
+      "tier_4": {
+        "tools": {
+          "property_based": "hypothesis (primary)",
+          "coverage_fuzzing": "atheris (Linux/macOS only)",
+          "mutation_validation": "mutmut or cosmic-ray",
+          "stateful": "hypothesis.stateful.RuleBasedStateMachine"
+        },
+        "install": "pip install hypothesis mutmut",
+        "optional": "pip install atheris  # Linux/macOS only"
+      }
+    },
+
+    "tester_agent_application": {
+      "workflow": "For each module/function being tested by the tester agent, the agent should produce tests at all applicable tiers:",
+      "tier_1_agent_action": "Read the function signature and docstring. Write tests for each documented use case. Verify primary return values and state changes.",
+      "tier_2_agent_action": "Identify all input constraints. Apply BVA to every bounded input. Write parametrized tests for: empty, single, maximum, out-of-range. Check error messages for invalid inputs.",
+      "tier_3_agent_action": "Identify the external surface (does this function accept user input? network data? file content?). If yes, write adversarial generators for injection, overflow, and malformed data. If the function has performance requirements, write a locust load test.",
+      "tier_4_agent_action": "State at least one universal property. Implement with @given. Run with default max_examples first. After implementation: run mutation testing to verify the property actually detects faults.",
+      "test_file_organization": "Organize tests in the same file by tier using clear section markers:\n# ========================\n# TIER 1: GOLDEN PATH\n# ========================\n# ... golden path tests ...\n\n# ========================\n# TIER 2: EDGE CASES\n# ========================\n# ... edge case tests ...\n\n# ========================\n# TIER 3: ADVERSARIAL\n# ========================\n# ... adversarial tests ...\n\n# ========================\n# TIER 4: PROPERTY-BASED\n# ========================\n# ... property tests ..."
+    },
+
+    "common_mistakes": [
+      {
+        "mistake": "Treating all tests as golden path (only testing the happy case)",
+        "consequence": "System fails silently on edge inputs; adversarial users can exploit missing validation",
+        "fix": "After writing golden path tests, explicitly audit: what happens with empty input? what happens with malicious input?"
+      },
+      {
+        "mistake": "Writing property tests without verifying they catch bugs (mutation score not checked)",
+        "consequence": "Property tests execute but don't actually detect behavioral regressions. Gives false confidence.",
+        "fix": "Run mutmut or cosmic-ray against the property test suite. Target mutation score >= 80%."
+      },
+      {
+        "mistake": "Running adversarial tests on every commit",
+        "consequence": "CI becomes slow (adversarial tests are expensive). Development velocity drops.",
+        "fix": "Move adversarial tests to nightly CI or pre-release gate. Keep per-commit suite to Tier 1 + Tier 2 + fast Tier 4."
+      },
+      {
+        "mistake": "Confusing edge cases (Tier 2) with adversarial inputs (Tier 3)",
+        "consequence": "Security testing gaps — edge cases don't cover crafted attack payloads. Edge cases also don't apply where no external surface exists.",
+        "fix": "Ask: is this input an accidental extreme (Tier 2) or a crafted attack (Tier 3)? SQL injection belongs in Tier 3; empty string belongs in Tier 2."
+      },
+      {
+        "mistake": "Using E2E/scenario tests as the primary test type (ice cone anti-pattern)",
+        "consequence": "Slow CI, flaky tests, poor debugging signal (test failure doesn't isolate the broken component)",
+        "fix": "Keep E2E/scenario tests to critical user journeys only. Use integration and unit tests for behavioral coverage."
+      }
+    ]
+  },
+
+  "sources": [
+    {
+      "title": "Pyramid or Crab? Find a testing strategy that fits — web.dev",
+      "url": "https://web.dev/articles/ta-strategies",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "On the Diverse And Fantastical Shapes of Testing — Martin Fowler",
+      "url": "https://martinfowler.com/articles/2021-test-shapes.html",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Testing in Production the Netflix Way — LaunchDarkly",
+      "url": "https://launchdarkly.com/blog/testing-in-production-the-netflix-way/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "How Netflix Tests: From DVDs to Chaos Engineering",
+      "url": "https://medium.com/@ivan.boklach/how-netflix-tests-from-dvds-to-chaos-engineering-and-back-again-1a18b1d46f8f",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "The Data Canary: How Netflix Validates Catalog Metadata — Netflix TechBlog (Feb 2026)",
+      "url": "https://netflixtechblog.medium.com/the-data-canary-how-netflix-validates-catalog-metadata-18b699d58e36",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Google SRE Book: Testing for Reliability",
+      "url": "https://sre.google/sre-book/testing-reliability/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Software Engineering at Google: Chapter 14 — Larger Testing",
+      "url": "https://abseil.io/resources/swe-book/html/ch14.html",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Beyond the Pyramid: Navigating Modern Strategies in Software Testing — Medium",
+      "url": "https://medium.com/@sanclk/beyond-the-pyramid-navigating-modern-strategies-in-software-testing-5e448ed4dc47",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "The testing pyramid is an outdated economic model — WireMock",
+      "url": "https://www.wiremock.io/post/rethinking-the-testing-pyramid",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Balancing Happy Paths, Golden Paths, and Negative Testing — Synthesized",
+      "url": "https://www.synthesized.io/post/balancing-happy-path-negative-testing",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Happy path — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Happy_path",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "How to Use Property-Based Testing as Fuzzy Unit Testing — InfoQ (Dec 2024)",
+      "url": "https://www.infoq.com/news/2024/12/fuzzy-unit-testing/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Scenario Testing Tutorial: Definition, Types, and Best Practices — ZetCode",
+      "url": "https://zetcode.com/terms-testing/scenario-testing/",
+      "type": "tutorial",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Integration vs E2E Testing: What's the Difference? — TestKube",
+      "url": "https://testkube.io/blog/integration-end-to-end-testing-cicd-pipelines",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Boundary Value Analysis and Equivalence Partitioning — guru99",
+      "url": "https://www.guru99.com/equivalence-partitioning-boundary-value-analysis.html",
+      "type": "tutorial",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "An Empirical Evaluation of Property-Based Testing in Python (OOPSLA 2025)",
+      "url": "https://cseweb.ucsd.edu/~mcoblenz/assets/pdf/OOPSLA_2025_PBT.pdf",
+      "type": "research",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Unit Testing vs Integration Testing vs E2E Testing — ShiftAsia",
+      "url": "https://shiftasia.com/column/unit-integration-e2e-testing-guide/",
+      "type": "tutorial",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Best Practices for End-to-End Testing in 2025 — BunnyShell",
+      "url": "https://www.bunnyshell.com/blog/best-practices-for-end-to-end-testing-in-2025/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "The Edge Case Hunter's Guide — DEV Community",
+      "url": "https://dev.to/shreyas1009/the-edge-case-hunters-guide-comprehensive-unit-testing-beyond-the-happy-path-1nm8",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Solved: Scenario Testing vs. Integration Testing — SAP Community",
+      "url": "https://answers.sap.com/questions/3151823/scenario-testing-vs-integration-testing.html",
+      "type": "forum",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    }
+  ],
+
+  "cross_references": {
+    "related_research_ids": [
+      "blind-testing-ivv-methodology",
+      "scenario-acceptance-testing-frameworks",
+      "ai-agent-code-testing-methodology"
+    ],
+    "from_existing_research": {
+      "property_based_effectiveness": "Each property-based test finds ~50x as many mutations as the average unit test (OOPSLA 2025). From blind-testing-ivv-methodology.",
+      "hypothesis_shrinking": "Hypothesis auto-shrinks failures to minimal reproducible examples, saves to .hypothesis/examples/. From blind-testing-ivv-methodology.",
+      "mutation_score_target": "Target mutation score >= 80% for strong fault-detection. From blind-testing-ivv-methodology.",
+      "scenario_testing_tooling": "behave, pytest-bdd, pact — full API reference in scenario-acceptance-testing-frameworks.",
+      "bdd_pattern": "Specification by Example pattern: write Gherkin scenarios BEFORE implementation. From scenario-acceptance-testing-frameworks."
+    }
+  },
+
+  "meta": {
+    "created_at": "2026-02-28T00:00:00Z",
+    "last_updated": "2026-02-28T00:00:00Z",
+    "confidence": 0.82,
+    "confidence_reason": "High confidence on industry testing shapes (Google, Netflix, Spotify) — multiple authoritative blog posts and official docs. High confidence on tier tooling — backed by OOPSLA 2025 empirical study and official docs from hypothesis.works, pytest.org, Google SRE book. Medium confidence on specific allocation percentages — 70/20/10 is widely cited but context-dependent. No single authoritative source for the exact 4-tier framework as described; synthesized from multiple complementary sources.",
+    "gaps": [
+      "No single authoritative source names the exact 4-tier system (golden path / edge / adversarial / property). This is a synthesis of multiple testing traditions.",
+      "Tier allocation percentages vary significantly by team/architecture — the 40/30/15/15 split is illustrative, not empirically validated.",
+      "Netflix's exact unit/integration/smoke allocation before canary is not publicly documented at detail level.",
+      "Google's test size (small/medium/large) classification details beyond the SWE book are not publicly available."
+    ],
+    "sources_used": ["websearch", "existing_research"],
+    "existing_research_leveraged": [
+      "blind-testing-ivv-methodology (hypothesis, mutation testing details)",
+      "scenario-acceptance-testing-frameworks (behave, pytest-bdd, pact APIs)",
+      "ai-agent-code-testing-methodology (tier patterns from agent eval research)"
+    ]
+  }
+}

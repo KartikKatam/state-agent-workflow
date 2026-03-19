@@ -1,0 +1,2178 @@
+{
+  "raises": [
+    {
+      "exception_class": "ValueError",
+      "raised_in": "common/geometry.py",
+      "line_number": 22,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 443,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 448,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 455,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 460,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 465,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 471,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 489,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 492,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 496,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 498,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 500,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 502,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 506,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 508,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 510,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 514,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 516,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 518,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 522,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 526,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 528,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 533,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 553,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 565,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 577,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 579,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 583,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 587,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 593,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 595,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 597,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 599,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 601,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 610,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 612,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 618,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 620,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 622,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 626,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 631,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 636,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 640,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 642,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 644,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 648,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 667,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 486,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 563,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/config.py",
+      "line_number": 606,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 72,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 83,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 125,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 135,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "RuntimeError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 227,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 236,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 272,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 338,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 344,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "consumer/ops_parseq.py",
+      "line_number": 348,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "producer/config.py",
+      "line_number": 272,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "producer/config.py",
+      "line_number": 279,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "producer/ops_corner_cnn.py",
+      "line_number": 85,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "RuntimeError",
+      "raised_in": "producer/ops_corner_cnn.py",
+      "line_number": 101,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "RuntimeError",
+      "raised_in": "producer/ops_detection.py",
+      "line_number": 70,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "producer/ops_detection.py",
+      "line_number": 98,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "RuntimeError",
+      "raised_in": "producer/ops_detection.py",
+      "line_number": 111,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 45,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 122,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 127,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "RuntimeError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 246,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "RuntimeError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 286,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 325,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 333,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 335,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 344,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 346,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 355,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ImportError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 58,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "tests/test_yolo_export.py",
+        "training/dataset.py",
+        "training/efficientnet_b3/train.py",
+        "training/regression/dataset.py",
+        "training/regression/production/train.py",
+        "training/regression/stride2/run.py",
+        "training/regression/train.py",
+        "training/regression/train_ema.py",
+        "training/regression/variance/train.py",
+        "training/train.py",
+        "training/yolo/curriculum.py",
+        "training/yolo/dataset.py",
+        "training/yolo/export.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "training/yolo/train.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "RuntimeError",
+      "raised_in": "scripts/export_parseq_trt.py",
+      "line_number": 215,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "tests/conftest_training.py",
+      "line_number": 107,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "tests/test_ocr_aggregator.py",
+      "line_number": 1922,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "RuntimeError",
+      "raised_in": "tests/test_parseq.py",
+      "line_number": 1029,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "SystemExit",
+      "raised_in": "tools/corner_annotator/__main__.py",
+      "line_number": 5,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "tools/synthetic_data/generate_composites.py",
+      "line_number": 658,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "tools/synthetic_data/validate_synthetic.py",
+      "line_number": 96,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "tools/synthetic_data/validate_synthetic.py",
+      "line_number": 43,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/dataset.py",
+      "line_number": 140,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "training/dataset.py",
+      "line_number": 318,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "training/dataset.py",
+      "line_number": 322,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/train.py",
+      "line_number": 511,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/efficientnet_b3/train.py",
+      "line_number": 511,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "training/regression/dataset.py",
+      "line_number": 141,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "training/regression/dataset.py",
+      "line_number": 145,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/regression/train.py",
+      "line_number": 453,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/regression/train_ema.py",
+      "line_number": 469,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/regression/train_progressive.py",
+      "line_number": 182,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/regression/production/train.py",
+      "line_number": 610,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "FileNotFoundError",
+      "raised_in": "training/regression/production/train.py",
+      "line_number": 182,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/regression/stride2/run.py",
+      "line_number": 79,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "ValueError",
+      "raised_in": "training/regression/variance/train.py",
+      "line_number": 407,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "consumer/ops_quality_rich.py",
+        "producer/config.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "scripts/workflow-timeline.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py",
+        "vendor/parseq/tools/coco_text_converter.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "SystemExit",
+      "raised_in": "training/yolo/export.py",
+      "line_number": 166,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "SystemExit",
+      "raised_in": "training/yolo/train.py",
+      "line_number": 90,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "Exception",
+      "raised_in": "vendor/parseq/tools/coco_2_converter.py",
+      "line_number": 71,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "Exception",
+      "raised_in": "vendor/parseq/tools/lsvt_converter.py",
+      "line_number": 66,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "Exception",
+      "raised_in": "vendor/parseq/tools/openvino_converter.py",
+      "line_number": 61,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    },
+    {
+      "exception_class": "Exception",
+      "raised_in": "vendor/parseq/tools/textocr_converter.py",
+      "line_number": 89,
+      "caught_by": [
+        "consumer/ops_parseq.py",
+        "producer/ops_corner_cnn.py",
+        "producer/ops_detection.py",
+        "producer/pipeline.py",
+        "scripts/export_parseq_trt.py",
+        "tests/test_training_loop.py",
+        "training/yolo/dataset.py",
+        "training/yolo/mining.py",
+        "training/yolo/run_experiments.py"
+      ],
+      "uncaught": false
+    }
+  ],
+  "total_raises": 107,
+  "total_handlers": 61,
+  "uncaught_count": 0,
+  "handler_summary": {
+    "Exception": 9,
+    "ValueError": 4,
+    "queue.Full": 2,
+    "queue.Empty": 1,
+    "ImportError": 16,
+    "json.JSONDecodeError": 8,
+    "AssertionError": 1,
+    "(json.JSONDecodeError, OSError)": 7,
+    "OSError": 7,
+    "TypeError": 2,
+    "(ImportError, TypeError)": 1,
+    "KeyError": 1,
+    "IOError": 2
+  }
+}

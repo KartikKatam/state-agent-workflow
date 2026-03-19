@@ -1,0 +1,13 @@
+Before delegating a subtask from your exploration work, reason through:
+
+1. SCOPE: What specific part of the codebase should the sub-agent explore?
+   Give directory paths, file patterns, or symbol names — not vague areas.
+
+2. DEDUP: Have you already explored this area? Check your findings so far
+   before spawning a redundant exploration.
+
+3. OUTPUT FORMAT: Should the sub-agent produce a context packet (.claude/context/),
+   a raw findings summary, or specific answers to questions?
+
+4. DEPTH: Should the sub-agent do a quick scan (file listing + key symbols) or
+   a deep read (full function analysis, dependency tracing)?

@@ -1,0 +1,1054 @@
+{
+  "persistent": [
+    {
+      "id": "agentic-coding-worktree-patterns",
+      "path": "persistent/agentic-coding-worktree-patterns.json",
+      "library": "agentic-coding-tools",
+      "version": "2026-02",
+      "type": "best_practices",
+      "topics": [
+        "git-worktrees",
+        "parallel-agents",
+        "git-isolation",
+        "claude-code",
+        "aider",
+        "swe-agent",
+        "openhands",
+        "devin",
+        "cursor",
+        "cline",
+        "multi-agent",
+        "worktree-management"
+      ],
+      "last_updated": "2026-03-01T00:00:00Z",
+      "confidence": 0.9,
+      "source_count": 24
+    },
+    {
+      "id": "community-debugging-skills",
+      "path": "new.claude/skills/debugging/references/community-research.md",
+      "library": "agentic-workflow-community",
+      "version": "2026-02",
+      "type": "best_practices",
+      "topics": [
+        "debugging",
+        "root-cause-analysis",
+        "hypothesis-testing",
+        "production-debugging",
+        "obra-superpowers",
+        "wshobson-agents",
+        "gsd-debugger",
+        "systematic-debugging",
+        "community-patterns"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.72,
+      "source_count": 15
+    },
+    {
+      "id": "ai-lab-eval-frameworks-blind-testing",
+      "path": "persistent/ai-lab-eval-frameworks-blind-testing.json",
+      "library": "ai-evaluation-frameworks",
+      "version": "2025-2026",
+      "type": "best_practices",
+      "topics": [
+        "eval-frameworks",
+        "blind-testing",
+        "code-evaluation",
+        "benchmark-design",
+        "contamination-prevention",
+        "anthropic-bloom",
+        "openai-evals",
+        "swe-bench",
+        "humaneval",
+        "livecodebench",
+        "cyberseceval",
+        "big-bench",
+        "red-teaming",
+        "independent-testing",
+        "model-grading",
+        "deterministic-grading",
+        "benchmark-saturation",
+        "teaching-to-the-test"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.75,
+      "source_count": 25
+    },
+    {
+      "id": "ai-agent-code-testing-methodology",
+      "path": "persistent/ai-agent-code-testing-methodology.json",
+      "library": "ai-coding-agents",
+      "version": "2025-2026",
+      "type": "best_practices",
+      "topics": [
+        "ai-agent-testing",
+        "scenario-testing",
+        "blind-testing",
+        "independent-verification",
+        "cognition-devin",
+        "cursor",
+        "vercel-v0",
+        "sourcegraph-cody",
+        "amazon-q",
+        "codeium",
+        "swe-bench-verified",
+        "livecodebench",
+        "contamination-prevention",
+        "flaky-tests",
+        "non-determinism",
+        "trajectory-sampling",
+        "evals-in-ci",
+        "tdd-mode-evaluation",
+        "golden-benchmark",
+        "multi-step-agent",
+        "eval-driven-development",
+        "generator-evaluator-separation",
+        "task-stratified-testing"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.75,
+      "source_count": 16
+    },
+    {
+      "id": "blind-testing-ivv-methodology",
+      "path": "persistent/blind-testing-ivv-methodology.json",
+      "library": "software-verification-methodologies",
+      "version": "2026-02",
+      "type": "best_practices",
+      "topics": [
+        "iv-and-v",
+        "independent-verification",
+        "mutation-testing",
+        "property-based-testing",
+        "fuzz-testing",
+        "do-178c",
+        "nasa-ivv",
+        "hypothesis-python",
+        "mutmut",
+        "cosmic-ray",
+        "pit-java",
+        "atheris",
+        "libfuzzer",
+        "afl",
+        "blind-testing",
+        "requirements-based-testing",
+        "mutation-score",
+        "shrinking",
+        "coverage-guided-fuzzing",
+        "test-quality"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.88,
+      "source_count": 23
+    },
+    {
+      "id": "scenario-acceptance-testing-frameworks",
+      "path": "persistent/scenario-acceptance-testing-frameworks.json",
+      "library": "behave, pytest-bdd, pact-python, approvaltests, litmuschaos",
+      "version": "2025-2026",
+      "type": "best_practices",
+      "topics": [
+        "bdd",
+        "behave",
+        "pytest-bdd",
+        "cucumber",
+        "gherkin",
+        "pact",
+        "contract-testing",
+        "consumer-driven-contracts",
+        "approval-testing",
+        "golden-master",
+        "snapshot-testing",
+        "approvaltests",
+        "syrupy",
+        "chaos-engineering",
+        "litmuschaos",
+        "gremlin",
+        "chaos-mesh",
+        "simian-army",
+        "steady-state-hypothesis",
+        "scenario-testing",
+        "acceptance-testing",
+        "specification-by-example",
+        "three-amigos",
+        "blind-testing",
+        "implementation-agnostic-testing"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.78,
+      "source_count": 27
+    },
+    {
+      "id": "blind-failure-reporting-patterns",
+      "path": "persistent/blind-failure-reporting-patterns.json",
+      "library": "multi-agent-tdd-workflow",
+      "version": "2026-02",
+      "type": "best_practices",
+      "topics": [
+        "blind-testing",
+        "failure-reporting",
+        "iv-and-v",
+        "nasa-ivv",
+        "do-178c",
+        "bdd",
+        "mutation-testing",
+        "property-based-testing",
+        "hypothesis",
+        "tester-coder-separation",
+        "multi-agent-tdd",
+        "behavioral-mismatch",
+        "report-format",
+        "progressive-disclosure",
+        "context-isolation",
+        "agentcoder",
+        "gherkin",
+        "cucumber",
+        "mutmut",
+        "stryker",
+        "failure-report-template",
+        "test-gap-report"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.88,
+      "source_count": 14
+    },
+    {
+      "id": "test-tier-architecture-4tier",
+      "path": "persistent/test-tier-architecture-4tier.json",
+      "library": "testing-architecture",
+      "version": "2025-2026",
+      "type": "best_practices",
+      "topics": [
+        "test-pyramid",
+        "test-honeycomb",
+        "test-diamond",
+        "test-trophy",
+        "google-testing",
+        "netflix-testing",
+        "spotify-testing",
+        "golden-path",
+        "happy-path",
+        "edge-cases",
+        "boundary-value-analysis",
+        "equivalence-partitioning",
+        "adversarial-testing",
+        "property-based-testing",
+        "4-tier-testing",
+        "tier-allocation",
+        "test-schedule",
+        "ci-pipeline-testing",
+        "scenario-vs-integration",
+        "chaos-engineering",
+        "canary-testing",
+        "tester-agent",
+        "test-completion-criteria"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.82,
+      "source_count": 20
+    },
+    {
+      "id": "ai-subagent-test-generation",
+      "path": "persistent/ai-subagent-test-generation.json",
+      "library": "ai-testing-methodology",
+      "version": "2026-02",
+      "type": "best_practices",
+      "topics": [
+        "sub-agent-test-writing",
+        "tautological-test-detection",
+        "fraudulent-test-prevention",
+        "mutation-guided-prompting",
+        "specification-only-prompting",
+        "adversarial-prompting",
+        "invariant-testing",
+        "over-mocked-tests",
+        "test-oracle-generation",
+        "meta-ach",
+        "agentic-pbt",
+        "test-delegation",
+        "sonnet-haiku-test-writing",
+        "prompt-templates",
+        "assertion-density",
+        "empty-stub-verification",
+        "test-granularity",
+        "homogenization-trap",
+        "generator-evaluator-separation",
+        "tdd-mode",
+        "context-elimination"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.88,
+      "source_count": 16
+    },
+    {
+      "id": "python-logging-observability-production",
+      "path": "new.claude/research/logging-observability-research.md",
+      "library": "structlog, opentelemetry-python, python-logging",
+      "version": "2026-02",
+      "type": "best_practices",
+      "topics": [
+        "python-logging",
+        "structured-logging",
+        "structlog",
+        "log-levels",
+        "correlation-ids",
+        "contextvars",
+        "opentelemetry",
+        "tracing",
+        "observability",
+        "what-not-to-log",
+        "pii",
+        "credentials",
+        "security-logging",
+        "owasp-logging",
+        "logging-anti-patterns",
+        "f-string-logging",
+        "performance-logging",
+        "logging-architecture",
+        "boundary-logging",
+        "dependency-injection-logger",
+        "testing-logs",
+        "caplog",
+        "pytest-structlog",
+        "ai-agent-logging",
+        "mutable-objects-logging",
+        "exc_info",
+        "json-logging",
+        "production-python",
+        "four-golden-signals"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.88,
+      "source_count": 25
+    },
+    {
+      "id": "design-rule-exceptions",
+      "path": "new.claude/research/design-rule-exceptions-research.md",
+      "library": "software-engineering-principles",
+      "version": "2026-02",
+      "type": "best_practices",
+      "topics": [
+        "function-length",
+        "cognitive-complexity",
+        "cyclomatic-complexity",
+        "single-responsibility-principle",
+        "dependency-injection",
+        "immutability",
+        "frozen-dataclass",
+        "extract-method",
+        "SLAP",
+        "type-annotations",
+        "guard-clauses",
+        "early-return",
+        "composition-over-inheritance",
+        "template-method",
+        "rule-of-three",
+        "clean-code-critique",
+        "nasa-power-of-10",
+        "google-style-guide",
+        "linux-kernel-coding-style",
+        "design-principle-priority",
+        "ai-code-quality",
+        "coderabbit-research",
+        "gitclear-research",
+        "codescene",
+        "tiered-coding-standards",
+        "wrong-abstraction",
+        "over-engineering",
+        "mutable-dataclass",
+        "builder-pattern",
+        "state-machine-pattern"
+      ],
+      "last_updated": "2026-02-28T00:00:00Z",
+      "confidence": 0.78,
+      "source_count": 21
+    }
+  ],
+  "ephemeral": [],
+  "search_index": {
+    "git-worktrees": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "parallel-agents": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "claude-code": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "worktree": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "isolation": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "aider": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "cursor": [
+      "agentic-coding-worktree-patterns",
+      "ai-agent-code-testing-methodology"
+    ],
+    "devin": [
+      "agentic-coding-worktree-patterns",
+      "ai-agent-code-testing-methodology"
+    ],
+    "openhands": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "cline": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "multi-agent": [
+      "agentic-coding-worktree-patterns",
+      "ai-agent-code-testing-methodology",
+      "blind-failure-reporting-patterns"
+    ],
+    "merge-strategy": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "chunk-coder": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "ccswarm": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "swe-agent": [
+      "agentic-coding-worktree-patterns"
+    ],
+    "debugging": [
+      "community-debugging-skills"
+    ],
+    "root-cause-analysis": [
+      "community-debugging-skills"
+    ],
+    "hypothesis-testing": [
+      "community-debugging-skills"
+    ],
+    "production-debugging": [
+      "community-debugging-skills"
+    ],
+    "systematic-debugging": [
+      "community-debugging-skills"
+    ],
+    "obra-superpowers": [
+      "community-debugging-skills"
+    ],
+    "wshobson": [
+      "community-debugging-skills"
+    ],
+    "gsd-debugger": [
+      "community-debugging-skills"
+    ],
+    "rubber-duck": [
+      "community-debugging-skills"
+    ],
+    "binary-search-debugging": [
+      "community-debugging-skills"
+    ],
+    "disconfirming-evidence": [
+      "community-debugging-skills"
+    ],
+    "multi-hypothesis": [
+      "community-debugging-skills"
+    ],
+    "eval-frameworks": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "blind-testing": [
+      "ai-lab-eval-frameworks-blind-testing",
+      "ai-agent-code-testing-methodology",
+      "blind-testing-ivv-methodology",
+      "scenario-acceptance-testing-frameworks",
+      "blind-failure-reporting-patterns"
+    ],
+    "code-evaluation": [
+      "ai-lab-eval-frameworks-blind-testing",
+      "ai-agent-code-testing-methodology"
+    ],
+    "benchmark-design": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "contamination-prevention": [
+      "ai-lab-eval-frameworks-blind-testing",
+      "ai-agent-code-testing-methodology"
+    ],
+    "anthropic-bloom": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "openai-evals": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "swe-bench": [
+      "ai-lab-eval-frameworks-blind-testing",
+      "ai-agent-code-testing-methodology"
+    ],
+    "humaneval": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "livecodebench": [
+      "ai-lab-eval-frameworks-blind-testing",
+      "ai-agent-code-testing-methodology"
+    ],
+    "cyberseceval": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "big-bench": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "red-teaming": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "independent-testing": [
+      "ai-lab-eval-frameworks-blind-testing",
+      "ai-agent-code-testing-methodology"
+    ],
+    "model-grading": [
+      "ai-lab-eval-frameworks-blind-testing",
+      "ai-agent-code-testing-methodology"
+    ],
+    "deterministic-grading": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "benchmark-saturation": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "teaching-to-the-test": [
+      "ai-lab-eval-frameworks-blind-testing"
+    ],
+    "ai-agent-testing": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "scenario-testing": [
+      "ai-agent-code-testing-methodology",
+      "scenario-acceptance-testing-frameworks",
+      "test-tier-architecture-4tier"
+    ],
+    "independent-verification": [
+      "ai-agent-code-testing-methodology",
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns"
+    ],
+    "cognition-devin": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "vercel-v0": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "sourcegraph-cody": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "amazon-q": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "codeium": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "swe-bench-verified": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "flaky-tests": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "non-determinism": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "trajectory-sampling": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "evals-in-ci": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "tdd-mode-evaluation": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "golden-benchmark": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "multi-step-agent": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "eval-driven-development": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "generator-evaluator-separation": [
+      "ai-agent-code-testing-methodology",
+      "ai-subagent-test-generation"
+    ],
+    "task-stratified-testing": [
+      "ai-agent-code-testing-methodology"
+    ],
+    "iv-and-v": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns"
+    ],
+    "mutation-testing": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns",
+      "ai-subagent-test-generation"
+    ],
+    "property-based-testing": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns",
+      "test-tier-architecture-4tier",
+      "ai-subagent-test-generation"
+    ],
+    "fuzz-testing": [
+      "blind-testing-ivv-methodology"
+    ],
+    "do-178c": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns"
+    ],
+    "nasa-ivv": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns"
+    ],
+    "hypothesis-python": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns",
+      "ai-subagent-test-generation"
+    ],
+    "mutmut": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns",
+      "ai-subagent-test-generation"
+    ],
+    "cosmic-ray": [
+      "blind-testing-ivv-methodology"
+    ],
+    "pit-java": [
+      "blind-testing-ivv-methodology"
+    ],
+    "atheris": [
+      "blind-testing-ivv-methodology"
+    ],
+    "libfuzzer": [
+      "blind-testing-ivv-methodology"
+    ],
+    "afl": [
+      "blind-testing-ivv-methodology"
+    ],
+    "requirements-based-testing": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns"
+    ],
+    "mutation-score": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns",
+      "ai-subagent-test-generation"
+    ],
+    "shrinking": [
+      "blind-testing-ivv-methodology",
+      "blind-failure-reporting-patterns"
+    ],
+    "coverage-guided-fuzzing": [
+      "blind-testing-ivv-methodology"
+    ],
+    "test-quality": [
+      "blind-testing-ivv-methodology",
+      "ai-subagent-test-generation"
+    ],
+    "bdd": [
+      "scenario-acceptance-testing-frameworks",
+      "blind-failure-reporting-patterns"
+    ],
+    "behave": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "pytest-bdd": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "cucumber": [
+      "scenario-acceptance-testing-frameworks",
+      "blind-failure-reporting-patterns"
+    ],
+    "gherkin": [
+      "scenario-acceptance-testing-frameworks",
+      "blind-failure-reporting-patterns"
+    ],
+    "pact": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "contract-testing": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "consumer-driven-contracts": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "approval-testing": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "golden-master": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "snapshot-testing": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "approvaltests": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "syrupy": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "chaos-engineering": [
+      "scenario-acceptance-testing-frameworks",
+      "test-tier-architecture-4tier"
+    ],
+    "litmuschaos": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "gremlin": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "chaos-mesh": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "simian-army": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "steady-state-hypothesis": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "acceptance-testing": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "specification-by-example": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "three-amigos": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "implementation-agnostic-testing": [
+      "scenario-acceptance-testing-frameworks"
+    ],
+    "failure-reporting": [
+      "blind-failure-reporting-patterns"
+    ],
+    "tester-coder-separation": [
+      "blind-failure-reporting-patterns",
+      "ai-subagent-test-generation"
+    ],
+    "multi-agent-tdd": [
+      "blind-failure-reporting-patterns",
+      "ai-subagent-test-generation"
+    ],
+    "behavioral-mismatch": [
+      "blind-failure-reporting-patterns"
+    ],
+    "report-format": [
+      "blind-failure-reporting-patterns"
+    ],
+    "progressive-disclosure": [
+      "blind-failure-reporting-patterns"
+    ],
+    "context-isolation": [
+      "blind-failure-reporting-patterns"
+    ],
+    "agentcoder": [
+      "blind-failure-reporting-patterns"
+    ],
+    "stryker": [
+      "blind-failure-reporting-patterns"
+    ],
+    "failure-report-template": [
+      "blind-failure-reporting-patterns"
+    ],
+    "test-gap-report": [
+      "blind-failure-reporting-patterns"
+    ],
+    "test-pyramid": [
+      "test-tier-architecture-4tier"
+    ],
+    "test-honeycomb": [
+      "test-tier-architecture-4tier"
+    ],
+    "test-diamond": [
+      "test-tier-architecture-4tier"
+    ],
+    "test-trophy": [
+      "test-tier-architecture-4tier"
+    ],
+    "google-testing": [
+      "test-tier-architecture-4tier"
+    ],
+    "netflix-testing": [
+      "test-tier-architecture-4tier"
+    ],
+    "spotify-testing": [
+      "test-tier-architecture-4tier"
+    ],
+    "golden-path": [
+      "test-tier-architecture-4tier"
+    ],
+    "happy-path": [
+      "test-tier-architecture-4tier"
+    ],
+    "edge-cases": [
+      "test-tier-architecture-4tier"
+    ],
+    "boundary-value-analysis": [
+      "test-tier-architecture-4tier"
+    ],
+    "equivalence-partitioning": [
+      "test-tier-architecture-4tier"
+    ],
+    "adversarial-testing": [
+      "test-tier-architecture-4tier"
+    ],
+    "4-tier-testing": [
+      "test-tier-architecture-4tier"
+    ],
+    "tier-allocation": [
+      "test-tier-architecture-4tier"
+    ],
+    "test-schedule": [
+      "test-tier-architecture-4tier"
+    ],
+    "ci-pipeline-testing": [
+      "test-tier-architecture-4tier"
+    ],
+    "scenario-vs-integration": [
+      "test-tier-architecture-4tier"
+    ],
+    "canary-testing": [
+      "test-tier-architecture-4tier"
+    ],
+    "tester-agent": [
+      "test-tier-architecture-4tier"
+    ],
+    "test-completion-criteria": [
+      "test-tier-architecture-4tier"
+    ],
+    "sub-agent-test-writing": [
+      "ai-subagent-test-generation"
+    ],
+    "tautological-test-detection": [
+      "ai-subagent-test-generation"
+    ],
+    "fraudulent-test-prevention": [
+      "ai-subagent-test-generation"
+    ],
+    "mutation-guided-prompting": [
+      "ai-subagent-test-generation"
+    ],
+    "specification-only-prompting": [
+      "ai-subagent-test-generation"
+    ],
+    "adversarial-prompting": [
+      "ai-subagent-test-generation"
+    ],
+    "invariant-testing": [
+      "ai-subagent-test-generation"
+    ],
+    "over-mocked-tests": [
+      "ai-subagent-test-generation"
+    ],
+    "test-oracle-generation": [
+      "ai-subagent-test-generation"
+    ],
+    "meta-ach": [
+      "ai-subagent-test-generation"
+    ],
+    "agentic-pbt": [
+      "ai-subagent-test-generation"
+    ],
+    "test-delegation": [
+      "ai-subagent-test-generation"
+    ],
+    "sonnet-haiku-test-writing": [
+      "ai-subagent-test-generation"
+    ],
+    "prompt-templates": [
+      "ai-subagent-test-generation"
+    ],
+    "assertion-density": [
+      "ai-subagent-test-generation"
+    ],
+    "empty-stub-verification": [
+      "ai-subagent-test-generation"
+    ],
+    "test-granularity": [
+      "ai-subagent-test-generation"
+    ],
+    "homogenization-trap": [
+      "ai-subagent-test-generation"
+    ],
+    "tdd-mode": [
+      "ai-subagent-test-generation"
+    ],
+    "context-elimination": [
+      "ai-subagent-test-generation"
+    ],
+    "python-logging": [
+      "python-logging-observability-production"
+    ],
+    "structured-logging": [
+      "python-logging-observability-production"
+    ],
+    "structlog": [
+      "python-logging-observability-production"
+    ],
+    "log-levels": [
+      "python-logging-observability-production"
+    ],
+    "correlation-ids": [
+      "python-logging-observability-production"
+    ],
+    "opentelemetry": [
+      "python-logging-observability-production"
+    ],
+    "observability": [
+      "python-logging-observability-production"
+    ],
+    "what-not-to-log": [
+      "python-logging-observability-production"
+    ],
+    "pii": [
+      "python-logging-observability-production"
+    ],
+    "owasp-logging": [
+      "python-logging-observability-production"
+    ],
+    "logging-anti-patterns": [
+      "python-logging-observability-production"
+    ],
+    "f-string-logging": [
+      "python-logging-observability-production"
+    ],
+    "performance-logging": [
+      "python-logging-observability-production"
+    ],
+    "logging-architecture": [
+      "python-logging-observability-production"
+    ],
+    "testing-logs": [
+      "python-logging-observability-production"
+    ],
+    "ai-agent-logging": [
+      "python-logging-observability-production"
+    ],
+    "json-logging": [
+      "python-logging-observability-production"
+    ],
+    "production-python": [
+      "python-logging-observability-production"
+    ],
+    "four-golden-signals": [
+      "python-logging-observability-production"
+    ],
+    "exc_info": [
+      "python-logging-observability-production"
+    ],
+    "mutable-objects-logging": [
+      "python-logging-observability-production"
+    ],
+    "dependency-injection": [
+      "design-rule-exceptions"
+    ],
+    "function-length": [
+      "design-rule-exceptions"
+    ],
+    "cognitive-complexity": [
+      "design-rule-exceptions"
+    ],
+    "cyclomatic-complexity": [
+      "design-rule-exceptions"
+    ],
+    "single-responsibility-principle": [
+      "design-rule-exceptions"
+    ],
+    "immutability": [
+      "design-rule-exceptions"
+    ],
+    "frozen-dataclass": [
+      "design-rule-exceptions"
+    ],
+    "extract-method": [
+      "design-rule-exceptions"
+    ],
+    "SLAP": [
+      "design-rule-exceptions"
+    ],
+    "guard-clauses": [
+      "design-rule-exceptions"
+    ],
+    "early-return": [
+      "design-rule-exceptions"
+    ],
+    "composition-over-inheritance": [
+      "design-rule-exceptions"
+    ],
+    "template-method": [
+      "design-rule-exceptions"
+    ],
+    "rule-of-three": [
+      "design-rule-exceptions"
+    ],
+    "clean-code-critique": [
+      "design-rule-exceptions"
+    ],
+    "nasa-power-of-10": [
+      "design-rule-exceptions"
+    ],
+    "google-style-guide": [
+      "design-rule-exceptions"
+    ],
+    "linux-kernel-coding-style": [
+      "design-rule-exceptions"
+    ],
+    "design-principle-priority": [
+      "design-rule-exceptions"
+    ],
+    "ai-code-quality": [
+      "design-rule-exceptions"
+    ],
+    "coderabbit-research": [
+      "design-rule-exceptions"
+    ],
+    "gitclear-research": [
+      "design-rule-exceptions"
+    ],
+    "codescene": [
+      "design-rule-exceptions"
+    ],
+    "tiered-coding-standards": [
+      "design-rule-exceptions"
+    ],
+    "wrong-abstraction": [
+      "design-rule-exceptions"
+    ],
+    "over-engineering": [
+      "design-rule-exceptions"
+    ],
+    "mutable-dataclass": [
+      "design-rule-exceptions"
+    ],
+    "builder-pattern": [
+      "design-rule-exceptions"
+    ],
+    "state-machine-pattern": [
+      "design-rule-exceptions"
+    ]
+  },
+  "meta": {
+    "last_cleanup": "2026-02-28T00:00:00Z",
+    "total_persistent": 11,
+    "total_ephemeral": 0,
+    "auto_cleanup_enabled": true,
+    "promotion_threshold": 3,
+    "libraries_covered": [
+      "agentic-coding-tools",
+      "agentic-workflow-community",
+      "ai-evaluation-frameworks",
+      "ai-coding-agents",
+      "software-verification-methodologies",
+      "behave, pytest-bdd, pact-python, approvaltests, litmuschaos",
+      "multi-agent-tdd-workflow",
+      "testing-architecture",
+      "ai-testing-methodology",
+      "structlog, opentelemetry-python, python-logging",
+      "software-engineering-principles"
+    ]
+  }
+}

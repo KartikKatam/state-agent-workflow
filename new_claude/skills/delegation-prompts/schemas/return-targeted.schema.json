@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Targeted Delegation Return",
+  "description": "Return schema for targeted delegation. The sub-agent returns the result plus decisions made during execution.",
+  "type": "object",
+  "required": ["delegation_type", "status", "result", "decisions_made"],
+  "properties": {
+    "delegation_type": {
+      "const": "targeted",
+      "description": "Must match the delegation type from the prompt."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "partial", "failed"],
+      "description": "Overall completion status."
+    },
+    "result": {
+      "type": "object",
+      "description": "The actual output or answer. Structure varies by task."
+    },
+    "decisions_made": {
+      "type": "array",
+      "description": "Decisions made during execution with rationale.",
+      "items": {
+        "type": "object",
+        "required": ["decision", "reason"],
+        "properties": {
+          "decision": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "unexpected_findings": {
+      "type": "array",
+      "description": "Findings outside the task scope that may be relevant to the parent or peers.",
+      "items": { "type": "string" }
+    },
+    "scope_extensions": {
+      "type": "array",
+      "description": "Areas the agent extended into beyond the original scope.",
+      "items": {
+        "type": "object",
+        "required": ["extended_to", "reason"],
+        "properties": {
+          "extended_to": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "cross_scope_findings": {
+      "type": "array",
+      "description": "Findings relevant to other agents or scopes.",
+      "items": {
+        "type": "object",
+        "required": ["finding", "relevant_to"],
+        "properties": {
+          "finding": { "type": "string" },
+          "relevant_to": { "type": "string" }
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "description": "Things the agent could not resolve.",
+      "items": { "type": "string" }
+    },
+    "carry_forward": {
+      "type": "array",
+      "description": "Information the parent should carry to subsequent delegations.",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

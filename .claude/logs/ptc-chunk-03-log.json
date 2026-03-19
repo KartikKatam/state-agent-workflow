@@ -1,0 +1,129 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-03",
+    "started_at": "2026-02-28T20:00:00Z",
+    "last_updated": "2026-02-28T20:15:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-03-2026-02-28",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "phase_history": [
+    {
+      "phase": "context_loading",
+      "timestamp": "2026-02-28T20:00:00Z",
+      "details": "Loaded chunk-03 spec, test specs, design doc, chunk-02 session log for continuity"
+    },
+    {
+      "phase": "test_writing",
+      "timestamp": "2026-02-28T20:03:00Z",
+      "details": "Wrote 11 tests in test_sandbox_runtime.py across 3 test classes (TestIpcClientCallTool, TestIpcClientResponseHandler, TestRuntimeMainLoop)"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T20:05:00Z",
+      "details": "11 tests failed: ImportError (ipc_sandbox and sandbox_runtime.runtime not yet created). 20 chunk-02 tests still passing."
+    },
+    {
+      "phase": "implementation",
+      "timestamp": "2026-02-28T20:07:00Z",
+      "details": "Created ipc_sandbox.py (IpcClient, ToolError) and sandbox_runtime/runtime.py (run, parse_args, main)"
+    },
+    {
+      "phase": "iteration",
+      "timestamp": "2026-02-28T20:10:00Z",
+      "details": "30/31 pass; 1 async test failing — test_call_tool_routes_by_call_id. Fixed: mock reader consumed data before futures registered; switched to asyncio.Queue for synchronized delivery. Also fixed asyncio.create_task → asyncio.ensure_future for _GatheringFuture."
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T20:12:00Z",
+      "details": "31/31 tests passing (20 chunk-02 + 11 chunk-03)"
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T20:13:00Z",
+      "details": "inv-03-01 PASS (IpcClient importable with call_tool), inv-03-02 PASS (runtime main importable), inv-03-03 PASS (all sandbox runtime tests pass)"
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T20:14:00Z",
+      "details": "ruff format PASS (2 reformatted), ruff check PASS (4 auto-fixed, 0 remaining), tests PASS (31/31)"
+    }
+  ],
+  "resume_point": "Awaiting user approval",
+  "files_modified": [
+    "~/.claude/mcp/ptc-server/ipc_sandbox.py",
+    "~/.claude/mcp/ptc-server/sandbox_runtime/runtime.py",
+    "tests/ptc/test_sandbox_runtime.py"
+  ],
+  "tests_written": [
+    {"name": "test_call_tool_sends_tool_call_msg", "class": "TestIpcClientCallTool", "status": "passing"},
+    {"name": "test_call_tool_routes_by_call_id", "class": "TestIpcClientCallTool", "status": "passing"},
+    {"name": "test_call_tool_raises_tool_error", "class": "TestIpcClientCallTool", "status": "passing"},
+    {"name": "test_call_tool_timeout", "class": "TestIpcClientCallTool", "status": "passing"},
+    {"name": "test_response_handler_routes_multiple", "class": "TestIpcClientResponseHandler", "status": "passing"},
+    {"name": "test_response_handler_ignores_unknown_ids", "class": "TestIpcClientResponseHandler", "status": "passing"},
+    {"name": "test_runtime_processes_execute_msg", "class": "TestRuntimeMainLoop", "status": "passing"},
+    {"name": "test_runtime_handles_cancel_msg", "class": "TestRuntimeMainLoop", "status": "passing"},
+    {"name": "test_runtime_handles_ping", "class": "TestRuntimeMainLoop", "status": "passing"},
+    {"name": "test_runtime_error_returns_error_msg", "class": "TestRuntimeMainLoop", "status": "passing"},
+    {"name": "test_runtime_socket_arg_parsing", "class": "TestRuntimeMainLoop", "status": "passing"}
+  ],
+  "invariants_status": {
+    "inv-03-01": "pass",
+    "inv-03-02": "pass",
+    "inv-03-03": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [
+    {
+      "id": "sig-001",
+      "type": "test_fix_cycle",
+      "context": {
+        "test_name": "test_call_tool_routes_by_call_id",
+        "failure_count": 2,
+        "failure_reason": "1) AsyncMock side_effect delivers all responses before call_tool registers pending futures, so responses are discarded. 2) asyncio.create_task rejects _GatheringFuture (not a coroutine).",
+        "resolution": "1) Used asyncio.Queue as mock reader — feed responses after futures registered. 2) asyncio.ensure_future instead of create_task for gather result."
+      },
+      "timestamp": "2026-02-28T20:11:00Z",
+      "extracted": false
+    }
+  ],
+  "deviations": [
+    {
+      "type": "task_modification",
+      "description": "Runtime run() reads directly from reader instead of using IpcClient._response_handler",
+      "reason": "IpcClient._response_handler runs as background task reading all messages. Runtime needs the same reader for ExecuteMsg/CancelMsg/PingMsg. Can't have two readers on one stream. Runtime reads directly and dispatches tool_result to IpcClient._pending manually.",
+      "plan_gap": "Plan doesn't specify how runtime and IpcClient share the single socket reader",
+      "impact": "Low — IpcClient still works standalone (connect+_response_handler). Runtime integrates differently but behavior is identical.",
+      "user_approval_needed": false
+    }
+  ],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "IpcClient has standalone connect()+_response_handler() for independent use, but runtime.run() reads the socket directly",
+      "reason": "Can't have two readers on one asyncio stream. Runtime dispatches tool_result to IpcClient._pending manually."
+    },
+    {
+      "decision": "call_tool has configurable timeout parameter (default 30s)",
+      "reason": "Test spec requires timeout test. asyncio.wait_for wraps the pending future."
+    },
+    {
+      "decision": "Runtime uses late import of IpcClient inside run() to avoid circular imports",
+      "reason": "ipc_sandbox imports from ipc_protocol; runtime imports from both. Late import keeps the dependency tree clean."
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 2
+  }
+}

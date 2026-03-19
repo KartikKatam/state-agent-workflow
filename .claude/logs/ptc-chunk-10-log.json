@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-10",
+    "started_at": "2026-02-28T21:00:00Z",
+    "last_updated": "2026-02-28T21:15:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-10-20260228",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "phase_history": [
+    {
+      "phase": "test_design",
+      "timestamp": "2026-02-28T21:02:00Z",
+      "details": "Designed 14 tests across 5 test classes for chunk-10"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T21:05:00Z",
+      "details": "14 tests failed: ModuleNotFoundError for tool_dispatcher"
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T21:10:00Z",
+      "details": "14/14 tests passing"
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T21:12:00Z",
+      "details": "All 5 invariants verified (inv-10-01 through inv-10-05). Note: inv-10-02/04 -k filters need CamelCase (StrategyRouting, Semaphore) not snake_case."
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T21:14:00Z",
+      "details": "ruff format + ruff check passing. 257/257 PTC tests pass (no regressions)."
+    }
+  ],
+  "resume_point": "Awaiting user approval",
+  "files_modified": [
+    {"file": "tests/ptc/test_tool_dispatcher.py", "action": "created"},
+    {"file": "~/.claude/mcp/ptc-server/tool_dispatcher.py", "action": "created"}
+  ],
+  "tests_written": [
+    {"name": "test_dispatcher_init", "class": "TestDispatcherInit", "status": "pass"},
+    {"name": "test_dispatch_ptc_tools_strategy", "class": "TestStrategyRouting", "status": "pass"},
+    {"name": "test_dispatch_subprocess_strategy", "class": "TestStrategyRouting", "status": "pass"},
+    {"name": "test_dispatch_host_fs_strategy", "class": "TestStrategyRouting", "status": "pass"},
+    {"name": "test_dispatch_host_network_strategy", "class": "TestStrategyRouting", "status": "pass"},
+    {"name": "test_dispatch_mcp_proxy_strategy", "class": "TestStrategyRouting", "status": "pass"},
+    {"name": "test_dispatch_returns_json_string", "class": "TestStrategyRouting", "status": "pass"},
+    {"name": "test_permission_denied_returns_error", "class": "TestPermissionDenial", "status": "pass"},
+    {"name": "test_permission_denied_logs_event", "class": "TestPermissionDenial", "status": "pass"},
+    {"name": "test_permission_denied_does_not_dispatch", "class": "TestPermissionDenial", "status": "pass"},
+    {"name": "test_semaphore_limits_concurrency", "class": "TestSemaphoreBackpressure", "status": "pass"},
+    {"name": "test_semaphore_releases_after_dispatch", "class": "TestSemaphoreBackpressure", "status": "pass"},
+    {"name": "test_dispatch_logs_start_and_complete", "class": "TestEventLogging", "status": "pass"},
+    {"name": "test_dispatch_logs_error_on_failure", "class": "TestEventLogging", "status": "pass"}
+  ],
+  "invariants_status": {
+    "inv-10-01": "pass",
+    "inv-10-02": "pass",
+    "inv-10-03": "pass",
+    "inv-10-04": "pass",
+    "inv-10-05": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [],
+  "deviations": [
+    {
+      "type": "task_modification",
+      "description": "Plan's invariant -k filters use snake_case (strategy_routing, semaphore) but test classes use CamelCase (TestStrategyRouting, TestSemaphoreBackpressure). Used CamelCase filters for verification.",
+      "reason": "Python convention for class names is CamelCase. pytest -k is substring-based, underscore vs no-underscore matters.",
+      "plan_gap": "Plan invariant commands assumed snake_case -k filters would match CamelCase class names",
+      "impact": "Low - tests still pass, just need correct -k filter string",
+      "user_approval_needed": false
+    }
+  ],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "Used real event_logger API signatures (log_tool_call_complete takes 6 args: exec_id, call_id, tool, duration_ms, result_bytes, result_preview) rather than simplified design doc version (4 args)",
+      "reason": "Design doc simplified the API. Real event_logger.py has richer signatures. Adapting to real API avoids integration issues."
+    },
+    {
+      "decision": "Generated call_id per dispatch via uuid for event logger tracking",
+      "reason": "Event logger methods require call_id parameter. Dispatcher generates one per dispatch call."
+    },
+    {
+      "decision": "Used asyncio.run_in_executor for subprocess_dispatch and host_network_dispatch",
+      "reason": "ptc_tools testing/git/network functions are blocking (subprocess.run, urllib). Wrapping in executor prevents event loop blocking."
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 1
+  }
+}

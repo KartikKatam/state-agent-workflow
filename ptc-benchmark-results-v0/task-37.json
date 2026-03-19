@@ -1,0 +1,32 @@
+{
+  "markers": [
+    {
+      "file": "vendor/parseq/tools/coco_2_converter.py",
+      "line_number": 26,
+      "marker_type": "HACK",
+      "text": "for multi-processing"
+    },
+    {
+      "file": "vendor/parseq/tools/lsvt_converter.py",
+      "line_number": 26,
+      "marker_type": "HACK",
+      "text": "for multi-processing"
+    },
+    {
+      "file": "vendor/parseq/tools/openvino_converter.py",
+      "line_number": 27,
+      "marker_type": "HACK",
+      "text": "for multi-processing"
+    },
+    {
+      "file": "vendor/parseq/tools/textocr_converter.py",
+      "line_number": 53,
+      "marker_type": "HACK",
+      "text": "for multi-processing"
+    }
+  ],
+  "total_count": 4,
+  "counts_by_marker": {
+    "HACK": 4
+  }
+}

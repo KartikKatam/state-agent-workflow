@@ -1,0 +1,533 @@
+{
+  "id": "ai-subagent-test-generation",
+  "library": "ai-testing-methodology",
+  "version": "2026-02",
+  "type": "best_practices",
+  "documentation": {
+    "summary": "Using smaller/faster LLMs (Sonnet/Haiku) to write tests under direction of a tester-architect agent (Opus) is viable but requires strict anti-fraud controls. Key findings: (1) sub-agents should receive specification + function signatures only — NOT implementation code — to prevent mirroring bias; (2) specification-only prompting prevents tautological tests by making it impossible to echo back implementation logic; (3) mutation testing is the single most reliable post-generation verification gate — LLM tests can reach 100% line coverage at 4% mutation score, exposing them as behaviorally blind; (4) adversarial prompt framing ('write a test that WILL FAIL on a correct implementation that mishandles edge case X') forces sub-agents to think adversarially rather than cooperatively; (5) Meta ACH (2025) demonstrated 73% engineer acceptance with 9,095 mutants by using mutation-guided prompting — the mutant itself serves as the test specification, guaranteeing the test will fail on the buggy code.",
+    "research_questions": {
+      "Q1_sub_agent_test_writing": {
+        "question": "How can Sonnet/Haiku sub-agents be used to write tests?",
+        "findings": {
+          "context_recommendations": {
+            "give": [
+              "Function/method signature (name, parameters, return type)",
+              "Docstring / specification text describing intended behavior",
+              "Preconditions, postconditions, and invariants (if stated)",
+              "Type annotations",
+              "Error/exception contract (what should raise, under what conditions)",
+              "Example usage from documentation (not from implementation)"
+            ],
+            "do_not_give": [
+              "The implementation code itself — this causes the sub-agent to mirror the implementation logic",
+              "Existing tests — the sub-agent will produce similar tests, reducing diversity",
+              "Internal implementation notes or comments from the developer"
+            ],
+            "rationale": "AugmenTest (arXiv:2501.17461) validated that inferring behavior from documentation WITHOUT looking at code produces tests that are less likely to share the implementation's blind spots. When LLMs see the code, they generate tests that 'make the code pass' rather than tests that 'verify the spec is satisfied'."
+          },
+          "granularity": {
+            "recommendation": "Write one function's test suite per sub-agent invocation, not one test at a time.",
+            "reasoning": "Class-level prompting and method-level prompting are complementary — merging passing tests from both achieves higher coverage than either alone (arXiv:2602.21997). Assigning one sub-agent per method is the right granularity: small enough to stay focused, large enough to generate the full range of edge cases for that method.",
+            "anti_pattern": "Asking a sub-agent to write a single test per invocation is too granular — it misses interactions between normal and edge cases. Asking it to write a full class suite is too coarse — attention is diluted across too many methods."
+          },
+          "prompt_patterns": {
+            "specification_only_pattern": {
+              "name": "Spec-Only Test Generation",
+              "when": "Primary pattern — use whenever implementation is available to the architect agent",
+              "template": "You are a test engineer. You will write pytest tests for the following function.\n\nIMPORTANT: Do NOT look at any implementation. Write tests based ONLY on the specification below.\n\nFunction signature:\n{signature}\n\nSpecification:\n{docstring_or_spec}\n\nPreconditions (what callers must guarantee):\n{preconditions}\n\nPostconditions (what this function guarantees):\n{postconditions}\n\nError contract:\n{exceptions_raised}\n\nYour task:\n1. Write tests for the NORMAL case (valid inputs, expected outputs)\n2. Write tests for BOUNDARY cases (minimum, maximum, empty, single-element)\n3. Write tests for ERROR cases (invalid inputs that should raise exceptions)\n4. Write at least one PROPERTY test using @given from hypothesis\n\nEach test must have an assert statement. Tests that only call the function without asserting anything are not acceptable.\nDo NOT import or reference the implementation file directly in the test body — only in the import.",
+              "confidence": "high",
+              "source": "Derived from AugmenTest methodology + IV&V requirements-based testing principle"
+            },
+            "adversarial_pattern": {
+              "name": "Adversarial Failure-Seeking Prompt",
+              "when": "For edge case and boundary test generation — forces adversarial thinking",
+              "template": "You are an adversarial tester. Your goal is to BREAK the following function.\n\nFunction: {signature}\nSpec: {docstring}\n\nThink like a malicious or careless caller. What inputs could this function mishandle?\nConsider:\n- Off-by-one errors (n-1, n+1 at boundaries)\n- Empty collections vs None\n- Integer overflow or underflow\n- Floating point edge cases (NaN, Inf, -0.0)\n- Unicode vs ASCII edge cases\n- Thread safety / ordering assumptions\n- Invariant violations after the function returns\n\nWrite 3-5 tests, each targeting a SPECIFIC way the function could fail.\nEach test should CLEARLY FAIL if the implementation has the bug you're targeting.\nLabel each test with a comment explaining what bug it would catch.",
+              "confidence": "high",
+              "source": "Derived from adversarial testing methodology (Google for Developers + SitePoint 2025)"
+            },
+            "invariant_pattern": {
+              "name": "Invariant/Property Identification Prompt",
+              "when": "For property-based test generation, especially for mathematical or data-structure functions",
+              "template": "You are a formal methods engineer analyzing a function.\n\nFunction: {signature}\nSpec: {docstring}\n\nList ALL invariants that must hold for this function. For each invariant:\n1. State it in English: 'For any input X, after calling f(X)...'\n2. Write it as a @given Hypothesis property test\n\nCommon invariant patterns to check:\n- Roundtrip: encode then decode returns original\n- Idempotency: f(f(x)) == f(x)\n- Commutativity: f(a,b) == f(b,a)\n- Monotonicity: if a <= b then f(a) <= f(b)\n- Size preservation: len(f(x)) == len(x)\n- Conservation: sum of f(x) == sum of x\n- Identity element: f(x, identity) == x\n\nWrite Hypothesis strategies appropriate to the parameter types.",
+              "confidence": "high",
+              "source": "Derived from Agentic PBT (arXiv:2510.09907) + Hypothesis OOPSLA 2025 paper"
+            },
+            "mutation_guided_pattern": {
+              "name": "Mutation-Guided Test Generation (Meta ACH pattern)",
+              "when": "When you have a specific bug class to guard against (privacy violations, security properties, compliance requirements)",
+              "template": "You are writing a test that MUST FAIL when a specific bug is present.\n\nThe bug we are guarding against:\n{plain_english_bug_description}\n\nHere is a mutated (BUGGY) version of the function:\n{mutant_code}\n\nHere is the CORRECT specification:\n{specification}\n\nWrite a test that:\n1. FAILS when run against the mutant above\n2. PASSES when run against a correct implementation\n3. Tests the specific behavior described in the bug\n\nProve your test kills this mutant by explaining what assertion fails and why.",
+              "confidence": "high",
+              "source": "Meta ACH (arXiv:2501.12862, Engineering at Meta blog Feb 2025)"
+            }
+          }
+        }
+      },
+      "Q2_fraud_prevention": {
+        "question": "How do you prevent sub-agents from writing fraudulent/tautological tests?",
+        "fraud_taxonomy": {
+          "type_1_tautological": {
+            "description": "Test always passes regardless of implementation",
+            "example": "def test_process():\n    result = process(data)\n    assert result is not None  # passes even if process() is broken",
+            "detection": "Run mutmut — every mutation survives; mutation score = 0%"
+          },
+          "type_2_mirror": {
+            "description": "Test mirrors the implementation — both test and code have the same bug",
+            "example": "# Implementation: return x + 1  (should be x - 1)\n# Test: assert f(5) == 6  (mirrors the wrong answer)\ndef test_f(): assert f(5) == 6",
+            "detection": "Specification-only prompting (cannot mirror code you never saw). Cross-check test expected values against the spec, not the implementation output.",
+            "root_cause": "Happens when sub-agent receives implementation code — it infers what the code DOES rather than what the spec SAYS it should do"
+          },
+          "type_3_over_mocked": {
+            "description": "Tests assert on mock behavior instead of real behavior (arXiv:2602.00409)",
+            "example": "def test_payment():\n    mock_gateway = Mock()\n    mock_gateway.charge.return_value = True\n    assert payment_service.process(mock_gateway, 100) == True\n    # Tests that mock returns True when configured to return True — not useful",
+            "detection": "Static analysis: count mock.return_value assignments vs real assertion count. Red flag: more mock configurations than real assertions.",
+            "rule": "Mocks should NEVER be the subject of assertions. They should only be used to isolate dependencies. Assert on real output, not mock state."
+          },
+          "type_4_no_assertion": {
+            "description": "Test has no assert statement — only calls the function",
+            "example": "def test_initialize():\n    obj = MyClass()\n    obj.initialize()  # No assertion = test always passes",
+            "detection": "AST analysis: grep for test functions with zero assert/assertEqual/assertRaises calls"
+          },
+          "type_5_homogenization": {
+            "description": "All tests target the same category of inputs — test suite shares LLM's blind spots",
+            "example": "All tests use medium-sized integer inputs, missing overflow, underflow, and zero cases",
+            "detection": "Measure test diversity: check coverage across boundary classes (empty, min, max, typical, adversarial). Property-based tests solve this — Hypothesis generates inputs outside the LLM's comfort zone."
+          }
+        },
+        "prevention_strategies": {
+          "primary_prevention": [
+            {
+              "strategy": "Specification-only prompting",
+              "prevents": ["type_2_mirror", "type_5_homogenization"],
+              "implementation": "Never include implementation code in the sub-agent prompt. Only spec, signature, docstring, and type annotations."
+            },
+            {
+              "strategy": "Require at least one Hypothesis property test per function",
+              "prevents": ["type_5_homogenization", "type_1_tautological"],
+              "implementation": "Add to prompt: 'You MUST write at least one @given Hypothesis property test. It must test an invariant that holds for ALL valid inputs, not just one specific case.'"
+            },
+            {
+              "strategy": "Assertion density gate in system prompt",
+              "prevents": ["type_4_no_assertion", "type_3_over_mocked"],
+              "implementation": "Add to prompt: 'Every test MUST contain at least one assert statement that checks a return value, state change, or raised exception. Tests that call functions without asserting are not acceptable. Mock objects must NOT appear in assert statements.'"
+            },
+            {
+              "strategy": "Expected value from spec, not from running code",
+              "prevents": ["type_2_mirror"],
+              "implementation": "In mutation-guided pattern, give the sub-agent the specification and the mutant — NOT the correct implementation. The sub-agent derives expected values from the spec, not by running the code."
+            }
+          ],
+          "architectural_prevention": [
+            {
+              "strategy": "Generator-evaluator separation (from AI eval methodology)",
+              "principle": "The agent that generates tests must not be the agent that verifies the implementation. Matches the IV&V principle: verifier must not be biased by authoring the implementation.",
+              "implementation": "Opus architect designs test architecture and verifies results. Sonnet sub-agents write tests from spec only. Neither group should see both the implementation and write tests."
+            },
+            {
+              "strategy": "Tautology-first verification",
+              "principle": "Before running tests against the real implementation, run them against an EMPTY or STUB implementation (one that returns None, 0, or raises NotImplementedError for everything).",
+              "implementation": "If a test PASSES against the empty stub, it is tautological. Any test that passes on an empty implementation cannot be a useful test.",
+              "note": "This is the 'empty implementation check' equivalent of the TDD red-green cycle."
+            }
+          ]
+        }
+      },
+      "Q3_verification": {
+        "question": "What verification do you run on sub-agent-generated tests?",
+        "verification_pipeline": [
+          {
+            "step": 1,
+            "name": "Static AST Analysis",
+            "tool": "Python AST module or astroid",
+            "checks": [
+              "Count assert statements per test function — flag any test with zero assertions",
+              "Count mock.return_value / patch configurations — flag if count exceeds real assertion count",
+              "Detect trivially-true assertions: assert True, assert 1 == 1, assert result is not None (with no other assertions)"
+            ],
+            "implementation": "import ast\n# Count assertions per test function\nfor node in ast.walk(tree):\n    if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):\n        assertion_count = sum(1 for n in ast.walk(node) if isinstance(n, ast.Assert))\n        if assertion_count == 0:\n            flag_test(node.name, 'no_assertions')",
+            "cost": "Negligible — pure static analysis",
+            "confidence": "high"
+          },
+          {
+            "step": 2,
+            "name": "Empty Implementation Tautology Check",
+            "tool": "Custom script + pytest",
+            "method": "Replace the implementation with a stub that returns None/raises NotImplementedError. Run the generated tests against the stub. Any test that PASSES is tautological.",
+            "implementation": "# Create stub file that replaces all functions with: raise NotImplementedError\n# Run: pytest test_file.py\n# Tests that pass = tautological tests = DELETE or FIX\n# Expected: all tests should FAIL against the empty stub",
+            "cost": "Low — one pytest run against a stub",
+            "confidence": "high"
+          },
+          {
+            "step": 3,
+            "name": "Mutation Testing (Kill Score Gate)",
+            "tool": "mutmut (Python) — fastest at 1,200 mutants/min, 88.5% detection rate",
+            "method": "Run mutmut on the module being tested with the generated test suite. Require mutation score >= 60% to accept the test suite. (80% for production-grade.)",
+            "implementation": "mutmut run --paths-to-mutate src/my_module.py\nmutmut results\n# Mutation score = (killed / total) * 100\n# threshold: 60% for initial acceptance, 80% for production",
+            "thresholds": {
+              "reject": "< 40% — tests are essentially tautological",
+              "marginal": "40-60% — tests catch some bugs but miss many",
+              "acceptable": "60-80% — tests have meaningful fault detection",
+              "strong": "> 80% — tests are genuinely effective (production target)"
+            },
+            "cost": "Medium — 1-5 minutes for a typical module",
+            "confidence": "high",
+            "key_finding": "LLM-generated tests can achieve 100% line/branch coverage at only 4% mutation score (HumanEval-Java study). Coverage is a meaningless metric for LLM-generated test quality — mutation score is the correct metric."
+          },
+          {
+            "step": 4,
+            "name": "Assertion Category Audit",
+            "method": "Categorize assertions in the generated test suite by type. A healthy test suite should have a mix of categories.",
+            "categories": {
+              "exact": "assert result == expected_value — accounts for ~41-43% in well-balanced suites (arXiv:2602.07900)",
+              "property": "assert len(result) > 0, assert result >= 0 — accounts for ~34-41%",
+              "exception": "with pytest.raises(ValueError): — should be present for all error contract tests",
+              "relational": "assert a < b, assert x <= y — typically underrepresented in LLM tests",
+              "mock_assertion": "mock.assert_called_with(...) — flag if this is the PRIMARY assertion type"
+            },
+            "red_flags": [
+              "Zero exact assertions — sub-agent didn't derive expected values from spec",
+              "Zero exception assertions — sub-agent ignored error contract",
+              "mock_assertion as primary type — tests assert on mock behavior, not real behavior",
+              "All assertions are property checks with weak conditions (is not None, is True)"
+            ],
+            "confidence": "high"
+          },
+          {
+            "step": 5,
+            "name": "Spec Cross-Reference Review (Opus)",
+            "method": "The architect-Opus reads the spec and each generated test and asks: 'Does this test verify something stated or implied by the specification?' Tests that verify behavior not in the spec are either irrelevant or testing implementation details.",
+            "implementation": "ARCHITECT_PROMPT: 'Here is the specification: {spec}. Here is a generated test: {test}. Does this test verify behavior specified in the spec? Rate: YES (aligns with spec), NO (tests implementation detail), UNSURE (unclear).'\nAccept: YES tests. Reject: NO tests. Flag: UNSURE for human review.",
+            "cost": "One Opus call per N tests (can batch 5-10 tests per call)",
+            "confidence": "medium"
+          }
+        ]
+      },
+      "Q4_prompt_patterns": {
+        "question": "What are the key prompt patterns for test generation?",
+        "patterns": {
+          "specification_only": {
+            "principle": "Give the spec, get the test, never show the code. Derives from IV&V requirements-based testing (DO-178C): tests must be derived from specifications, not from reading the implementation.",
+            "effect": "Prevents type_2_mirror (implementation mirroring). Forces the sub-agent to reason about intended behavior, not actual behavior.",
+            "variation_full_docstring_vs_partial": "Research (arXiv:2601.09695) shows performance degrades significantly with partial or no docstrings. Full docstrings including parameter descriptions, return value descriptions, and examples are required for quality test generation. Invest in documentation quality before delegating test writing."
+          },
+          "adversarial_failure_seeking": {
+            "principle": "Ask the sub-agent to think like a tester trying to BREAK the function, not help it pass.",
+            "key_phrases": [
+              "'Write a test that SHOULD fail if the implementation handles X incorrectly'",
+              "'What could go wrong with this function signature?'",
+              "'What inputs would a careless programmer forget to handle?'",
+              "'Write tests for the error paths, not the happy path'"
+            ],
+            "effect": "Forces boundary and edge case exploration. Counters the LLM's default cooperative bias (wanting to make things pass rather than fail).",
+            "research_basis": "SitePoint 2025 practical testing guide + Google adversarial testing guide"
+          },
+          "mutation_guided": {
+            "principle": "Use a mutant (buggy version) as the test specification. The test MUST kill the mutant.",
+            "meta_ach_implementation": {
+              "description": "Meta's ACH system uses this as its core technique. Engineers describe the fault class in plain English. ACH generates targeted mutants for that fault class. LLM then writes tests that kill those specific mutants.",
+              "result": "73% engineer acceptance rate, 9,095 mutants processed across Facebook, Instagram, WhatsApp, Quest, Ray-Ban Meta glasses (Oct-Dec 2024 trial)",
+              "equivalent_mutant_handling": "ACH deploys a separate LLM agent to detect equivalent mutants (precision 0.79, recall 0.47 — rising to 0.95/0.96 with pre-processing). Equivalent mutants produce syntactically different code with identical semantics; tests cannot kill them and should not be penalized for it.",
+              "key_innovation": "Providing the mutant guarantees the test has something concrete to fail against. The sub-agent doesn't need to imagine failure modes — the failure mode is specified in the mutant code."
+            },
+            "template": "See Q1 mutation_guided_pattern template above"
+          },
+          "invariant_elicitation": {
+            "principle": "Ask the sub-agent to identify what mathematical/logical properties MUST hold for all inputs, then write property-based tests for those properties.",
+            "research_basis": "Agentic PBT (arXiv:2510.09907): 56% of generated bug reports were valid; 32% would be reported to maintainers; found confirmed bugs in NumPy (numpy.random.wald produces negative values with large mean >= 1e8, violating the definition of the Wald distribution), cloud computing SDKs, with 3 patches merged.",
+            "effectiveness": "Each property-based test finds ~50x as many mutations as the average unit test (OOPSLA 2025 empirical study)",
+            "when_to_use": "Mathematical functions, data transformations, encode/decode pairs, sorting/ordering, size-preserving operations, any function with clear pre/postconditions"
+          },
+          "context_elimination": {
+            "principle": "When generating tests iteratively, eliminate already-covered code from subsequent prompts (arXiv:2602.21997).",
+            "implementation": "After first test batch: run coverage. Pass only the UNCOVERED code paths to the next sub-agent invocation, not the full function.",
+            "effect": "Forces LLM attention onto uncovered corners. Prevents redundant test generation for already-covered paths.",
+            "research_basis": "arXiv:2602.21997 — systematic coverage-guided context elimination improves test generation quality"
+          }
+        }
+      },
+      "Q5_industry_examples": {
+        "question": "Industry examples of AI-generated testing",
+        "examples": {
+          "meta_ach": {
+            "name": "Meta ACH (Automated Compliance Hardening)",
+            "paper": "arXiv:2501.12862, FSE 2025 Industry Papers",
+            "blog": "engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/",
+            "stats": {
+              "classes_analyzed": 10795,
+              "mutants_generated": 9095,
+              "test_cases_generated": 571,
+              "engineer_acceptance_rate": "73%",
+              "privacy_relevant_rate": "36%",
+              "equivalent_mutant_precision": 0.79,
+              "equivalent_mutant_recall": 0.47,
+              "platforms": ["Facebook", "Instagram", "WhatsApp", "Quest", "Ray-Ban Meta glasses"],
+              "trial_period": "October-December 2024"
+            },
+            "how_it_works": "Engineers describe fault classes in plain English. ACH generates targeted mutants (fewer than traditional mutation testing, but focused on the fault class of concern). LLM writes tests that kill those specific mutants, proving it catches the described bug class. Separate LLM agent detects and filters equivalent mutants.",
+            "key_insight": "Using mutation testing as test specification — not as verification after the fact — is the architectural breakthrough. The mutant IS the test contract.",
+            "quality_mechanism": "Tests are verified by proving they kill the target mutant before being submitted to engineers. Engineers then do final acceptance review."
+          },
+          "agentic_pbt": {
+            "name": "Agentic Property-Based Testing (arXiv:2510.09907)",
+            "description": "LLM agent that analyzes Python modules, infers properties from code and documentation, synthesizes and executes PBTs, reflects on outputs to confirm true bugs, produces actionable bug reports",
+            "stats": {
+              "packages_evaluated": 100,
+              "valid_bug_rate": "56% of generated reports",
+              "reportable_bug_rate": "32% (would be reported to maintainers)",
+              "top_priority_valid_rate": "86% of top 21 bugs were valid",
+              "bugs_reported_with_patches": 5,
+              "patches_merged": 3
+            },
+            "confirmed_numpy_bug": "numpy.random.wald produces negative values when called with large mean parameters (>= 1e8), violating the mathematical definition of the Wald distribution (which only produces positive values)",
+            "quality_mechanism": "Agent uses a reflection step: after generating a PBT, it runs the test and analyzes the failure output to confirm it represents a genuine bug vs a test oracle error. Only confirmed bugs are reported."
+          },
+          "github_copilot_test_generation": {
+            "name": "GitHub Copilot Test Generation",
+            "description": "Copilot analyzes source code and project structure, creates/updates test files. Uses deterministic generation grounded in compiler and language semantics.",
+            "quality_mechanism": "Build-then-fix loop: generates tests, builds, if errors exist attempts to identify and fix them, re-runs. Does not use mutation testing as a quality gate.",
+            "known_limitation": "AST 2024 empirical study: different AI models show varying effectiveness in eliminating mutants; some produce valid test suites for a wider range of classes while others demonstrate greater stability in mutation elimination. Copilot test quality varies significantly by language and context.",
+            "metrics_used": "Mutation Coverage (MC) and Mutation Score (MS) used in research evaluations"
+          },
+          "swe_bench_tdd_mode": {
+            "name": "Cognition Devin: TDD Mode Evaluation",
+            "description": "Providing the expected failing tests alongside the problem specification as a behavioral contract",
+            "stats": {
+              "standard_success_rate": "13.86%",
+              "tdd_mode_success_rate": "23%",
+              "relative_improvement": "66%"
+            },
+            "implication_for_tester_agent": "If the tester-Opus provides Sonnet chunk-coders with the generated tests as part of the specification, chunk-coder success rate may significantly improve. Tests serve as precise, executable specifications."
+          },
+          "agent_test_writing_study": {
+            "name": "Rethinking Value of Agent-Generated Tests (arXiv:2602.07900)",
+            "description": "Study of whether tests written by SWE-bench agents during autonomous coding actually improve resolution rates",
+            "stats": {
+              "test_writing_frequency": "83% of tasks result in at least one new test artifact",
+              "assertion_distribution": "~41-43% Exact, ~34-41% Property, consistently low Relational",
+              "discouraging_test_writing_token_reduction": "49.0% and 32.9% for two high-writing models",
+              "api_call_reduction": "35.4% for kimi-k2-thinking",
+              "success_rate_drop_when_discouraged": "only 2.6% and 1.8%"
+            },
+            "key_finding": "More agent-written tests do NOT mean more task resolutions in high-autonomy settings. A substantial portion of tokens spent on test writing has limited marginal benefit for autonomous coding. However, this applies to self-directed agents writing tests for their OWN verification — it does NOT contradict using a dedicated tester agent to write tests for a SEPARATE implementer.",
+            "implication": "For a tester-implementer architecture (Opus tests, Sonnet implements), the test quality question is entirely different from the question of whether a coding agent should self-write tests."
+          },
+          "over_mocked_tests_study": {
+            "name": "Are Coding Agents Generating Over-Mocked Tests? (arXiv:2602.00409)",
+            "description": "First empirical study of mock usage in agent-generated tests across 2,168 TypeScript repositories analyzing 1.2 million commits (2025)",
+            "key_finding": "Coding agents systematically over-mock dependencies, creating tests that assert on mock behavior rather than real behavior — making tests pass trivially while catching nothing real",
+            "implication": "Explicit prompt instructions to avoid asserting on mock objects are necessary. Rule: 'Use mocks only to isolate dependencies. Assert ONLY on real return values, real state changes, or real exceptions — never on mock.called or mock.return_value.'"
+          }
+        }
+      }
+    },
+    "recommended_architecture": {
+      "title": "Recommended Architecture for Opus-Tester + Sonnet-Writer Pipeline",
+      "roles": {
+        "opus_architect": {
+          "responsibilities": [
+            "Reads implementation code and spec",
+            "Designs test architecture: which test patterns to use, which invariants to verify, which fault classes to target",
+            "Decides whether to use spec-only, mutation-guided, adversarial, or invariant pattern",
+            "Generates mutants for high-priority functions (privacy, security, invariant-critical paths)",
+            "Runs mutation testing verification on Sonnet-generated tests",
+            "Runs empty-stub tautology check",
+            "Does assertion category audit",
+            "Rejects or requests revisions for failing tests"
+          ],
+          "does_not_do": [
+            "Write the actual test code (delegates to Sonnet)",
+            "Share the implementation code with Sonnet sub-agents"
+          ]
+        },
+        "sonnet_writer": {
+          "receives": [
+            "Function signature",
+            "Docstring/specification",
+            "Preconditions and postconditions",
+            "Error contract",
+            "Prompt pattern (adversarial / invariant / spec-only / mutation-guided)",
+            "If mutation-guided: the mutant code + fault class description"
+          ],
+          "does_not_receive": [
+            "Implementation source code",
+            "Existing tests for the same function",
+            "Internal developer notes"
+          ],
+          "produces": [
+            "Complete pytest test suite for the assigned function(s)",
+            "One Hypothesis property test minimum",
+            "Assertion in EVERY test function"
+          ]
+        }
+      },
+      "verification_pipeline_order": [
+        "1. Static AST check: zero-assertion tests, over-mocked tests",
+        "2. Empty-stub tautology check: run tests against stub implementation",
+        "3. Mutation testing: mutmut with >= 60% kill score gate",
+        "4. Assertion category audit: check distribution",
+        "5. Spec cross-reference (optional Opus review): does each test match the spec?"
+      ],
+      "quality_gate_thresholds": {
+        "reject_immediately": "Any test with zero assertions, OR mutation score < 40%",
+        "request_revision": "Mutation score 40-60%, OR all assertions are trivially-true property checks",
+        "accept": "Mutation score >= 60% AND no zero-assertion tests AND no mock-only assertions",
+        "production_grade": "Mutation score >= 80% AND has at least one Hypothesis property test"
+      }
+    },
+    "gotchas": [
+      {
+        "issue": "100% code coverage with near-zero mutation score",
+        "detail": "HumanEval-Java study: LLM-generated tests achieved 100% line/branch coverage at only 4% mutation score. Coverage is not a valid quality metric for LLM-generated tests. Always run mutation testing.",
+        "solution": "Replace coverage as quality gate with mutation score. Use mutmut for Python."
+      },
+      {
+        "issue": "Sub-agent mirrors implementation when given code",
+        "detail": "When LLMs see the implementation, they generate tests that 'make the current code pass' rather than 'verify the spec is satisfied'. This is the primary source of type_2_mirror tests.",
+        "solution": "Never include implementation code in the sub-agent test-writing prompt. Specification-only prompting is the primary fraud-prevention mechanism."
+      },
+      {
+        "issue": "Over-mocking produces tests that catch nothing",
+        "detail": "arXiv:2602.00409: coding agents systematically over-mock in TypeScript repos. Tests assert that mocks behave the way mocks were configured — logically circular and meaningless.",
+        "solution": "Explicit prompt instruction: 'Do not assert on mock state. Assert only on real return values, state changes, or exceptions.'"
+      },
+      {
+        "issue": "LLM test suites share the LLM's cognitive blind spots",
+        "detail": "LLM-based test suites mirror the generating model's error patterns (homogenization trap). They catch LLM-like bugs but miss human-like bugs (logical flaws, integer overflows). SAGA study: detection rate improves 9.55% by combining human expertise with LLM generation.",
+        "solution": "Mandate at least one Hypothesis property test per function. Property-based tests generate inputs outside the LLM's comfort zone, finding bugs the LLM's handwritten tests would never find (50x more mutations per PBT vs unit test, OOPSLA 2025)."
+      },
+      {
+        "issue": "More tests does not mean more test coverage of bugs",
+        "detail": "arXiv:2602.07900: discouraging test writing dropped token usage 49% with only 1.8-2.6% reduction in success rate. Volume of generated tests is a poor proxy for test quality.",
+        "solution": "Optimize for mutation score, not for test count. Fewer, well-targeted tests (especially mutation-guided ones) outperform large suites of shallow tests."
+      },
+      {
+        "issue": "Equivalent mutants inflate false negatives in mutation testing",
+        "detail": "Equivalent mutants (syntactically different code, semantically identical behavior) cannot be killed by any correct test. They inflate the 'survived' count and artificially lower mutation score.",
+        "solution": "Use an LLM-based equivalent mutant detector (as Meta ACH does: precision 0.79, recall 0.47). Or use mutmut's '--simple-output' to focus on high-confidence mutants. Do not penalize test suites for surviving equivalent mutants."
+      },
+      {
+        "issue": "Oracle quality degrades sharply without full docstrings",
+        "detail": "Research evaluated three docstring conditions: full, partial, none. Quality degrades significantly with partial or absent docstrings. Tests generated with no docstrings are mostly unusable.",
+        "solution": "Invest in docstring quality before delegating test writing. Full docstrings — including parameter descriptions, return value description, examples, and exception conditions — are a prerequisite for quality sub-agent test generation."
+      },
+      {
+        "issue": "Agent-generated tests for self-verification are lower value than tester-agent generated tests",
+        "detail": "arXiv:2602.07900 found agent self-written tests have marginal impact on resolution rates and primarily waste tokens. But this does NOT apply to a separate tester agent (Opus) generating tests for a separate implementer (Sonnet). The Cognition TDD mode study confirms: receiving pre-written tests improves resolution rate by 66%.",
+        "solution": "Use the tester-implementer separation. Do not conflate 'agent writes tests for itself' (low value) with 'dedicated tester writes tests for implementer' (high value)."
+      }
+    ]
+  },
+  "sources": [
+    {
+      "title": "Mutation-Guided LLM-based Test Generation at Meta (arXiv:2501.12862, FSE 2025)",
+      "url": "https://arxiv.org/abs/2501.12862",
+      "type": "peer_reviewed",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Meta Engineering: Revolutionizing software testing — LLM-powered bug catchers (ACH)",
+      "url": "https://engineering.fb.com/2025/02/05/security/revolutionizing-software-testing-llm-powered-bug-catchers-meta-ach/",
+      "type": "engineering_blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Meta Engineering: LLMs Are the Key to Mutation Testing and Better Compliance",
+      "url": "https://engineering.fb.com/2025/09/30/security/llms-are-the-key-to-mutation-testing-and-better-compliance/",
+      "type": "engineering_blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Agentic Property-Based Testing: Finding Bugs Across the Python Ecosystem (arXiv:2510.09907)",
+      "url": "https://arxiv.org/abs/2510.09907",
+      "type": "peer_reviewed",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Rethinking the Value of Agent-Generated Tests for LLM-Based Software Engineering Agents (arXiv:2602.07900)",
+      "url": "https://arxiv.org/html/2602.07900v1",
+      "type": "preprint",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Are Coding Agents Generating Over-Mocked Tests? An Empirical Study (arXiv:2602.00409)",
+      "url": "https://arxiv.org/html/2602.00409v1",
+      "type": "preprint",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Understanding LLM-Driven Test Oracle Generation (arXiv:2601.05542)",
+      "url": "https://arxiv.org/abs/2601.05542",
+      "type": "preprint",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Enhancing LLM-Based Test Generation by Eliminating Covered Code (arXiv:2602.21997)",
+      "url": "https://arxiv.org/abs/2602.21997",
+      "type": "preprint",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "AugmenTest: Enhancing Tests with LLM-Driven Oracles (arXiv:2501.17461)",
+      "url": "https://arxiv.org/html/2501.17461v1",
+      "type": "preprint",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "An Empirical Evaluation of Property-Based Testing in Python (OOPSLA 2025)",
+      "url": "https://cseweb.ucsd.edu/~mcoblenz/assets/pdf/OOPSLA_2025_PBT.pdf",
+      "type": "peer_reviewed",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "When Generated Tests Pass but Don't Protect: LLMs Creating Superficial Unit Tests (DEV.to)",
+      "url": "https://dev.to/jamesdev4123/when-generated-tests-pass-but-dont-protect-llms-creating-superficial-unit-tests-24c0",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Testing AI-Generated Code: Practical Strategies (SitePoint)",
+      "url": "https://www.sitepoint.com/testing-ai-generated-code/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Adversarial Testing for Generative AI (Google for Developers)",
+      "url": "https://developers.google.com/machine-learning/guides/adv-testing",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Consistency Meets Verification: Enhancing Test Generation Quality Without Ground-Truth Solutions (arXiv:2602.10522)",
+      "url": "https://arxiv.org/html/2602.10522",
+      "type": "preprint",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Cognition: TDD Mode Evaluation (Devin 66% relative improvement)",
+      "url": "https://cognition.ai/blog/evaluating-coding-agents",
+      "type": "engineering_blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "The Perils of Letting Coding Agents Write All of Your Tests (EQengineered)",
+      "url": "https://www.eqengineered.com/insights/coding-agents-and-testing",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "created_at": "2026-02-28T00:00:00Z",
+    "last_updated": "2026-02-28T00:00:00Z",
+    "confidence": 0.88,
+    "confidence_reason": "High: Meta ACH paper (FSE 2025 peer-reviewed), OOPSLA 2025 PBT paper, multiple arXiv preprints from Feb 2026. Adversarial prompt templates derived from multiple consistent sources. Over-mocked tests from empirical study on 1.2M commits. Spec-only prompting from AugmenTest (validated empirically). Some prompt template wording is synthesized from principles rather than direct quotes — practitioners should adapt to their specific domain.",
+    "gaps": [
+      "Haiku vs Sonnet comparative quality for test writing — no direct study found. Sonnet is recommended over Haiku for test writing (needs synthesis, not just mechanical output).",
+      "Python-specific mutation testing thresholds for LLM-generated tests — 80% target from general best practices, not LLM-specific study.",
+      "Context length sensitivity for spec-only prompting — not directly studied for test generation specifically."
+    ],
+    "related_research": [
+      "blind-testing-ivv-methodology",
+      "ai-agent-code-testing-methodology",
+      "scenario-acceptance-testing-frameworks"
+    ]
+  }
+}

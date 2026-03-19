@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+
+  "teammateMode": "tmux",
+
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "WebSearch",
+      "Read(**)",
+      "Edit(.claude/**)",
+      "Write(.claude/logs/**)",
+      "Write(.claude/plans/**)",
+      "Write(.claude/context/**)",
+      "Write(.claude/temp/**)",
+      "Write(.claude/research/**)",
+      "Bash(mkdir *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(gh *)",
+      "mcp__sequential-thinking",
+      "mcp__context7",
+      "mcp__github-personal",
+      "mcp__think"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Bash(rm -rf *)",
+      "Bash(rm -r *)",
+      "Edit(.env*)",
+      "Edit(**/secrets*)",
+      "Edit(**/.git/*)"
+    ]
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|SendMessage",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/PreToolUseValidation.py",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Read|Glob|Grep|Bash|mcp__think__think",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/PostToolUse.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

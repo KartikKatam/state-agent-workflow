@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/training/config.py
+# hypothesis_version: 6.151.5
+
+[1e-06, 0.0001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 0.9, 1.0, 1.1, 1.2, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0, 15.0, 25.0, 30.0, 60.0, 114, 256, 300, 'checkpoints', 'corner-cnn-training', 'cuda', 'data/crops', 'data/split.json', 'training_config.json']

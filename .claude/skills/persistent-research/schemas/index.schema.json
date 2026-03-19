@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://firefly/schemas/research-index.json",
+  "title": "Research Index",
+  "description": "Master index of all research (persistent + ephemeral). Enables fast lookup and duplicate detection.",
+  "type": "object",
+  "required": ["persistent", "ephemeral", "meta"],
+  "properties": {
+    "persistent": {
+      "type": "array",
+      "description": "Index of all persistent research documents",
+      "items": {
+        "type": "object",
+        "required": ["id", "path", "library", "topics", "last_updated"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Research document ID (matches filename)"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path to research file",
+            "pattern": "^persistent/[a-z0-9-]+\\.json$"
+          },
+          "library": {
+            "type": "string",
+            "description": "Library or framework name"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version researched"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["api_reference", "integration_guide", "best_practices", "troubleshooting"]
+          },
+          "topics": {
+            "type": "array",
+            "description": "Searchable topics/keywords (e.g., ['batch processing', 'inference', 'optimization'])",
+            "items": {"type": "string"}
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "source_count": {
+            "type": "integer",
+            "description": "Number of sources backing this research"
+          }
+        }
+      }
+    },
+    "ephemeral": {
+      "type": "array",
+      "description": "Index of ephemeral queries (cleaned up on expiration)",
+      "items": {
+        "type": "object",
+        "required": ["id", "path", "query", "created_at", "expires_at"],
+        "properties": {
+          "id": {"type": "string"},
+          "path": {
+            "type": "string",
+            "pattern": "^ephemeral/query-[0-9]+-[a-z0-9-]+\\.json$"
+          },
+          "query": {"type": "string"},
+          "keywords": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Extracted keywords for search"
+          },
+          "created_at": {"type": "string", "format": "date-time"},
+          "expires_at": {"type": "string", "format": "date-time"},
+          "access_count": {"type": "integer", "minimum": 0},
+          "should_promote": {"type": "boolean"}
+        }
+      }
+    },
+    "search_index": {
+      "type": "object",
+      "description": "Inverted index for fast topic/keyword search",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "List of research IDs that contain this keyword"
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": ["last_cleanup", "total_persistent", "total_ephemeral"],
+      "properties": {
+        "last_cleanup": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When expired ephemeral queries were last deleted"
+        },
+        "total_persistent": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_ephemeral": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "auto_cleanup_enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to auto-delete expired ephemeral queries"
+        },
+        "promotion_threshold": {
+          "type": "integer",
+          "default": 3,
+          "description": "Access count needed to promote ephemeral → persistent"
+        },
+        "libraries_covered": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Unique list of libraries with persistent research"
+        }
+      }
+    }
+  }
+}

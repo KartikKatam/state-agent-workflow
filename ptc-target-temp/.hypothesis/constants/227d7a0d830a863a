@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/consumer/ops_ocr_aggregator.py
+# hypothesis_version: 6.151.5
+
+[-1.0, 0.0, 0.3, 0.5, 1.0, '?', '^[0-9]{4}[A-Z]{3}$']

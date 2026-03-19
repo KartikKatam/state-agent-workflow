@@ -1,0 +1,147 @@
+{
+  "meta": {
+    "type": "codebase",
+    "created": "2026-02-28T17:00:00Z",
+    "updated": "2026-02-28T17:00:00Z",
+    "schema_version": "1.0",
+    "project_root": "/home/kartik/personal/agentic_workflow",
+    "project_name": "agentic_workflow",
+    "update_type": "full",
+    "notes": "Two-repo project: workflow infra (agentic_workflow) + MCP server (ptc-server). PTC feature spans both."
+  },
+  "structure": {
+    "blocks": [
+      {
+        "name": "ptc-server",
+        "path": "~/.claude/mcp/ptc-server/",
+        "purpose": "PTC V2 MCP server — persistent REPL pool with bridge networking",
+        "status": "implemented",
+        "key_files": {
+          "server": "server.py",
+          "container_mgr": "container_manager.py",
+          "ipc_protocol": "ipc_protocol.py",
+          "ipc_host": "ipc_host.py",
+          "event_logger": "event_logger.py",
+          "config": "config.json",
+          "dockerfile_base": "Dockerfile",
+          "dockerfile_roles": "Dockerfile.{explorer,coder,auditor,tester,researcher,strategist}",
+          "build_script": "build-images.sh",
+          "sandbox_runtime": "sandbox_runtime/runtime.py",
+          "sandbox_executor": "sandbox_runtime/executor.py"
+        },
+        "notes": "V2 removed tool_dispatcher.py, tool_registry.py, ipc_sandbox.py, ptc_tools/. Containers use bridge networking + /workspace:rw. No tool dispatch — agents write direct Python."
+      },
+      {
+        "name": "agentic-workflow-infra",
+        "path": "/home/kartik/personal/agentic_workflow/",
+        "purpose": "workflow orchestration infra, skills, tests for PTC",
+        "status": "implemented",
+        "key_files": {
+          "agent_specs": ".claude/agents/",
+          "skills": ".claude/skills/",
+          "designs": ".claude/designs/ptc.md",
+          "schemas": "schemas/",
+          "hooks": "hooks/",
+          "state_machines": "state-machines/",
+          "scripts": "scripts/gate.sh",
+          "tests": "tests/ptc/"
+        }
+      },
+      {
+        "name": "tests-ptc",
+        "path": "tests/ptc/",
+        "purpose": "existing tests for ptc-server (to be rewritten)",
+        "status": "implemented",
+        "key_files": {
+          "server_tests": "tests/ptc/test_server.py",
+          "kernel_tests": "tests/ptc/test_kernel_manager.py",
+          "registry_tests": "tests/ptc/test_tool_registry.py",
+          "tools_tests": "tests/ptc/test_tools.py",
+          "conftest": "tests/ptc/conftest.py"
+        }
+      },
+      {
+        "name": "ptc-v2-implemented",
+        "path": "~/.claude/mcp/ptc-server/",
+        "purpose": "PTC V2 — simplified REPL pool manager (replaces V1 tool dispatch architecture)",
+        "status": "implemented",
+        "notes": "Merged into ptc-server block above. V2 removed tool dispatch layer, enabled bridge networking, uses pre-built role images."
+      }
+    ]
+  },
+  "types": {
+    "shared": [],
+    "by_block": {
+      "ptc-server": [
+        {"name": "ExecuteMsg", "file": "~/.claude/mcp/ptc-server/ipc_protocol.py", "kind": "dataclass", "usage": "host→container: run code"},
+        {"name": "CompleteMsg", "file": "~/.claude/mcp/ptc-server/ipc_protocol.py", "kind": "dataclass", "usage": "container→host: execution done"},
+        {"name": "ErrorMsg", "file": "~/.claude/mcp/ptc-server/ipc_protocol.py", "kind": "dataclass", "usage": "container→host: execution failed"},
+        {"name": "PingMsg", "file": "~/.claude/mcp/ptc-server/ipc_protocol.py", "kind": "dataclass", "usage": "health check request"},
+        {"name": "PongMsg", "file": "~/.claude/mcp/ptc-server/ipc_protocol.py", "kind": "dataclass", "usage": "health check response"},
+        {"name": "ReplHandle", "file": "~/.claude/mcp/ptc-server/container_manager.py", "kind": "dataclass", "usage": "one REPL process in a container"},
+        {"name": "ContainerInfo", "file": "~/.claude/mcp/ptc-server/container_manager.py", "kind": "dataclass", "usage": "one Docker container + its REPLs"},
+        {"name": "ContainerManager", "file": "~/.claude/mcp/ptc-server/container_manager.py", "kind": "class", "usage": "REPL pool + container lifecycle"},
+        {"name": "IpcHost", "file": "~/.claude/mcp/ptc-server/ipc_host.py", "kind": "class", "usage": "host-side Unix socket server per REPL"},
+        {"name": "Executor", "file": "~/.claude/mcp/ptc-server/sandbox_runtime/executor.py", "kind": "class", "usage": "code exec + persistent namespace in container"},
+        {"name": "PtcEventLogger", "file": "~/.claude/mcp/ptc-server/event_logger.py", "kind": "class", "usage": "JSONL event logging for PTC events"}
+      ]
+    }
+  },
+  "configs": [
+    {
+      "name": "ptc-server config (V2)",
+      "file": "~/.claude/mcp/ptc-server/config.json",
+      "fields": {
+        "resource_limits": "{memory_mb:1024, cpu_cores:1, timeout_seconds:60, max_containers:8, disk_mb:512, max_output_bytes:65536, idle_timeout_seconds:300, container_ttl_seconds:600}",
+        "repl_pool": "{max_repls_per_container:6, repl_start_timeout_seconds:5}",
+        "docker": "{image:ptc-sandbox:latest, role_image_pattern:ptc-{role}:latest, network_mode:bridge, container_prefix:ptc, runtime:runc}",
+        "ipc": "{socket_dir:/tmp/ptc-ipc}",
+        "observability": "{log_file, debug_log_code:false, result_preview_chars:200}"
+      },
+      "notes": "V2: No role_tools, tool_strategies, or output_formats. No fallback config."
+    }
+  ],
+  "patterns": {
+    "direct_python": {
+      "style": "agents write plain Python in ptc_execute — open(), requests.get(), subprocess.run()",
+      "note": "V2: no tool stubs, no await tool_name() pattern. Bridge networking + /workspace:rw enables direct access."
+    },
+    "ipc_protocol": {
+      "style": "NDJSON over Unix domain socket bind-mounted into container",
+      "wire_format": "newline-delimited JSON, 1MB max per message",
+      "message_types": "5: ExecuteMsg, CompleteMsg, ErrorMsg, PingMsg, PongMsg",
+      "socket_path": "/tmp/ptc-ipc/{container_name}/repl-{N}.sock"
+    },
+    "repl_pool": {
+      "style": "multiple Python processes per container, shared packages, independent namespaces",
+      "startup_cost": "container creation: ~1-2s (pre-built image); new REPL: ~100ms (docker exec)"
+    },
+    "error_handling": {
+      "style": "return JSON error dict, never re-execute on crash",
+      "crash_recovery": "return error to agent; agent retries if needed"
+    },
+    "logging": {
+      "library": "stdlib logging",
+      "stream": "stderr",
+      "observability": "JSONL events at ~/.claude/logs/ptc-events.jsonl"
+    }
+  },
+  "quality_gate": {
+    "script": "scripts/gate.sh",
+    "components": ["ruff format .", "ruff check . --fix", "pyright", "pytest"]
+  },
+  "name_bank": {
+    "in_use": [
+      "ptc_execute", "ptc_status", "ptc_reset_namespace", "ptc_shutdown", "ptc_shutdown_all",
+      "ipc_protocol", "ipc_host", "container_manager", "event_logger",
+      "sandbox_runtime", "ptc-sandbox",
+      "ExecuteMsg", "CompleteMsg", "ErrorMsg", "PingMsg", "PongMsg",
+      "ContainerManager", "ContainerInfo", "ReplHandle", "IpcHost", "Executor", "PtcEventLogger"
+    ],
+    "available": ["KernelManager", "ExecutionResult"]
+  },
+  "manual_notes": {
+    "_comment": "Add manual observations here",
+    "notes": []
+  }
+}

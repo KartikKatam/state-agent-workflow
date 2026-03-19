@@ -1,0 +1,98 @@
+{
+  "status": "in_progress",
+  "files_modified": [
+    "src/main.py",
+    "/tmp/pytest-of-kartik/pytest-195/test_validator_failure_sets_pe0/bad.py",
+    "/tmp/pytest-of-kartik/pytest-195/test_validator_pass_clears_pen0/clean.py",
+    "/tmp/pytest-of-kartik/pytest-206/test_validator_failure_sets_pe0/bad.py",
+    "/tmp/pytest-of-kartik/pytest-206/test_validator_pass_clears_pen0/clean.py"
+  ],
+  "state_history": [
+    {
+      "state": "WRITING",
+      "timestamp": "2026-03-19T00:24:39.349572+00:00"
+    },
+    {
+      "state": "IDLE",
+      "timestamp": "2026-03-19T00:24:39.573424+00:00"
+    },
+    {
+      "state": "THINK_REQUIRED",
+      "timestamp": "2026-03-19T00:24:39.590609+00:00"
+    },
+    {
+      "state": "STATE_B",
+      "timestamp": "2026-03-19T00:24:39.599063+00:00"
+    },
+    {
+      "state": "IDLE",
+      "timestamp": "2026-03-19T00:24:39.603227+00:00"
+    },
+    {
+      "state": "STATE_B",
+      "timestamp": "2026-03-19T00:24:39.605212+00:00"
+    },
+    {
+      "state": "THINK_REQUIRED",
+      "timestamp": "2026-03-19T00:24:39.618912+00:00"
+    },
+    {
+      "state": "UNRESTRICTED",
+      "timestamp": "2026-03-19T00:24:39.630612+00:00"
+    },
+    {
+      "state": "APPROVED",
+      "timestamp": "2026-03-19T00:24:39.705758+00:00"
+    },
+    {
+      "state": "ASSESS",
+      "timestamp": "2026-03-19T00:24:39.707620+00:00"
+    },
+    {
+      "state": "RETRY",
+      "timestamp": "2026-03-19T00:24:39.709695+00:00"
+    },
+    {
+      "state": "APPROVED",
+      "timestamp": "2026-03-19T00:24:39.711581+00:00"
+    },
+    {
+      "state": "ASSESS",
+      "timestamp": "2026-03-19T00:24:39.713750+00:00"
+    },
+    {
+      "state": "THINK_REQUIRED",
+      "timestamp": "2026-03-19T04:23:02.114988+00:00"
+    },
+    {
+      "state": "STATE_B",
+      "timestamp": "2026-03-19T04:23:02.123173+00:00"
+    },
+    {
+      "state": "IDLE",
+      "timestamp": "2026-03-19T04:23:02.126772+00:00"
+    },
+    {
+      "state": "STATE_B",
+      "timestamp": "2026-03-19T04:23:02.129332+00:00"
+    },
+    {
+      "state": "THINK_REQUIRED",
+      "timestamp": "2026-03-19T04:23:02.147233+00:00"
+    },
+    {
+      "state": "UNRESTRICTED",
+      "timestamp": "2026-03-19T04:23:02.162557+00:00"
+    },
+    {
+      "state": "THINK_REQUIRED",
+      "timestamp": "2026-03-19T04:23:02.178703+00:00"
+    },
+    {
+      "state": "DONE",
+      "timestamp": "2026-03-19T04:23:02.181066+00:00"
+    }
+  ],
+  "last_updated": "2026-03-19T04:23:02.181066+00:00",
+  "context_usage_pct": 0
+}

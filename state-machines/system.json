@@ -1,0 +1,388 @@
+{
+  "name": "system",
+  "description": "System-level workflow state machine. Owned by the orchestrator, tracks overall workflow lifecycle from design loading through final audit.",
+  "version": "1.1.0",
+  "agent_role": null,
+  "initial_state": "IDLE",
+  "terminal_states": [
+    "COMPLETE"
+  ],
+  "states": [
+    {
+      "name": "IDLE",
+      "description": "No active workflow. Waiting for design document."
+    },
+    {
+      "name": "DESIGN_LOADED",
+      "description": "Design document provided by user, ready for exploration."
+    },
+    {
+      "name": "EXPLORING",
+      "description": "Explorer agent(s) generating codebase context packets.",
+      "think_on_exit": true,
+      "think_prompt": "1) Did the explorer cover all directories and modules relevant to the design doc? 2) Are there gaps in the context packets that could blind the strategist? 3) Were any exploration queries ambiguous enough to produce unreliable results? 4) Should a second explorer be dispatched for parallel coverage?"
+    },
+    {
+      "name": "CONTEXT_READY",
+      "description": "Context packets generated, ready for strategy planning."
+    },
+    {
+      "name": "STRATEGIZING",
+      "description": "Strategist converting design doc into phased plan.",
+      "think_on_exit": true,
+      "think_prompt": "1) Does the strategist's plan cover every requirement in the design doc? 2) Are phase boundaries drawn at natural integration points? 3) Are task dependencies correctly ordered to avoid blocking? 4) Is the review_level assignment (light/phase/full) justified for each task? 5) Are there missing test scenarios the tester will need?"
+    },
+    {
+      "name": "PLAN_TEXT_REVIEW",
+      "description": "Plain-text plan complete, awaiting user review and approval."
+    },
+    {
+      "name": "PLAN_JSON_CONVERSION",
+      "description": "User approved plain-text plan, strategist converting to JSON."
+    },
+    {
+      "name": "PLAN_READY",
+      "description": "JSON plan validated and ready. Orchestrator can start first phase."
+    },
+    {
+      "name": "PHASE_ACTIVE",
+      "description": "A phase has started. Orchestrator assigning tasks to coders, tester begins scenario planning.",
+      "think_on_exit": true,
+      "think_prompt": "1) Are all tasks for this phase properly scoped and assigned? 2) Do any tasks require exploration or research before coding can begin? 3) Is the tester's scenario planning aligned with the phase scope? 4) Are there cross-task dependencies that need coordination? 5) What is the risk of this phase blocking downstream phases?"
+    },
+    {
+      "name": "PHASE_IMPLEMENTATION",
+      "description": "Coders actively implementing tasks in worktrees. Tester building scenarios in parallel."
+    },
+    {
+      "name": "PHASE_TASKS_COMPLETE",
+      "description": "All implementation tasks complete. All task audits resolved (full=APPROVED, phase=pass-through, light=gate-passed). All merges successful. Waiting for tester scenarios to be ready. In universal audit_mode, all tasks require APPROVED regardless of review_level."
+    },
+    {
+      "name": "PHASE_SCENARIO_EXECUTION",
+      "description": "Tester executing Pass D scenarios against merged code."
+    },
+    {
+      "name": "PHASE_REMEDIATION",
+      "description": "Scenario failures detected. Coders fixing issues. Progressive escalation: cycle 1 = light info_request, cycle 2 = structured bug_report, cycle 3+ = bug_report with peer coordination. Progress-aware cap: up to 5 cycles if converging, arbitration if stalled.",
+      "think_on_exit": true,
+      "think_prompt": "1) What is the root cause pattern across scenario failures? 2) Is this a coder misunderstanding or a tester over-specification? 3) Which remediation cycle are we on and is progress being made? 4) Should escalation to arbitration happen now or is another cycle warranted? 5) Are the bug reports specific enough for coders to act on?"
+    },
+    {
+      "name": "PHASE_ARBITRATION",
+      "description": "Remediation cycles exhausted. Auditor arbitrating tester-coder deadlock.",
+      "think_on_exit": true,
+      "think_prompt": "1) Is the deadlock caused by ambiguous requirements, incorrect tests, or flawed implementation? 2) What evidence supports the tester's position vs the coder's position? 3) Should the ruling waive specific scenarios or require implementation changes? 4) Will the ruling create precedent that affects later phases? 5) Is user involvement needed to resolve the ambiguity?"
+    },
+    {
+      "name": "PHASE_AUDIT",
+      "description": "Phase auditor performing comprehensive review with independent exploration."
+    },
+    {
+      "name": "PHASE_REPORT",
+      "description": "Phase report generated. Awaiting user review.",
+      "think_on_exit": true,
+      "think_prompt": "1) Does the phase report accurately reflect all implementation, testing, and audit findings? 2) Are there unresolved issues that should block user approval? 3) Were any plan deviations justified and documented? 4) Is the phase ready for production or does it need remediation? 5) What risks does approving this phase introduce for subsequent phases?"
+    },
+    {
+      "name": "PHASE_COMMITTED",
+      "description": "Phase approved and committed. Ready for next phase or final audit."
+    },
+    {
+      "name": "FINAL_AUDIT",
+      "description": "All phases complete. Final production readiness review (auditor hardening mode).",
+      "think_on_exit": true,
+      "think_prompt": "1) Do all phases integrate correctly when combined? 2) Are there cross-phase issues that individual phase audits missed? 3) Does the implementation satisfy the original design doc holistically? 4) Are there production readiness concerns (error handling, edge cases, performance)? 5) Should any phase be sent back for remediation before marking complete?"
+    },
+    {
+      "name": "COMPLETE",
+      "description": "Workflow finished. All phases implemented, tested, audited, and committed."
+    },
+    {
+      "name": "ERROR",
+      "description": "Unrecoverable failure during exploration or strategy. Requires user decision to reset or retry."
+    }
+  ],
+  "transitions": [
+    {
+      "from_state": "IDLE",
+      "to_state": "DESIGN_LOADED",
+      "trigger": "design_provided",
+      "actions": [
+        "log_workflow_start"
+      ]
+    },
+    {
+      "from_state": "DESIGN_LOADED",
+      "to_state": "EXPLORING",
+      "trigger": "exploration_started",
+      "actions": [
+        "spawn_explorer"
+      ]
+    },
+    {
+      "from_state": "EXPLORING",
+      "to_state": "CONTEXT_READY",
+      "trigger": "exploration_complete",
+      "guards": [
+        "think_completed",
+        "context_packets_exist"
+      ]
+    },
+    {
+      "from_state": "EXPLORING",
+      "to_state": "DESIGN_LOADED",
+      "trigger": "exploration_failed",
+      "guards": [
+        "think_completed",
+        "context_packets_insufficient"
+      ],
+      "max_occurrences": 1
+    },
+    {
+      "from_state": "CONTEXT_READY",
+      "to_state": "STRATEGIZING",
+      "trigger": "planning_started",
+      "actions": [
+        "spawn_strategist"
+      ]
+    },
+    {
+      "from_state": "STRATEGIZING",
+      "to_state": "PLAN_TEXT_REVIEW",
+      "trigger": "plain_text_plan_complete",
+      "guards": [
+        "think_completed",
+        "plan_text_file_exists"
+      ]
+    },
+    {
+      "from_state": "STRATEGIZING",
+      "to_state": "ERROR",
+      "trigger": "strategy_failed",
+      "guards": [
+        "think_completed",
+        "strategist_error_reported"
+      ],
+      "actions": [
+        "log_error"
+      ]
+    },
+    {
+      "from_state": "PLAN_TEXT_REVIEW",
+      "to_state": "PLAN_JSON_CONVERSION",
+      "trigger": "user_approved_text_plan",
+      "requires_user_approval": true
+    },
+    {
+      "from_state": "PLAN_TEXT_REVIEW",
+      "to_state": "STRATEGIZING",
+      "trigger": "user_rejected_text_plan",
+      "requires_user_approval": true,
+      "actions": [
+        "spawn_strategist"
+      ],
+      "max_occurrences": 2
+    },
+    {
+      "from_state": "PLAN_JSON_CONVERSION",
+      "to_state": "PLAN_READY",
+      "trigger": "json_plan_validated",
+      "guards": [
+        "plan_json_valid",
+        "plan_json_matches_text"
+      ]
+    },
+    {
+      "from_state": "PLAN_READY",
+      "to_state": "PHASE_ACTIVE",
+      "trigger": "phase_started",
+      "actions": [
+        "init_phase",
+        "spawn_tester"
+      ]
+    },
+    {
+      "from_state": "PHASE_ACTIVE",
+      "to_state": "PHASE_IMPLEMENTATION",
+      "trigger": "tasks_assigned",
+      "actions": [
+        "spawn_coders"
+      ],
+      "guards": [
+        "think_completed",
+        "tasks_assigned_to_coders"
+      ]
+    },
+    {
+      "from_state": "PHASE_IMPLEMENTATION",
+      "to_state": "PHASE_TASKS_COMPLETE",
+      "trigger": "all_tasks_complete",
+      "guards": [
+        "all_coder_tasks_complete"
+      ]
+    },
+    {
+      "from_state": "PHASE_TASKS_COMPLETE",
+      "to_state": "PHASE_SCENARIO_EXECUTION",
+      "trigger": "scenarios_ready_to_execute",
+      "guards": [
+        "all_task_audits_resolved_or_skipped",
+        "all_merges_successful",
+        "tester_scenarios_ready"
+      ]
+    },
+    {
+      "from_state": "PHASE_SCENARIO_EXECUTION",
+      "to_state": "PHASE_AUDIT",
+      "trigger": "scenarios_passed",
+      "guards": [
+        "all_scenarios_passed"
+      ]
+    },
+    {
+      "from_state": "PHASE_SCENARIO_EXECUTION",
+      "to_state": "PHASE_REMEDIATION",
+      "trigger": "scenarios_failed",
+      "guards": [
+        "scenario_failures_exist"
+      ]
+    },
+    {
+      "from_state": "PHASE_REMEDIATION",
+      "to_state": "PHASE_SCENARIO_EXECUTION",
+      "trigger": "remediation_complete",
+      "guards": [
+        "think_chosen:RETRY_SCENARIOS",
+        "fixes_applied",
+        "remediation_cycle_under_ceiling"
+      ],
+      "actions": [
+        "increment_remediation_cycle"
+      ]
+    },
+    {
+      "from_state": "PHASE_REMEDIATION",
+      "to_state": "PHASE_ARBITRATION",
+      "trigger": "remediation_exhausted",
+      "guards": [
+        "think_chosen:ESCALATE",
+        "remediation_stalled_or_ceiling"
+      ],
+      "actions": [
+        "spawn_auditor_arbitration"
+      ]
+    },
+    {
+      "from_state": "PHASE_ARBITRATION",
+      "to_state": "PHASE_REMEDIATION",
+      "trigger": "ruling_favors_tester",
+      "guards": [
+        "think_chosen:REMEDIATE",
+        "auditor_ruling_issued",
+        "ruling_requires_coder_fixes"
+      ]
+    },
+    {
+      "from_state": "PHASE_ARBITRATION",
+      "to_state": "PHASE_AUDIT",
+      "trigger": "ruling_favors_coder",
+      "guards": [
+        "think_chosen:ACCEPT",
+        "auditor_ruling_issued",
+        "ruling_accepts_implementation"
+      ]
+    },
+    {
+      "from_state": "PHASE_AUDIT",
+      "to_state": "PHASE_REPORT",
+      "trigger": "phase_audit_complete",
+      "guards": [
+        "audit_report_written"
+      ],
+      "actions": [
+        "generate_phase_report"
+      ]
+    },
+    {
+      "from_state": "PHASE_REPORT",
+      "to_state": "PHASE_COMMITTED",
+      "trigger": "phase_approved",
+      "requires_user_approval": true,
+      "actions": [
+        "commit_phase"
+      ]
+    },
+    {
+      "from_state": "PHASE_REPORT",
+      "to_state": "PHASE_REMEDIATION",
+      "trigger": "user_rejected_phase",
+      "requires_user_approval": true,
+      "max_occurrences": 1
+    },
+    {
+      "from_state": "PHASE_COMMITTED",
+      "to_state": "PHASE_ACTIVE",
+      "trigger": "next_phase_started",
+      "guards": [
+        "remaining_phases_exist"
+      ],
+      "actions": [
+        "init_phase"
+      ]
+    },
+    {
+      "from_state": "PHASE_COMMITTED",
+      "to_state": "FINAL_AUDIT",
+      "trigger": "all_phases_complete",
+      "guards": [
+        "no_remaining_phases"
+      ],
+      "actions": [
+        "spawn_auditor_hardening"
+      ]
+    },
+    {
+      "from_state": "FINAL_AUDIT",
+      "to_state": "COMPLETE",
+      "trigger": "final_audit_passed",
+      "guards": [
+        "hardening_report_approved"
+      ],
+      "requires_user_approval": true,
+      "actions": [
+        "log_workflow_complete"
+      ]
+    },
+    {
+      "from_state": "FINAL_AUDIT",
+      "to_state": "PHASE_ACTIVE",
+      "trigger": "final_audit_failed_critical",
+      "guards": [
+        "think_completed",
+        "hardening_failures_exist"
+      ],
+      "actions": [
+        "init_remediation_phase"
+      ],
+      "max_occurrences": 1
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "IDLE",
+      "trigger": "reset",
+      "requires_user_approval": true,
+      "actions": [
+        "clear_workflow_state"
+      ]
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "EXPLORING",
+      "trigger": "retry_exploration",
+      "actions": [
+        "spawn_explorer"
+      ]
+    }
+  ]
+}

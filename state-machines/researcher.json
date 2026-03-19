@@ -1,0 +1,438 @@
+{
+  "name": "researcher",
+  "description": "External information source. Ephemeral \u2014 one query or related batch per instance. Uses Context7 MCP and WebSearch via sub-agents. All research is persistent and searchable. Never writes source code.",
+  "version": "1.2.0",
+  "agent_role": "researcher",
+  "initial_state": "SPAWNED",
+  "terminal_states": [
+    "TERMINATED",
+    "HANDOFF"
+  ],
+  "universal_transitions": [
+    {
+      "to_state": "HANDOFF",
+      "trigger": "context_pressure_exceeded",
+      "guards": [
+        "context_usage_above_threshold"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "name": "SPAWNED",
+      "description": "Researcher spawned. Loading query and research index.",
+      "write_allowed": false
+    },
+    {
+      "name": "EXISTING_RESEARCH_CHECK",
+      "description": "Searching existing research files before dispatching new sub-agents. Prevents duplicate work. Think phase evaluates whether existing research genuinely covers the query at sufficient confidence, or whether the coverage is stale, partial, or tangential.",
+      "write_allowed": false,
+      "think_on_exit": true
+    },
+    {
+      "name": "QUERY_ANALYSIS",
+      "description": "Analyzing query to determine search strategy: MCP vs WebSearch, sub-agent allocation, confidence requirements. If the query is ambiguous or underspecified, transition to AWAITING_CLARIFICATION instead of guessing.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Is the query best served by library documentation (Context7 MCP) or general web search? 2) What specific API endpoints, functions, or patterns need to be documented? 3) What confidence level is required \u2014 is approximate guidance acceptable or do we need exact signatures? 4) Are there version-specific concerns that constrain the search? 5) Should multiple search strategies be tried in parallel or sequentially?"
+    },
+    {
+      "name": "AWAITING_CLARIFICATION",
+      "description": "Researcher has identified ambiguity in the research topic that cannot be resolved from existing research or context alone (e.g., 'which API version?', 'which implementation pattern?', 'what depth of research?'). A clarification request has been sent to the orchestrator. Researcher is blocked until the orchestrator responds. No file reads or writes in this state.",
+      "write_allowed": false
+    },
+    {
+      "name": "SUB_AGENT_DISPATCH",
+      "description": "Sub-agents executing MCP calls (Context7) and/or WebSearch. Raw results stay in sandbox.",
+      "write_allowed": false
+    },
+    {
+      "name": "SEARCH_STRATEGY_FALLBACK",
+      "description": "Primary search strategy failed (e.g., Context7 MCP unavailable, timeout, rate-limited). Think phase evaluates: which strategy failed, what alternatives exist (MCP\u2192WebSearch or vice versa), whether query terms should be adjusted for the fallback tool. This is a recoverable failure \u2014 the research goal is unchanged, only the tool changes.",
+      "write_allowed": false,
+      "think_on_exit": true
+    },
+    {
+      "name": "ADDITIONAL_SEARCH",
+      "description": "Initial results insufficient. Additional sub-agents dispatched with adjusted strategy for deeper/broader search.",
+      "write_allowed": false
+    },
+    {
+      "name": "SYNTHESIS",
+      "description": "Synthesizing sub-agent results with confidence scoring. Writes research file. Can also be entered from ERROR with partial results \u2014 in that case, synthesizes whatever data was successfully collected before the failure, marks confidence accordingly.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/research/**"
+      ],
+      "post_actions": {
+        "Write": [
+          "validate_research_schema"
+        ]
+      }
+    },
+    {
+      "name": "RESEARCH_WRITTEN",
+      "description": "Research file written and validated. Ready for delivery.",
+      "write_allowed": false
+    },
+    {
+      "name": "IDLE",
+      "description": "Between queries. Waiting for next research request or termination signal.",
+      "write_allowed": false
+    },
+    {
+      "name": "QUERY_RELATEDNESS_ASSESSMENT",
+      "description": "Think phase for evaluating whether a new query is related to the previous research scope. The agent must use the think tool to evaluate relatedness against concrete research-specific criteria before transitioning. This ensures the reasoning is logged and auditable rather than a subjective snap judgment.",
+      "write_allowed": false,
+      "think_on_exit": true
+    },
+    {
+      "name": "ERROR",
+      "description": "All search strategies exhausted or non-recoverable failure. Combined diagnosis and recovery decision state. Agent must diagnose the failure and choose exactly one recovery path: RETRY, PARTIAL_SYNTHESIS, HANDOFF, or ABORT.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "Answer ALL of the following questions to diagnose the failure and choose a recovery path. DIAGNOSIS: 1) Which search strategies failed and why (MCP unavailable, timeout, rate-limited, empty results, sandbox failure)? 2) Is the failure transient (service restart, rate limit cooldown) or permanent (API removed, library not indexed)? State your evidence. 3) Which sub-agents returned results before the failure? Summarize what data was collected. 4) What percentage of the research query is covered by successful results? RECOVERY DECISION: Evaluate ALL four recovery paths and choose one. 5) RETRY (transition to QUERY_ANALYSIS): Is the failure transient AND has the retry budget not been used? What would you adjust on retry? 6) PARTIAL_SYNTHESIS (transition to SYNTHESIS): Do partial results exist AND are they useful enough to synthesize (not misleading)? What confidence level would the partial research have? 7) HANDOFF (transition to HANDOFF): Does research progress exist but the researcher cannot continue? What partial findings would be passed to the successor? 8) ABORT (transition to TERMINATED): Is there genuinely no salvageable work? CHOSEN: RETRY, PARTIAL_SYNTHESIS, HANDOFF, or ABORT."
+    },
+    {
+      "name": "TERMINATED",
+      "description": "Researcher terminated. Next unrelated query gets a fresh instance."
+    },
+    {
+      "name": "HANDOFF",
+      "description": "Context pressure exceeded or error recovery chose handoff. Writing handoff summary of research progress including any partial findings. Researcher terminates, orchestrator spawns fresh researcher.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from_state": "SPAWNED",
+      "to_state": "EXISTING_RESEARCH_CHECK",
+      "trigger": "query_received",
+      "guards": [
+        "query_text_non_empty"
+      ]
+    },
+    {
+      "from_state": "EXISTING_RESEARCH_CHECK",
+      "to_state": "IDLE",
+      "trigger": "existing_research_sufficient",
+      "guards": [
+        "think_chosen:REUSE",
+        "confidence_above_threshold"
+      ],
+      "actions": [
+        "notify_requester_existing_research"
+      ],
+      "description": "Think phase must log: what existing research was found, how it maps to the current query, and why the confidence level is sufficient. This prevents silently returning stale or tangential research."
+    },
+    {
+      "from_state": "EXISTING_RESEARCH_CHECK",
+      "to_state": "QUERY_ANALYSIS",
+      "trigger": "new_research_needed",
+      "guards": [
+        "think_chosen:EXPLORE"
+      ]
+    },
+    {
+      "from_state": "QUERY_ANALYSIS",
+      "to_state": "SUB_AGENT_DISPATCH",
+      "trigger": "strategy_determined",
+      "guards": [
+        "think_chosen:DISPATCH"
+      ],
+      "actions": [
+        "spawn_sub_agents"
+      ]
+    },
+    {
+      "from_state": "QUERY_ANALYSIS",
+      "to_state": "AWAITING_CLARIFICATION",
+      "trigger": "query_ambiguous",
+      "guards": [
+        "think_chosen:CLARIFY"
+      ],
+      "actions": [
+        "send_clarification_request_to_orchestrator"
+      ],
+      "description": "R3 fix: Researcher cannot determine search strategy without orchestrator input. Think tool must log what is ambiguous and what specific question is being asked."
+    },
+    {
+      "from_state": "AWAITING_CLARIFICATION",
+      "to_state": "QUERY_ANALYSIS",
+      "trigger": "clarification_received",
+      "guards": [
+        "orchestrator_response_received",
+        "clarification_resolves_ambiguity"
+      ],
+      "actions": [
+        "incorporate_clarification_into_query"
+      ],
+      "description": "Orchestrator provided clarification. Return to query analysis with refined understanding."
+    },
+    {
+      "from_state": "AWAITING_CLARIFICATION",
+      "to_state": "TERMINATED",
+      "trigger": "clarification_timeout_or_cancelled",
+      "guards": [
+        "clarification_wait_exceeded_or_orchestrator_cancelled"
+      ],
+      "actions": [
+        "log_research_aborted",
+        "notify_requester_failed"
+      ],
+      "description": "Orchestrator did not respond or explicitly cancelled the query."
+    },
+    {
+      "from_state": "SUB_AGENT_DISPATCH",
+      "to_state": "SYNTHESIS",
+      "trigger": "results_sufficient",
+      "guards": [
+        "sub_agent_results_received",
+        "confidence_above_threshold"
+      ]
+    },
+    {
+      "from_state": "SUB_AGENT_DISPATCH",
+      "to_state": "ADDITIONAL_SEARCH",
+      "trigger": "results_insufficient",
+      "guards": [
+        "confidence_below_threshold"
+      ]
+    },
+    {
+      "from_state": "SUB_AGENT_DISPATCH",
+      "to_state": "SEARCH_STRATEGY_FALLBACK",
+      "trigger": "primary_strategy_failed",
+      "guards": [
+        "sub_agent_error_reported",
+        "alternative_strategy_exists"
+      ],
+      "actions": [
+        "log_strategy_failure",
+        "snapshot_partial_results"
+      ],
+      "description": "R1 fix: Primary search tool failed (e.g., Context7 MCP down, timeout). Route through fallback assessment before trying alternative."
+    },
+    {
+      "from_state": "SUB_AGENT_DISPATCH",
+      "to_state": "ERROR",
+      "trigger": "catastrophic_failure",
+      "guards": [
+        "sub_agent_error_reported",
+        "no_alternative_strategy_exists"
+      ],
+      "actions": [
+        "log_error",
+        "snapshot_partial_results"
+      ],
+      "description": "R1 fix: Non-recoverable failure with no fallback strategy available. Goes directly to ERROR for recovery assessment."
+    },
+    {
+      "from_state": "SEARCH_STRATEGY_FALLBACK",
+      "to_state": "SUB_AGENT_DISPATCH",
+      "trigger": "fallback_strategy_available",
+      "guards": [
+        "think_chosen:FALLBACK"
+      ],
+      "actions": [
+        "spawn_sub_agents"
+      ],
+      "max_occurrences": 1,
+      "description": "R1 fix: Retry with fallback strategy (e.g., MCP failed \u2192 try WebSearch, or vice versa). Max 1 fallback attempt to prevent infinite tool-switching."
+    },
+    {
+      "from_state": "SEARCH_STRATEGY_FALLBACK",
+      "to_state": "ERROR",
+      "trigger": "no_fallback_available",
+      "guards": [
+        "think_chosen:ABORT"
+      ],
+      "actions": [
+        "log_error"
+      ],
+      "description": "R1 fix: All search strategies tried and failed. Escalate to ERROR for recovery assessment."
+    },
+    {
+      "from_state": "ADDITIONAL_SEARCH",
+      "to_state": "ADDITIONAL_SEARCH",
+      "trigger": "still_insufficient",
+      "guards": [
+        "confidence_below_threshold"
+      ],
+      "max_occurrences": 2
+    },
+    {
+      "from_state": "ADDITIONAL_SEARCH",
+      "to_state": "SYNTHESIS",
+      "trigger": "results_now_sufficient",
+      "guards": [
+        "all_additional_sub_agents_complete",
+        "confidence_above_threshold"
+      ]
+    },
+    {
+      "from_state": "ADDITIONAL_SEARCH",
+      "to_state": "SYNTHESIS",
+      "trigger": "search_exhausted_best_effort",
+      "guards": [
+        "max_additional_searches_exceeded"
+      ]
+    },
+    {
+      "from_state": "ADDITIONAL_SEARCH",
+      "to_state": "SEARCH_STRATEGY_FALLBACK",
+      "trigger": "search_error",
+      "guards": [
+        "sub_agent_error_reported"
+      ],
+      "actions": [
+        "log_strategy_failure",
+        "snapshot_partial_results"
+      ],
+      "description": "R1 fix: Search tool failed during additional search. Route through fallback assessment."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "QUERY_ANALYSIS",
+      "trigger": "retry_viable",
+      "guards": [
+        "think_chosen:RETRY",
+        "retry_count_under_limit"
+      ],
+      "actions": [
+        "reset_sub_agent_state"
+      ],
+      "max_occurrences": 1,
+      "description": "R1 fix: Retry path \u2014 only if think assessment concludes failure was transient (network timeout, service restart) and retry budget remains."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "SYNTHESIS",
+      "trigger": "partial_results_salvageable",
+      "guards": [
+        "think_chosen:PARTIAL_SYNTHESIS",
+        "partial_sub_agent_results_exist",
+        "partial_results_meet_minimum_coverage"
+      ],
+      "actions": [
+        "mark_research_as_partial"
+      ],
+      "description": "R1 fix: Partial synthesis path \u2014 some sub-agents succeeded. Synthesize what we have into a partial research file (marked as such with reduced confidence) rather than losing all work."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "HANDOFF",
+      "trigger": "handoff_with_partial_work",
+      "guards": [
+        "think_chosen:HANDOFF",
+        "research_progress_exists"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ],
+      "description": "R1 fix: Handoff path \u2014 researcher has partial work (query analyzed, some results collected) but cannot continue. Pass work to successor rather than discarding."
+    },
+    {
+      "from_state": "ERROR",
+      "to_state": "TERMINATED",
+      "trigger": "abort_no_salvageable_work",
+      "guards": [
+        "think_chosen:ABORT",
+        "no_partial_results_exist"
+      ],
+      "actions": [
+        "log_research_aborted",
+        "notify_requester_failed"
+      ],
+      "description": "R1 fix: Abort path \u2014 only when think assessment confirms no useful partial data exists to save or hand off."
+    },
+    {
+      "from_state": "SYNTHESIS",
+      "to_state": "RESEARCH_WRITTEN",
+      "trigger": "research_synthesized_no_duplicate",
+      "guards": [
+        "research_file_written",
+        "confidence_scores_assigned",
+        "no_duplicate_research_exists"
+      ],
+      "actions": [
+        "update_research_index",
+        "notify_requester_research_ready"
+      ]
+    },
+    {
+      "from_state": "SYNTHESIS",
+      "to_state": "RESEARCH_WRITTEN",
+      "trigger": "research_synthesized_merge_duplicate",
+      "guards": [
+        "research_file_written",
+        "confidence_scores_assigned",
+        "duplicate_research_exists"
+      ],
+      "actions": [
+        "merge_into_existing_research",
+        "update_research_index",
+        "notify_requester_research_ready"
+      ]
+    },
+    {
+      "from_state": "RESEARCH_WRITTEN",
+      "to_state": "IDLE",
+      "trigger": "delivery_confirmed"
+    },
+    {
+      "from_state": "IDLE",
+      "to_state": "QUERY_RELATEDNESS_ASSESSMENT",
+      "trigger": "new_query_received",
+      "guards": [
+        "query_text_non_empty"
+      ],
+      "description": "R2 fix: Instead of directly guarding with subjective 'query_is_related_to_previous', route through a think phase that evaluates relatedness against concrete research-specific criteria."
+    },
+    {
+      "from_state": "QUERY_RELATEDNESS_ASSESSMENT",
+      "to_state": "EXISTING_RESEARCH_CHECK",
+      "trigger": "query_assessed_related",
+      "guards": [
+        "think_chosen:RELATED"
+      ],
+      "description": "R2 fix: Query deemed related based on concrete criteria: (1) overlapping research domain, API, library, or framework, (2) shares keywords or topic area with previous query, (3) falls within the original research scope boundary. The think tool reasoning is logged for auditability."
+    },
+    {
+      "from_state": "QUERY_RELATEDNESS_ASSESSMENT",
+      "to_state": "TERMINATED",
+      "trigger": "query_assessed_unrelated",
+      "guards": [
+        "think_chosen:UNRELATED"
+      ],
+      "actions": [
+        "notify_orchestrator_unrelated_query"
+      ],
+      "description": "R2 fix: Query is unrelated \u2014 different domain, no overlapping keywords or topic area. Researcher terminates so orchestrator can spawn a fresh instance with clean context for the new scope."
+    },
+    {
+      "from_state": "IDLE",
+      "to_state": "TERMINATED",
+      "trigger": "no_more_queries",
+      "guards": [
+        "no_pending_queries"
+      ]
+    },
+    {
+      "from_state": "RESEARCH_WRITTEN",
+      "to_state": "TERMINATED",
+      "trigger": "single_query_done",
+      "guards": [
+        "no_pending_queries"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "id": "ai-lab-eval-frameworks-blind-testing",
+  "library": "ai-evaluation-frameworks",
+  "version": "2025-2026",
+  "type": "best_practices",
+  "documentation": {
+    "summary": "AI labs and independent researchers use a multi-layered approach to blind evaluation of AI-generated code. The core pattern is: define tasks without exposing them to the model during training (contamination resistance), run evaluation in isolated harnesses (Harbor/SWE-bench), grade deterministically where possible (unit tests pass/fail), and use independent or cross-lab reviewers for subjective quality. Key frameworks include Anthropic Bloom, OpenAI Evals, SWE-bench Verified, Terminal-Bench 2.0, LiveCodeBench, and cybersecurity suites (CyberSecEval, CAIBench).",
+    "common_patterns": [
+      {
+        "pattern": "Tasks authored independently of the model under test",
+        "when_to_use": "Always — the strongest blind evals source tasks from parties with no stake in the model being tested",
+        "example": "SWE-bench: GitHub issues written by real users. BIG-Bench: tasks by external researchers. LiveCodeBench: competitive programming problems from independent platforms."
+      },
+      {
+        "pattern": "Deterministic unit-test grading",
+        "when_to_use": "Whenever the task has an objectively correct answer (code correctness, bug fixes, security checks)",
+        "example": "SWE-bench Verified: solution must fix failing tests without breaking passing tests. HumanEval: 164 Python tasks graded by unit tests. CyberSecEval: pass/fail by security static analysis tools."
+      },
+      {
+        "pattern": "Statistical robustness over single-run scores",
+        "when_to_use": "All stochastic model evaluations",
+        "example": "Terminal-Bench: 5-15 samples per task across staggered batches. Bloom: 100 rollouts repeated 3 times. Report pass@k alongside mean scores."
+      },
+      {
+        "pattern": "Rolling benchmark updates for contamination resistance",
+        "when_to_use": "Long-lived benchmarks that risk training set leakage over time",
+        "example": "LiveCodeBench adds new competitive programming problems monthly — models cannot be trained on the test set. AntiLeakBench constructs samples with knowledge provably absent from training sets."
+      },
+      {
+        "pattern": "Cross-lab and third-party verification",
+        "when_to_use": "Publishing official benchmark results for frontier model releases",
+        "example": "Terminal-Bench 2.0 reports both original lab scores and Anthropic's independent reproduction. The Anthropic-OpenAI joint eval exercise (June-July 2025) ran Anthropic's internal alignment evals against OpenAI models."
+      },
+      {
+        "pattern": "Blinded human evaluation for subjective tasks",
+        "when_to_use": "Open-ended tasks where code correctness alone does not capture quality (style, maintainability, design)",
+        "example": "OpenAI and Anthropic use randomized blinded tests where human evaluators or external labeling agencies judge outputs without knowing which model produced them."
+      },
+      {
+        "pattern": "Auto-generated scenarios (not hand-crafted) for behavioral evals",
+        "when_to_use": "Evaluating model tendencies/behaviors rather than task completion",
+        "example": "Anthropic Bloom: 4-stage pipeline (Understanding -> Ideation -> Rollout -> Judgment) generates diverse scenarios from a researcher-specified behavior. Prevents unconscious bias from scenario authors."
+      },
+      {
+        "pattern": "Containerized isolated test environments",
+        "when_to_use": "Agentic coding tasks requiring tool use or multi-step execution",
+        "example": "Harbor runs Terminal-Bench 2.0 in fresh containers per task. SWE-bench uses Docker containers per repository. Prevents state leakage between tasks."
+      },
+      {
+        "pattern": "Staged pass/fail gates",
+        "when_to_use": "Complex coding tasks with multiple correctness dimensions",
+        "example": "SWE-bench: (1) Does code run? (2) Do failing tests now pass? (3) Are existing passing tests unbroken? All three gates must pass."
+      },
+      {
+        "pattern": "Adversarial red-team probing",
+        "when_to_use": "Safety and security evaluations seeking failure modes rather than average-case performance",
+        "example": "OpenAI external red team network. Japan AISI Red Teaming Guide v1.10 (March 2025). Humane Intelligence Asia-Pacific multilingual exercise. Red teamers probe the black-box API without seeing internal alignment methods."
+      }
+    ],
+    "gotchas": [
+      {
+        "issue": "HumanEval saturation and contamination",
+        "solution": "Do not use HumanEval as a primary benchmark in 2025+. Frontier models score 93%+. Contamination is well-documented. Use SWE-bench Verified, LiveCodeBench, or BigCodeBench instead.",
+        "example": "A model scoring 95% on HumanEval reveals nothing about its ability to fix real bugs in production codebases."
+      },
+      {
+        "issue": "Lab-published scores diverging from independent real-world results",
+        "solution": "Always require independent reproduction. Lab scores often rely on complex, high-compute prompting not representative of developer out-of-the-box experience.",
+        "example": "Terminal-Bench 2.0 reports both the original lab's score and Anthropic's independent re-run on the same harness."
+      },
+      {
+        "issue": "Model-as-grader introduces preference bias",
+        "solution": "Use model grading only for tasks without deterministic answers. Always pair with at least one other grading method. Avoid using the same model family to grade its own outputs.",
+        "example": "Anthropic uses Claude as grader for open-ended tasks but supplements with code-based and human grading for high-stakes assessments."
+      },
+      {
+        "issue": "Benchmark overfitting ('teaching to the test')",
+        "solution": "Limit to 2-3 benchmarks per release. Rotate benchmark versions. Monitor for suspiciously rapid improvement on a single benchmark. Maintain strictly held-out test sets never touched during development.",
+        "example": "SWE-bench Verified is resistant: fixing real GitHub bugs requires general coding ability, not benchmark-specific tricks."
+      },
+      {
+        "issue": "In-house red teaming is insufficiently blind",
+        "solution": "Use external red team networks or independent third parties. Diverse evaluators who don't share the model developers' harm classifications and cultural assumptions.",
+        "example": "OpenAI requires third-party evaluators to independently confirm safety claims. CISA documents TEVV methodology for independent AI evaluation."
+      },
+      {
+        "issue": "Single-run scores are statistically meaningless for stochastic models",
+        "solution": "Run 5-15 samples per task minimum. Use staggered batches. Report confidence intervals. Use pass@k metric.",
+        "example": "Terminal-Bench 2.0: 5-15 samples per task with 1x guaranteed / 3x ceiling resource allocation."
+      }
+    ],
+    "examples": [
+      {
+        "title": "Anthropic Bloom: 4-Stage Behavioral Evaluation Pipeline",
+        "description": "Bloom generates behavioral evaluations without hand-crafting scenarios, reducing evaluator bias.",
+        "code": "# Stage 1: Understanding\n# Researcher specifies behavior: e.g., 'self-preferential bias'\n# Bloom parses the trait into measurable dimensions\n\n# Stage 2: Ideation\n# Bloom auto-generates diverse scenarios where the behavior could manifest\n# (NOT written by the researcher or the model team)\n\n# Stage 3: Rollout\n# Each scenario is run against the model via LiteLLM\n# Supports any frontier model: Anthropic, OpenAI, Google, etc.\n# 100 rollouts per behavior, repeated 3 times for statistical validity\n\n# Stage 4: Judgment\n# Independent judge (model or human) scores each rollout\n# Outputs: frequency rate + severity distribution\n# Results exported as Inspect-compatible transcripts for third-party verification\n\n# Key blind-testing property:\n# Scenarios are generated FRESH per evaluation run\n# The model team does not write the test cases\n# Any lab can re-run using the same pipeline on their own models",
+        "output": "Behavioral quantification: frequency=12%, severity_mean=0.43 across 300 rollouts of 'self-preferential bias' on 16 frontier models"
+      },
+      {
+        "title": "SWE-bench Verified: Staged Deterministic Grading",
+        "description": "Uses pre-existing, externally-authored test suites from real repositories — the strongest structural blind eval design.",
+        "code": "# Task sourcing (blind by design):\n# 1. Real GitHub issues reported by actual users\n# 2. Issues post-training-cutoff — model cannot have memorized the fix\n# 3. Repository has existing test suite written by the repo's own maintainers\n\n# Evaluation harness:\n# 1. Give model the GitHub issue text + repository code\n# 2. Model generates a code patch\n# 3. Apply patch to repository in isolated Docker container\n# 4. Run repository's test suite\n\n# Grading gates (all deterministic, no human preference):\n# Gate 1: Does the patched code run without errors?\n# Gate 2: Do the failing tests now pass? (issue is fixed)\n# Gate 3: Do all previously-passing tests still pass? (no regression)\n# PASS = all three gates pass\n\n# Why it resists contamination:\n# Real-world tasks require understanding the specific codebase\n# Cannot be solved by memorizing patterns from a benchmark dataset\n# Test suite is authored by the repo maintainers, NOT the evaluators",
+        "output": "Score: 80%+ for top agentic systems in 2025 (vs 1.96% baseline in 2024)"
+      },
+      {
+        "title": "Cross-Lab Blind Eval: Anthropic x OpenAI Joint Exercise (2025)",
+        "description": "Each lab evaluates the other's models using their own eval framework — true structural independence.",
+        "code": "# June-July 2025 exercise:\n# 1. Anthropic selects its strongest internal alignment evaluations\n# 2. Anthropic runs those evals against OpenAI's leading public models\n#    via API access (black box — no training data or internals exposed)\n# 3. OpenAI does not control the evaluation harness or grading criteria\n# 4. Results are compared against OpenAI's own internal safety assessments\n# 5. Disagreements are documented and published\n\n# Blind properties:\n# - Evaluators (Anthropic) have no stake in the model (OpenAI's)\n# - Model team (OpenAI) does not control the test design\n# - Black-box API access only — no internals exposed\n# - Results published regardless of which lab's model performs better",
+        "output": "Published at alignment.anthropic.com/2025/openai-findings/"
+      }
+    ],
+    "integration_points": [
+      {
+        "location": ".claude/research/persistent/ai-lab-eval-frameworks-blind-testing.json",
+        "usage": "Reference for designing independent test suites in the chunk-coder TDD workflow and plan-architect test architecture",
+        "notes": "Key takeaways: use deterministic grading, source tasks externally, run multiple samples, and keep test sets strictly held out"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "url": "https://alignment.anthropic.com/2025/bloom-auto-evals/",
+      "type": "official_docs",
+      "title": "Bloom: An Open-Source Tool for Automated Behavioral Evaluations (Anthropic)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://github.com/safety-research/bloom",
+      "type": "github",
+      "title": "Bloom GitHub Repository (safety-research/Anthropic)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents",
+      "type": "official_docs",
+      "title": "Demystifying Evals for AI Agents (Anthropic Engineering)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://alignment.anthropic.com/2025/openai-findings/",
+      "type": "official_docs",
+      "title": "Findings from a Pilot Anthropic-OpenAI Alignment Evaluation Exercise",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://github.com/anthropics/evals",
+      "type": "github",
+      "title": "Anthropic Evals GitHub Repository",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://github.com/openai/evals",
+      "type": "github",
+      "title": "OpenAI Evals Framework (GitHub)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://platform.openai.com/docs/guides/evaluation-best-practices",
+      "type": "official_docs",
+      "title": "OpenAI Evaluation Best Practices",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://openai.com/index/strengthening-safety-with-external-testing/",
+      "type": "official_docs",
+      "title": "OpenAI: Strengthening Safety Ecosystem with External Testing",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://developers.openai.com/blog/eval-skills/",
+      "type": "official_docs",
+      "title": "OpenAI: Testing Agent Skills Systematically with Evals",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://runloop.ai/blog/understanding-llm-code-benchmarks-from-humaneval-to-swe-bench",
+      "type": "blog",
+      "title": "Understanding LLM Code Benchmarks: From HumanEval to SWE-bench (Runloop)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://o-mega.ai/articles/top-50-ai-model-evals-full-list-of-benchmarks-october-2025",
+      "type": "blog",
+      "title": "Top 50 AI Model Benchmarks and Evaluation Metrics 2025 Guide",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://o-mega.ai/articles/the-best-ai-agent-evals-and-benchmarks-full-2025-guide",
+      "type": "blog",
+      "title": "Best AI Agent Evaluation Benchmarks 2025 Complete Guide",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://arxiv.org/html/2510.24317v1",
+      "type": "official_docs",
+      "title": "CAIBench: Cybersecurity AI Benchmark (arXiv)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.lxt.ai/blog/llm-benchmarks/",
+      "type": "blog",
+      "title": "LLM Benchmarks 2025: What They Prove and What Businesses Need (LXT)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.marktechpost.com/2025/07/31/the-ultimate-2025-guide-to-coding-llm-benchmarks-and-performance-metrics/",
+      "type": "blog",
+      "title": "Ultimate 2025 Guide to Coding LLM Benchmarks (MarkTechPost)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://aclanthology.org/2025.acl-long.901/",
+      "type": "official_docs",
+      "title": "AntiLeakBench: Preventing Data Contamination by Automatically Constructing Benchmarks (ACL 2025)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://arxiv.org/html/2601.19334v1",
+      "type": "official_docs",
+      "title": "When Benchmarks Leak: Inference-Time Decontamination for LLMs (arXiv)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.holisticai.com/blog/overview-of-data-contamination",
+      "type": "blog",
+      "title": "Overview of Data Contamination: Causes, Risks, Signs, Defenses (Holistic AI)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.cisa.gov/news-events/news/ai-red-teaming-applying-software-tevv-ai-evaluations",
+      "type": "official_docs",
+      "title": "AI Red Teaming: Applying Software TEVV for AI Evaluations (CISA)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://aisi.go.jp/assets/pdf/E1_ai_safety_RT_v1.10_en.pdf",
+      "type": "official_docs",
+      "title": "Guide to Red Teaming Methodology on AI Safety v1.10, March 2025 (Japan AISI)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://storage.googleapis.com/deepmind-media/DeepSearchQA/DeepSearchQA_benchmark_paper.pdf",
+      "type": "official_docs",
+      "title": "DeepSearchQA: Bridging the Comprehensiveness Gap for Deep Research (Google DeepMind)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://arxiv.org/html/2509.26553v2",
+      "type": "official_docs",
+      "title": "Towards Reliable Benchmarking: Contamination-Free Framework for Multi-step LLM Function Calling (arXiv)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://hai.stanford.edu/ai-index/2025-ai-index-report/technical-performance",
+      "type": "official_docs",
+      "title": "Stanford HAI 2025 AI Index Report: Technical Performance",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://deepeval.com/docs/benchmarks-human-eval",
+      "type": "official_docs",
+      "title": "HumanEval Benchmark Documentation (DeepEval)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.greptile.com/state-of-ai-coding-2025",
+      "type": "blog",
+      "title": "State of AI Coding 2025 (Greptile)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "created_at": "2026-02-28T00:00:00Z",
+    "last_updated": "2026-02-28T00:00:00Z",
+    "confidence": 0.75,
+    "contributors": [
+      {
+        "agent_id": "researcher",
+        "sections": ["common_patterns", "gotchas", "examples", "integration_points"],
+        "timestamp": "2026-02-28T00:00:00Z"
+      }
+    ],
+    "merge_strategy": "consolidation",
+    "related_research": []
+  }
+}

@@ -1,0 +1,554 @@
+{
+  "id": "blind-failure-reporting-patterns",
+  "library": "multi-agent-tdd-workflow",
+  "version": "2026-02",
+  "type": "best_practices",
+  "documentation": {
+    "summary": "Blind failure reporting is the discipline of a tester who has no knowledge of the implementation describing WHAT failed in observable behavioral terms — without referencing code paths, guessing developer intent, or suggesting fixes. The pattern comes from five real-world traditions: NASA IV&V (organizational independence, reports bypass the dev team), DO-178C (requirements-based test derivation), BDD (behavior in business language), mutation testing (surviving mutants = test gaps, not code bugs), and property-based testing (shrunk minimal counterexamples). Applied to multi-agent coding workflows, a 'tester' agent derives tests from specifications only and reports failures as behavioral mismatches — the 'coder' agent then uses its implementation context to locate the root cause.",
+
+    "q1_what_to_include": {
+      "title": "What a Blind Failure Report MUST Include",
+      "principle": "Report observable behavior only. Everything the tester writes must be derivable from the specification and the test output — never from reading the implementation.",
+      "required_fields": [
+        {
+          "field": "test_id",
+          "description": "Unique identifier for the failing test case. Allows coder to locate the exact test without re-running everything.",
+          "example": "TC-AUTH-007"
+        },
+        {
+          "field": "scenario_description",
+          "description": "The human-readable name of what was being tested, in behavioral language. From BDD tradition — written as user story or Given/When/Then.",
+          "example": "Given an unauthenticated request, When /api/orders is called, Then the response status is 401"
+        },
+        {
+          "field": "expected_behavior",
+          "description": "What the specification says should happen. Derived from requirements/spec doc — never from reading the code.",
+          "example": "HTTP 401 with body {\"error\": \"unauthorized\"}"
+        },
+        {
+          "field": "actual_behavior",
+          "description": "Exactly what the system returned or did. Verbatim output — no interpretation or paraphrasing.",
+          "example": "HTTP 200 with body {\"orders\": []}"
+        },
+        {
+          "field": "deviation_type",
+          "description": "Classification of HOW the behavior differs: wrong_status, wrong_body, wrong_type, missing_field, unexpected_exception, timeout, no_response, property_violated, invariant_broken.",
+          "example": "wrong_status"
+        },
+        {
+          "field": "reproduction_input",
+          "description": "The minimal input that triggers the failure. For property-based tests: the shrunk counterexample. For unit tests: the exact arguments. Must be copy-pasteable.",
+          "example": "request = {method: GET, path: /api/orders, headers: {}}"
+        },
+        {
+          "field": "test_derivation_source",
+          "description": "Which requirement or specification clause this test was derived from. Proves the test is requirements-based, not code-derived.",
+          "example": "spec.md §4.2: All unauthenticated requests to /api/* MUST return 401"
+        },
+        {
+          "field": "reproducible",
+          "description": "Whether the failure is deterministic. Flaky failures must be noted — they require a different kind of investigation.",
+          "example": "true (deterministic) | false (flaky, failed 3/10 runs)"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field": "related_passing_tests",
+          "description": "Tests that PASSED in the same area. Helps coder triangulate — the failure is specific to THIS scenario.",
+          "example": "TC-AUTH-005 (authenticated GET /api/orders) PASSED"
+        },
+        {
+          "field": "mutation_survivors",
+          "description": "For mutation testing reports: which mutations survived (tests that didn't catch code changes). Lists the mutation type and location in spec terms.",
+          "example": "Boundary change on empty-list behavior survived — no test verifies empty-list response shape"
+        },
+        {
+          "field": "property_violated",
+          "description": "For property-based test failures: which invariant was broken, stated as a mathematical/logical property.",
+          "example": "decode(encode(x)) == x violated for x = b'\\xff\\xfe'"
+        },
+        {
+          "field": "shrunk_from",
+          "description": "For property-based testing: the original large input before Hypothesis shrinking. Useful context but the shrunk version is what matters.",
+          "example": "Original: 1024-byte buffer. Shrunk to: b'\\xff\\xfe' (2 bytes)"
+        }
+      ],
+      "real_world_sources": {
+        "nasa_ivv": "NASA IV&V findings include: Finding ID, severity (Critical/Major/Minor), description of discrepancy, requirement reference, evidence of discrepancy. Reports go to the Chief Software Management Authority — NOT the development team lead.",
+        "do_178c": "Test case documentation includes: test ID, objective, inputs, expected outputs, actual outputs, pass/fail status, and the requirement it traces to. Explicitly EXCLUDES developer implementation notes.",
+        "bdd_cucumber": "Cucumber failure output: Scenario name, the EXACT step that failed (Given/When/Then), expected vs actual value. Zero mention of which method or line of code was called.",
+        "hypothesis_python": "Hypothesis failure output: the minimal shrunk counterexample (e.g., x=-1, y=0), the property assertion that failed, the full repr of the failing input. Saved to .hypothesis/examples/ for deterministic replay.",
+        "mutmut": "Mutmut survivor output: file.py:42: x > 0 => x >= 0 (SURVIVED). Reports WHAT changed and WHERE in the source, plus mutation score. The tester reports this as 'the boundary condition on line 42 was changed without detection.'"
+      }
+    },
+
+    "q2_what_to_exclude": {
+      "title": "What a Blind Failure Report MUST Exclude",
+      "principle": "Anything derived from reading the implementation is contaminated information. A blind tester cannot know it — and if they guess it, they introduce bias.",
+      "exclusions": [
+        {
+          "category": "implementation_details",
+          "description": "References to specific class names, method names, function calls, line numbers (from the implementation), variable names, or internal data structures.",
+          "bad_example": "The authenticate() method in auth_service.py returns None instead of raising HTTPException at line 45.",
+          "why_bad": "Tester cannot know this without reading the code. Reporting it contaminates the report with implementation context and may misdirect the coder.",
+          "good_alternative": "When called with no Authorization header, the endpoint returns HTTP 200 instead of the specified HTTP 401."
+        },
+        {
+          "category": "developer_intent_guessing",
+          "description": "Phrases like 'they probably meant to...', 'I think the issue is...', 'the developer forgot to...', 'this looks like they intended...'",
+          "bad_example": "The developer probably forgot to add the authorization check before returning the orders list.",
+          "why_bad": "The tester has no knowledge of the implementation. Guessing intent steers the coder toward a pre-assumed cause rather than the actual root cause.",
+          "good_alternative": "The endpoint returns order data without verifying caller identity. Spec §4.2 requires identity verification before any data is returned."
+        },
+        {
+          "category": "fix_suggestions",
+          "description": "Any prescriptive guidance on what to change, how to fix it, or which approach to take.",
+          "bad_example": "You should add a check for the Authorization header at the start of the handler function and return 401 if it's missing.",
+          "why_bad": "The tester does not know the implementation. A 'fix' suggestion may be right about the symptom but wrong about the cause. The coder has the context; the tester does not.",
+          "good_alternative": "No fix suggestion included. Tester's role ends at behavior description."
+        },
+        {
+          "category": "filtered_findings",
+          "description": "Omitting failures because the tester assumes they are 'probably intentional' or 'not important'. Every behavioral deviation from spec must be reported.",
+          "bad_example": "(omitted) The response body includes an undocumented 'debug' field — probably just a dev artifact.",
+          "why_bad": "This is the tester making an implementation assumption. In NASA IV&V, filtered findings that turn out to be real bugs are accountability failures.",
+          "good_alternative": "Report it: Response body includes undocumented field 'debug' with value 'true'. Spec §3.1 defines the response schema — this field is not in the schema."
+        },
+        {
+          "category": "stack_traces_from_internals",
+          "description": "Internal stack traces that reveal implementation structure. Exception messages that name internal modules.",
+          "bad_example": "Exception: AttributeError in auth_middleware.py:23 in validate_token(), 'NoneType' has no attribute 'user_id'",
+          "why_bad": "Exposing auth_middleware.py:23 as the source tells the coder where to look, but it also means the tester has seen the internal structure. Report the observable symptom instead.",
+          "good_alternative": "The endpoint raised an unhandled exception (HTTP 500, Internal Server Error) when called without an Authorization header. Spec §4.2 requires HTTP 401 in this case, not a 500."
+        }
+      ]
+    },
+
+    "q3_feedback_loop": {
+      "title": "How the Feedback Loop Works: Blind Tester to Coder",
+      "principle": "The tester describes WHAT failed. The coder identifies WHERE in the code. The tester NEVER suggests fixes. Information flows in one direction only: tester reports observable facts; coder interprets them using implementation context.",
+      "phases": [
+        {
+          "phase": 1,
+          "name": "Initial Behavioral Report",
+          "owner": "tester",
+          "content": "Full blind failure report as defined above. Behavioral language only. No implementation references.",
+          "format": "Structured report (see template below)"
+        },
+        {
+          "phase": 2,
+          "name": "Coder Triage",
+          "owner": "coder",
+          "content": "Coder reads the behavioral report. Uses their implementation knowledge to locate the root cause. They do NOT ask the tester 'which function failed' — they already know the implementation.",
+          "decision_tree": "Can I locate the bug from the behavioral description alone? YES -> fix it. NO -> ask tester for one more observable data point (NOT for implementation help)."
+        },
+        {
+          "phase": 3,
+          "name": "Progressive Disclosure (if needed)",
+          "owner": "tester",
+          "content": "If and ONLY IF the coder cannot isolate the issue from phase 1, the tester provides one additional behavioral data point. NOT more code insight — more behavioral evidence.",
+          "examples": [
+            "Does the failure happen with any missing header, or only Authorization specifically?",
+            "Is the failure consistent across all request methods (GET, POST) or only GET?",
+            "Does the failure occur when the database is empty vs populated?"
+          ],
+          "constraint": "Each progressive disclosure round adds ONE behavioral data point. Stops when the coder can locate the issue."
+        },
+        {
+          "phase": 4,
+          "name": "Fix and Re-run",
+          "owner": "coder",
+          "content": "Coder fixes the implementation. Tester re-runs the SAME test against the fixed implementation. Tester reports pass/fail — no assessment of HOW the fix was made."
+        }
+      ],
+      "agentcoder_precedent": {
+        "description": "AgentCoder (multi-agent code generation system, 2023) implements this exact separation: programmer agent, test designer agent (has no access to programmer's code), test executor agent. Feedback loop: executor collects actual error messages -> programmer refines. No cross-contamination of context.",
+        "key_finding": "By avoiding overlap between code generation and test creation, the system reduces confirmation bias and catches subtle errors missed in tightly coupled designs."
+      },
+      "messaging_contract": {
+        "tester_to_coder_message_type": "failure_report",
+        "required_fields_in_message": ["test_id", "scenario", "expected", "actual", "deviation_type", "reproduction_input", "spec_reference"],
+        "forbidden_fields_in_message": ["suggested_fix", "implementation_reference", "stack_trace_details", "developer_intent"],
+        "coder_to_tester_message_type": "clarification_request",
+        "clarification_rule": "Coder may only ask for additional BEHAVIORAL observations, never ask 'what line failed' or 'which function was called'"
+      }
+    },
+
+    "q4_preventing_bias": {
+      "title": "How to Prevent the Tester from Becoming Biased",
+      "principle": "Bias enters when the tester knows HOW the system was built. Prevention requires structural barriers, not willpower.",
+      "mechanisms": [
+        {
+          "mechanism": "Context Isolation (primary prevention)",
+          "description": "The tester agent NEVER receives the implementation code, file paths, or any artifact produced by the coder. The tester's context contains only: specification/requirements, test suite, test output.",
+          "implementation": "In agent teams: tester agent is spawned with no access to implementation files. It reads spec docs and its own test output. Implementation files are out of scope.",
+          "precedent": "NASA IV&V: IV&V team has separate office, separate budget, separate reporting chain from the development team. Physical and organizational separation enforces information isolation."
+        },
+        {
+          "mechanism": "Requirements-First Test Derivation",
+          "description": "Tests are written from specification documents BEFORE the implementation exists (TDD) or without reading the implementation (blind testing). The expected behavior is derived from the spec, not inferred from what the code does.",
+          "precedent": "DO-178C mandates this: 'Tests must be requirements-based, not source-code-based.' The verifier must be able to write tests with only the specification in hand.",
+          "implementation": "Tester agent receives: spec.md, requirements list, API schema. It does NOT receive: implementation files, migration notes, developer comments."
+        },
+        {
+          "mechanism": "Fresh Context Per Round (AI-specific)",
+          "description": "AI agent testers should start with a fresh context for each testing round. A tester that has seen a previous coder response — even just in message history — has been contaminated with implementation context.",
+          "implementation": "Spawn a new tester agent for each test round. Pass only: the specification and the test suite. Do not pass: the coder's previous message, fix descriptions, or implementation summaries.",
+          "why": "An AI tester that read 'I added an authorization check in the middleware' will unconsciously test the middleware path, not explore other paths where the same behavior should appear."
+        },
+        {
+          "mechanism": "Observable-Only Reporting Discipline",
+          "description": "The tester is trained (via system prompt) to report ONLY what it can observe from running tests against the public API surface. It is explicitly told: you cannot know HOW the system is built; describe only what it does.",
+          "system_prompt_clause": "You are a blind tester. You have access to: the specification, your test code, and the test output. You do NOT have access to the implementation. In your failure reports, describe ONLY observable behavior — what the system returned, what exception was raised, what property was violated. Never guess developer intent. Never suggest how to fix the implementation."
+        },
+        {
+          "mechanism": "Organizational Independence (for human IV&V teams)",
+          "description": "The verifier reports to different management than the developer. Findings go to program management directly, bypassing the dev team lead. This prevents social pressure to soften findings.",
+          "precedent": "NASA IV&V findings go to the Chief Software Management Authority. The IV&V team has a separate budget line — they cannot be defunded by the project they are verifying."
+        }
+      ]
+    },
+
+    "q5_report_templates": {
+      "title": "Real-World Failure Report Formats and Templates",
+
+      "template_1_behavioral_unit_test": {
+        "name": "Behavioral Unit Test Failure Report",
+        "origin": "BDD / TDD tradition",
+        "format": {
+          "FINDING_ID": "TC-{feature}-{number}",
+          "SEVERITY": "Critical | Major | Minor | Informational",
+          "SCENARIO": "Given {precondition}, When {action}, Then {expected outcome}",
+          "EXPECTED": "{exact expected value or behavior}",
+          "ACTUAL": "{verbatim actual output — no interpretation}",
+          "DEVIATION_TYPE": "wrong_status | wrong_body | missing_field | unexpected_exception | timeout | no_response",
+          "REPRODUCTION": "{minimal copy-pasteable input that triggers the failure}",
+          "SPEC_REFERENCE": "{Section X.Y of specification document}",
+          "REPRODUCIBLE": "true | false (flaky: N/M runs)",
+          "RELATED_PASSING": "[list of passing tests in the same area, if any]",
+          "TESTER_NOTES": "{additional behavioral observations ONLY — no implementation guesses}"
+        },
+        "example": {
+          "FINDING_ID": "TC-AUTH-007",
+          "SEVERITY": "Critical",
+          "SCENARIO": "Given no Authorization header is present, When GET /api/orders is called, Then the response status MUST be 401",
+          "EXPECTED": "HTTP 401, body: {\"error\": \"unauthorized\"}",
+          "ACTUAL": "HTTP 200, body: {\"orders\": []}",
+          "DEVIATION_TYPE": "wrong_status",
+          "REPRODUCTION": "curl -X GET http://localhost:8000/api/orders",
+          "SPEC_REFERENCE": "spec.md §4.2: All unauthenticated requests to /api/* MUST return 401 Unauthorized",
+          "REPRODUCIBLE": "true",
+          "RELATED_PASSING": "TC-AUTH-005 (authenticated GET returns 200) PASSED",
+          "TESTER_NOTES": "No fix suggestion. Behavioral deviation from spec is clear and reproducible."
+        }
+      },
+
+      "template_2_ivv_finding": {
+        "name": "IV&V Finding Report",
+        "origin": "NASA IV&V / DO-178C tradition",
+        "format": {
+          "FINDING_ID": "IVV-{project}-{sequence_number}",
+          "DATE": "ISO 8601",
+          "SEVERITY": "Critical (safety hazard) | Major (mission impact) | Minor (degraded function) | Observation (improvement)",
+          "DISCREPANCY_DESCRIPTION": "{What the system does, stated in behavioral/functional terms. No implementation references.}",
+          "REQUIREMENT_REFERENCE": "{Exact requirement text or section number this violates}",
+          "EVIDENCE": "{Test case ID, test output, logs showing the behavioral deviation — not stack traces}",
+          "VERIFICATION_METHOD": "Test | Analysis | Inspection | Demonstration",
+          "REPRODUCIBILITY": "Always | Intermittent (specify conditions) | Once",
+          "DISPOSITION": "{Left blank — filled in by program management, not the verifier}",
+          "REPORTED_TO": "Program Management (NOT development team lead)"
+        },
+        "example": {
+          "FINDING_ID": "IVV-ORION-0142",
+          "DATE": "2026-02-28",
+          "SEVERITY": "Critical",
+          "DISCREPANCY_DESCRIPTION": "The telemetry processing component returns a status of OK when fed a null payload. Specification §7.4.1 requires that null payloads trigger a FAULT status and halt processing.",
+          "REQUIREMENT_REFERENCE": "SYS-REQ-0471: Upon receipt of a null telemetry payload, the system SHALL transition to FAULT state within 100ms and log the event.",
+          "EVIDENCE": "Test TC-TEL-019: Input = null payload. Expected output = FAULT status, event logged. Actual output = OK status, no event logged. Test repeated 10 times: 10/10 reproduce.",
+          "VERIFICATION_METHOD": "Test",
+          "REPRODUCIBILITY": "Always",
+          "DISPOSITION": "",
+          "REPORTED_TO": "Chief Software Management Authority (CSMA)"
+        }
+      },
+
+      "template_3_mutation_survivor": {
+        "name": "Mutation Testing Gap Report",
+        "origin": "Mutation testing tradition (mutmut, Stryker, PIT)",
+        "format": {
+          "REPORT_TYPE": "test_gap_report (NOT a code_bug_report)",
+          "MUTATION_SCORE": "{killed}/{total} = {percentage}%",
+          "SURVIVORS": [
+            {
+              "LOCATION": "{file}:{line} (behavioral description, not code name)",
+              "MUTATION": "{what was changed — stated as behavioral change, not code change}",
+              "MEANING": "{what behavior gap this reveals — phrased as a missing test}",
+              "GAP_DESCRIPTION": "{The test suite does not verify behavior X in condition Y}"
+            }
+          ],
+          "INTERPRETATION": "Survivors indicate test gaps. They do NOT indicate code bugs. The implementation may be correct — but the tests cannot prove it.",
+          "RECOMMENDATION": "Add tests that exercise the behaviors listed in each gap_description."
+        },
+        "example": {
+          "REPORT_TYPE": "test_gap_report",
+          "MUTATION_SCORE": "45/60 = 75%",
+          "SURVIVORS": [
+            {
+              "LOCATION": "auth_logic_behavior:boundary",
+              "MUTATION": "Boundary condition for token expiry changed from strict to lenient comparison",
+              "MEANING": "The test suite does not verify behavior when a token expires at exactly the boundary time",
+              "GAP_DESCRIPTION": "No test checks authentication behavior when token.expiry == current_time (boundary case)"
+            },
+            {
+              "LOCATION": "order_list_behavior:empty_case",
+              "MUTATION": "Return value for empty order list changed from empty list to None",
+              "MEANING": "The test suite does not verify the response body when the order list is empty",
+              "GAP_DESCRIPTION": "No test checks that GET /api/orders returns [] (not null) when no orders exist"
+            }
+          ],
+          "INTERPRETATION": "These survivors show WHERE our tests are blind. The implementation behavior in these areas is unverified by the current test suite.",
+          "RECOMMENDATION": "Write tests covering: token boundary expiry case, empty order list response shape."
+        }
+      },
+
+      "template_4_property_failure": {
+        "name": "Property-Based Test Failure Report (Hypothesis-style)",
+        "origin": "Hypothesis / QuickCheck tradition",
+        "format": {
+          "PROPERTY_VIOLATED": "{The invariant that was broken, stated as a universal statement}",
+          "MINIMAL_COUNTEREXAMPLE": "{The shrunk minimal input that triggers the violation — copy-pasteable}",
+          "EXPECTED_PROPERTY": "{What should always be true according to the spec}",
+          "ACTUAL_BEHAVIOR": "{What actually happened for the counterexample}",
+          "SHRUNK_FROM": "{Original large input before shrinking — optional context}",
+          "REPRODUCIBLE_AS": "{Command or code snippet to replay deterministically}",
+          "SPEC_REFERENCE": "{Which behavioral requirement this property tests}"
+        },
+        "example": {
+          "PROPERTY_VIOLATED": "For all binary inputs b, decode(encode(b)) == b (encode/decode roundtrip must be lossless)",
+          "MINIMAL_COUNTEREXAMPLE": "b = b'\\xff\\xfe'",
+          "EXPECTED_PROPERTY": "decode(encode(b'\\xff\\xfe')) == b'\\xff\\xfe'",
+          "ACTUAL_BEHAVIOR": "decode(encode(b'\\xff\\xfe')) returned b'\\xff' (2 bytes became 1 byte — data loss)",
+          "SHRUNK_FROM": "Original failing input: 1024-byte buffer with random bytes. Shrunk over 47 steps to minimal 2-byte input.",
+          "REPRODUCIBLE_AS": "pytest tests/test_codec.py::test_roundtrip --hypothesis-seed=12345",
+          "SPEC_REFERENCE": "spec.md §2.1: The codec MUST preserve all input bytes. No lossy encoding is permitted."
+        }
+      },
+
+      "template_5_bdd_failure": {
+        "name": "BDD Scenario Failure Report (Cucumber/behave style)",
+        "origin": "BDD / Cucumber tradition",
+        "format": "Cucumber native failure output already follows blind reporting principles — it reports the scenario (business language), the EXACT step that failed, and expected vs actual. No code references.",
+        "example_output": "Feature: User Authentication\n  Scenario: Unauthenticated access is rejected    [FAILED]\n    Given no Authorization header is present      [PASSED]\n    When GET /api/orders is called                [PASSED]\n    Then the response status is 401               [FAILED]\n      Expected: 401\n      Actual:   200\n\nFailing step: 'Then the response status is 401'\nSpec reference: auth.feature:line 8\nNo implementation details reported.",
+        "key_principle": "The failure names the STEP (business behavior), not the function. The coder reads 'response status is 401 [FAILED]' and uses their implementation knowledge to find the auth gap — the report itself never mentions middleware, handlers, or internal code."
+      }
+    },
+
+    "agent_workflow_application": {
+      "title": "Applying Blind Failure Reporting in Multi-Agent TDD Workflows",
+      "tester_agent_system_prompt_additions": [
+        "You are a blind tester. Your context contains: the specification, your test files, and test output.",
+        "You do NOT have access to the implementation code. You cannot read it, reference it, or guess about it.",
+        "In failure reports: describe ONLY what the system returned, raised, or produced. Never guess why.",
+        "Never suggest a fix. Your role ends at describing the behavioral deviation.",
+        "If asked 'what function failed', respond: 'I cannot determine this — I do not have implementation access. I can tell you the behavioral conditions under which the failure occurs.'"
+      ],
+      "coder_agent_constraint": "The coder agent receives failure reports in the structured format above. It does NOT share implementation details back with the tester in response — it fixes and triggers a re-run.",
+      "fresh_context_rule": "Spawn a NEW tester agent for each test round if possible. If reusing the same agent, ensure the tester context does not include the coder's implementation files or fix descriptions.",
+      "message_schema": {
+        "type": "failure_report",
+        "payload": {
+          "test_id": "string",
+          "scenario": "Given/When/Then behavioral description",
+          "expected": "verbatim expected output",
+          "actual": "verbatim actual output",
+          "deviation_type": "wrong_status | wrong_body | property_violated | unexpected_exception | ...",
+          "reproduction": "minimal input to reproduce",
+          "spec_reference": "document section reference",
+          "reproducible": "true | false",
+          "mutation_survivors": "optional: list of test gap descriptions",
+          "property_violated": "optional: invariant statement for PBT failures"
+        },
+        "forbidden_in_payload": ["suggested_fix", "implementation_path", "stack_trace_internals", "developer_intent_guess"]
+      }
+    },
+
+    "common_patterns": [
+      {
+        "pattern": "Behavioral Language Gate",
+        "description": "Before sending a failure report, the tester agent checks each sentence: 'Could I have written this without seeing the implementation?' If no, remove it.",
+        "example": "PASS: 'The endpoint returned HTTP 200 instead of 401.' FAIL: 'The middleware didn't check the token.' (cannot know without reading code)"
+      },
+      {
+        "pattern": "Severity Classification from Spec Impact",
+        "description": "Severity is determined by how critical the violated requirement is — not by how 'obvious' the bug looks. A 'small' deviation from a safety-critical requirement is Critical.",
+        "example": "Critical: Required authentication bypass. Major: Wrong response format. Minor: Undocumented field in response. Observation: Slow response within acceptable range."
+      },
+      {
+        "pattern": "Related-Passing Tests as Triangulation",
+        "description": "Including nearby passing tests in the report helps the coder triangulate. If TC-AUTH-005 (authenticated GET) passes but TC-AUTH-007 (unauthenticated GET) fails, the authentication check specifically is the gap.",
+        "example": "TC-AUTH-005 (authenticated GET /api/orders) PASSED. TC-AUTH-007 (unauthenticated GET /api/orders) FAILED. This isolates the authentication-check path."
+      },
+      {
+        "pattern": "Mutation Gaps as Test Assignments, Not Bug Reports",
+        "description": "Mutation survivors are TEST GAPS — they tell the tester what tests are missing, not the coder what code is broken. The coder reads them and may realize the code IS correct but undertested.",
+        "example": "Survivor: 'boundary condition on token expiry'. Assignment: 'Write a test for token.expiry == current_time.' Code may be correct — the test just didn't exist to prove it."
+      },
+      {
+        "pattern": "Progressive Disclosure Protocol",
+        "description": "Start with the minimum behavioral description. Only add detail if the coder requests a specific behavioral data point. Never add implementation context.",
+        "levels": [
+          "Level 1: Scenario + Expected + Actual (always provided)",
+          "Level 2: Reproduction input + Spec reference (if level 1 insufficient)",
+          "Level 3: Related passing tests + boundary conditions tested (if level 2 insufficient)",
+          "Level 4: Additional behavioral edge cases the tester can run on request"
+        ]
+      }
+    ],
+
+    "gotchas": [
+      {
+        "issue": "Tester agent reads implementation files 'just to understand the test surface'",
+        "solution": "Enforce context isolation at the agent spawn level. The tester agent's task description must list explicitly what context it has access to. Implementation files are not in scope.",
+        "example": "CORRECT tester context: [spec.md, tests/test_auth.py, test_output.txt]. INCORRECT: [spec.md, tests/test_auth.py, src/auth_middleware.py]"
+      },
+      {
+        "issue": "Exception messages leaking internal structure into failure reports",
+        "solution": "The tester strips internal stack traces from failure reports. Report the OBSERVABLE symptom (HTTP 500, unexpected exception type, crash) without the internal stack trace detail.",
+        "example": "REPORT: 'The endpoint raised an unhandled exception returning HTTP 500 (Internal Server Error).' NOT: 'AttributeError at auth_middleware.py:23 in validate_token()'"
+      },
+      {
+        "issue": "Coder pressures tester for a fix suggestion ('just tell me where it is')",
+        "solution": "The tester's response is: 'I can provide more behavioral data points to help you triangulate. I cannot tell you WHERE in the implementation the issue is — that requires implementation knowledge I don't have.'",
+        "example": "Tester: 'The failure occurs only when the Authorization header is completely absent, not when it is present but invalid. TC-AUTH-008 (invalid token) PASSED.'"
+      },
+      {
+        "issue": "AI tester 'hallucinating' implementation details it never read",
+        "solution": "System prompt must explicitly forbid implementation references AND provide positive framing: 'You describe observable behavior. This makes your reports more useful, not less — the coder has the implementation context you don't need.'",
+        "example": "Enforce in tester agent: 'Before submitting your report, verify: every statement could have been written by someone who only ran the tests and read the spec.'"
+      },
+      {
+        "issue": "Mutation survivors reported as code bugs instead of test gaps",
+        "solution": "Frame mutation reports explicitly: 'These are test gaps, not code bugs. The implementation MAY be correct. These survivals prove the current test suite cannot verify the behavior.'",
+        "example": "WRONG: 'Bug: boundary check on token expiry is wrong.' RIGHT: 'Gap: No test verifies behavior when token.expiry == current_time. The implementation behavior at this boundary is unverified.'"
+      }
+    ]
+  },
+
+  "sources": [
+    {
+      "title": "NASA IV&V Overview",
+      "url": "https://www.nasa.gov/ivv-overview/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "NASA SWE-141: Software Independent Verification and Validation (Handbook Ver D)",
+      "url": "https://swehb.nasa.gov/spaces/SWEHBVD/pages/102695499/SWE-141+-+Software+Independent+Verification+and+Validation",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "NASA IV&V Technical Framework (2023)",
+      "url": "https://www.nasa.gov/wp-content/uploads/2023/11/ivv-09-1-independent-verification-and-validation-technical-framework-ver-s-08-28-2023.pdf",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Adaptive IV&V Reduces Risk (Aerospace Corporation 2023)",
+      "url": "https://aerospace.org/sites/default/files/2024-07/2023.AMA%201400_GEREK_IAASSS%20Conf%20Adaptive%20IV&V.pdf",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Complete Verification and Validation for DO-178C (Vector Whitepaper)",
+      "url": "https://cdn.vector.com/cms/content/know-how/aerospace/Documents/Complete_Verification_and_Validation_for_DO-178C.pdf",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Behaviour-Driven Development (BDD) | Cucumber Docs",
+      "url": "https://cucumber.io/docs/bdd/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Given When Then - Martin Fowler",
+      "url": "https://martinfowler.com/bliki/GivenWhenThen.html",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Hypothesis: Details and Advanced Features",
+      "url": "https://hypothesis.readthedocs.io/en/latest/details.html",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Stryker Mutator: Mutant States and Metrics",
+      "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "AgentCoder: Multi-Agent-based Code Generation with Iterative Testing",
+      "url": "https://arxiv.org/html/2312.13010v1",
+      "type": "research_paper",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Code in Harmony: Evaluating Multi-Agent Frameworks",
+      "url": "https://openreview.net/pdf?id=URUMBfrHFy",
+      "type": "research_paper",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Mutation Testing: A Practical Overview (softengbook.org)",
+      "url": "https://softengbook.org/articles/mutation-testing",
+      "type": "tutorial",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Implementation of a Blind Quality Control Program in a Forensic Laboratory (PMC)",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7317955/",
+      "type": "research_paper",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Let Hypothesis Break Your Python Code Before Your Users Do (Towards Data Science)",
+      "url": "https://towardsdatascience.com/let-hypothesis-break-your-python-code-before-your-users-do/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    }
+  ],
+
+  "meta": {
+    "created_at": "2026-02-28T00:00:00Z",
+    "last_updated": "2026-02-28T00:00:00Z",
+    "confidence": 0.88,
+    "confidence_reason": "High: NASA IV&V official docs and DO-178C references are authoritative. BDD/Cucumber and Hypothesis are well-documented official tools. AgentCoder paper (arxiv) is peer-reviewed. Mutation testing survivor format from Stryker official docs. The multi-agent application section synthesizes from first principles + AgentCoder precedent (medium confidence — pattern is sound but AI-agent-specific failure report field schemas are not yet formally standardized).",
+    "gaps": [
+      "NASA IV&V finding report template is publicly referenced but the exact template form is behind NASA internal systems — fields inferred from multiple official publications and the technical framework PDF",
+      "AI-agent-specific 'blind failure report' schema not yet a formal standard — synthesized from multiple traditions (IV&V + BDD + PBT + mutation)",
+      "DO-178C full standard text not directly accessible — referenced via Vector and Aerospace Corporation whitepapers"
+    ],
+    "research_type": "persistent",
+    "topics": [
+      "blind-testing", "failure-reporting", "iv-and-v", "nasa-ivv", "do-178c", "bdd", "mutation-testing",
+      "property-based-testing", "hypothesis", "tester-coder-separation", "multi-agent-tdd",
+      "behavioral-mismatch", "report-format", "progressive-disclosure", "context-isolation",
+      "agentcoder", "gherkin", "cucumber", "mutmut", "stryker"
+    ],
+    "contributors": [
+      {
+        "agent_id": "researcher-sonnet-4-6",
+        "sections": ["all"],
+        "timestamp": "2026-02-28T00:00:00Z"
+      }
+    ],
+    "related_research": [
+      "blind-testing-ivv-methodology",
+      "scenario-acceptance-testing-frameworks",
+      "ai-agent-code-testing-methodology"
+    ]
+  }
+}

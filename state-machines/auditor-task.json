@@ -1,0 +1,158 @@
+{
+  "name": "auditor-task",
+  "description": "Ephemeral task auditor. Spawned after each coder claims task complete. Adversarial review \u2014 forces coder to fix issues before merge. Never writes code. One review per instance.",
+  "version": "1.3.0",
+  "agent_role": "auditor",
+  "initial_state": "SPAWNED",
+  "terminal_states": [
+    "APPROVED",
+    "ESCALATED",
+    "HANDOFF"
+  ],
+  "universal_transitions": [
+    {
+      "to_state": "HANDOFF",
+      "trigger": "context_pressure_exceeded",
+      "guards": [
+        "context_usage_above_threshold"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "name": "SPAWNED",
+      "description": "Task auditor spawned. Loading coder's implementation, plan, and context.",
+      "write_allowed": false
+    },
+    {
+      "name": "CODE_REVIEW",
+      "description": "Reviewing implementation against plan. Reading source and test files. Fully read-only.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Does the implementation match the plan chunk's requirements and invariants? 2) Are there edge cases or error paths not covered by the tests? 3) Does the code follow the project's established patterns and naming conventions? 4) Are there any security concerns, resource leaks, or performance issues? 5) Is the implementation the simplest approach that satisfies the requirements?"
+    },
+    {
+      "name": "CRITIQUE_SENT",
+      "description": "Review critique sent to coder. Waiting for fixes. If the coder terminates unexpectedly (crash, HANDOFF, SCRAP_RETRY), escalates to orchestrator.",
+      "write_allowed": false
+    },
+    {
+      "name": "FIXES_VERIFIED",
+      "description": "Reviewing coder's fixes. Checking if issues are resolved.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) Did the coder address the root cause of each issue, not just the symptoms? 2) Were any new issues introduced by the fixes? 3) Does the quality gate still pass after the fixes? 4) Are the fixes consistent with the original implementation approach? 5) Should this be approved or does another critique cycle provide meaningful value?"
+    },
+    {
+      "name": "APPROVED",
+      "description": "Implementation approved. Coder can merge. Auditor terminates."
+    },
+    {
+      "name": "ESCALATED",
+      "description": "Audit cannot continue. Either max critique cycles exhausted without resolution, or coder terminated unexpectedly. Orchestrator notified to decide next steps (fresh coder, user involvement, etc.)."
+    },
+    {
+      "name": "HANDOFF",
+      "description": "Context pressure exceeded. Writing handoff summary of review progress. Auditor terminates, orchestrator spawns fresh task auditor.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from_state": "SPAWNED",
+      "to_state": "CODE_REVIEW",
+      "trigger": "context_loaded",
+      "guards": [
+        "coder_files_readable",
+        "plan_chunk_loaded",
+        "coder_quality_gate_passed"
+      ]
+    },
+    {
+      "from_state": "CODE_REVIEW",
+      "to_state": "CRITIQUE_SENT",
+      "trigger": "issues_found",
+      "guards": [
+        "think_chosen:CRITIQUE"
+      ],
+      "actions": [
+        "send_critique_to_coder"
+      ]
+    },
+    {
+      "from_state": "CODE_REVIEW",
+      "to_state": "APPROVED",
+      "trigger": "no_issues_found",
+      "guards": [
+        "think_chosen:APPROVE"
+      ],
+      "actions": [
+        "send_approval_to_coder"
+      ]
+    },
+    {
+      "from_state": "CRITIQUE_SENT",
+      "to_state": "FIXES_VERIFIED",
+      "trigger": "coder_fixes_submitted",
+      "guards": [
+        "coder_notified_fixes_ready"
+      ]
+    },
+    {
+      "from_state": "CRITIQUE_SENT",
+      "to_state": "ESCALATED",
+      "trigger": "coder_terminated",
+      "guards": [
+        "coder_session_terminated",
+        "coder_fixes_not_submitted"
+      ],
+      "actions": [
+        "notify_orchestrator_coder_gone"
+      ],
+      "description": "A2 fix + race fix: Coder terminated unexpectedly while auditor was waiting for fixes. Only escalates if the coder did NOT submit fixes before terminating. If fixes were submitted (coder_notified_fixes_ready=true), the FIXES_VERIFIED transition takes priority \u2014 the fixes are on disk and should be reviewed regardless of coder status."
+    },
+    {
+      "from_state": "FIXES_VERIFIED",
+      "to_state": "APPROVED",
+      "trigger": "fixes_acceptable",
+      "guards": [
+        "think_chosen:APPROVE"
+      ],
+      "actions": [
+        "send_approval_to_coder"
+      ]
+    },
+    {
+      "from_state": "FIXES_VERIFIED",
+      "to_state": "CRITIQUE_SENT",
+      "trigger": "more_fixes_needed",
+      "guards": [
+        "think_chosen:CRITIQUE"
+      ],
+      "actions": [
+        "send_followup_critique"
+      ],
+      "max_occurrences": 3
+    },
+    {
+      "from_state": "FIXES_VERIFIED",
+      "to_state": "ESCALATED",
+      "trigger": "max_critiques_exhausted",
+      "guards": [
+        "critique_cycles_exceeded",
+        "think_chosen:CRITIQUE"
+      ],
+      "actions": [
+        "notify_orchestrator_audit_deadlock"
+      ],
+      "description": "Structural fix: Added think_chosen:CRITIQUE to prevent ambiguity. Without it, when cycles are exhausted and agent chooses APPROVE, both APPROVED and ESCALATED transitions pass simultaneously \u2014 daemon fires NONE (ambiguity detection). Now ESCALATED only fires when agent tried to critique but cycles were exhausted."
+    }
+  ]
+}

@@ -1,0 +1,274 @@
+{
+  "id": "blind-testing-ivv-methodology",
+  "library": "software-verification-methodologies",
+  "version": "2026-02",
+  "type": "best_practices",
+  "documentation": {
+    "summary": "Blind testing methodologies — IV&V, mutation testing, property-based testing, and fuzz testing — share one principle: the verifier must not be biased by knowing how the implementation was built. IV&V enforces organizational independence (separate personnel, budgets, reporting chains). Mutation testing provides mechanical blindness by silently changing code and checking whether tests detect the change. Property-based testing generates inputs the developer never specified, finding 50x more mutations per test than handwritten unit tests per OOPSLA 2025. Coverage-guided fuzzing generates inputs guided purely by unexplored code paths, not developer intent.",
+    "examples": [
+      {
+        "title": "mutmut: Run mutation testing on a Python module",
+        "description": "Runs all mutations against the test suite and reports survivors (tests that failed to catch code changes). Scores above 80% indicate strong fault-detection.",
+        "code": "pip install mutmut\nmutmut run\nmutmut results\n# Shows only surviving mutants (tests that didn't catch changes)\n# Example output:\n# SURVIVED: src/parser.py:42: x > 0 => x >= 0",
+        "output": "Mutation score = (killed / total) * 100. Target: >= 80%."
+      },
+      {
+        "title": "cosmic-ray: Python mutation testing with kill matrix",
+        "description": "Cosmic Ray generates mutants using 9 operator types and provides a kill matrix showing which tests kill which mutants. Useful for identifying redundant tests and coverage gaps.",
+        "code": "pip install cosmic-ray\ncosmic-ray init config.toml mymodule tests/\ncosmic-ray exec config.toml\ncosmic-ray dump config.toml | python -m cosmic_ray.reporting.full_text\n# Operators: AOR (arithmetic), LOR (logical), ROR (relational),\n# LCR (logical connector), constant replacement, unary insertion"
+      },
+      {
+        "title": "Hypothesis: Property-based test with pytest",
+        "description": "Hypothesis integrates natively with pytest via @given. Generates inputs automatically and shrinks failures to the minimal reproducible case. Saves failing examples to a local database so bugs do not hide behind randomness in CI.",
+        "code": "from hypothesis import given, strategies as st\n\n@given(st.lists(st.integers()))\ndef test_sort_is_idempotent(lst):\n    \"\"\"Sorting twice equals sorting once — a structural invariant.\"\"\"\n    assert sorted(sorted(lst)) == sorted(lst)\n\n@given(st.text(), st.text())\ndef test_concatenation_length(a, b):\n    assert len(a + b) == len(a) + len(b)",
+        "output": "When a property fails, Hypothesis shrinks to the minimal failing example and saves it to .hypothesis/examples/ for deterministic replay."
+      },
+      {
+        "title": "Atheris: Coverage-guided fuzzing for Python",
+        "description": "Atheris wraps libFuzzer to provide coverage-guided fuzzing for Python. It instruments Python bytecode for coverage tracking and generates inputs guided by unexplored code edges.",
+        "code": "pip install atheris\n\nimport atheris\nimport sys\n\ndef TestOneInput(data):\n    fdp = atheris.FuzzedDataProvider(data)\n    value = fdp.ConsumeString(10)\n    try:\n        my_parser(value)\n    except ValueError:\n        pass  # Expected\n    except Exception as e:\n        raise  # Unexpected exception = potential bug\n\natheris.Setup(sys.argv, TestOneInput)\natheris.Fuzz()\n\n# Run: python my_fuzz_target.py -max_total_time=60",
+        "output": "Crashes, unexpected exceptions, and sanitizer violations are reported with the exact input bytes that triggered them."
+      },
+      {
+        "title": "DO-178C: Independence verification by DAL level",
+        "description": "DO-178C requires that the person verifying software artifacts is NOT the person who authored them. Verification must be requirements-based (derived from specs, not from reading code).",
+        "code": "# Independence requirements by Design Assurance Level:\n# Level A (Catastrophic): 16/31 review objectives require independence\n# Level B (Hazardous):     7/31 review objectives require independence\n# Level C (Major):         0/31 independence required\n# Level D (Minor):         0/31 independence required\n#\n# Key rule: Tests derived from HIGH-LEVEL REQUIREMENTS, not source code.\n# Verifier reads: requirements docs, architecture, design docs, source code.\n# Verifier does NOT start from: developer's mental model, implementation intent,\n# or the developer's own test cases.",
+        "output": "Documented in the Software Verification Plan. Applies to requirements review, design review, code review, and test case review."
+      }
+    ],
+    "common_patterns": [
+      {
+        "pattern": "Requirements-Based Testing (IV&V / DO-178C)",
+        "when_to_use": "When verifying safety-critical or mission-critical software where implementation bias could mask failures. Mandatory at DO-178C Level A/B.",
+        "example": "Derive test cases from requirements documents only. Do not read the implementation before writing tests. Write expected behavior based on the specification, then run against the implementation."
+      },
+      {
+        "pattern": "Mutation Score as Test Quality Gate",
+        "when_to_use": "After any test suite is written — especially AI-generated tests. Use mutation score to prove tests actually detect behavioral changes, not just execute code.",
+        "example": "Target mutation score >= 80%. A score of 4% with 100% line coverage means tests are structurally executed but behaviorally blind. Run mutmut or cosmic-ray before accepting any test suite."
+      },
+      {
+        "pattern": "Property Invariant Testing (Hypothesis)",
+        "when_to_use": "For any function where you can state a general truth about behavior across all valid inputs: roundtrips, commutativity, idempotency, size preservation, consistency with reference implementation.",
+        "example": "@given(st.binary())\ndef test_encode_decode_roundtrip(data):\n    assert decode(encode(data)) == data"
+      },
+      {
+        "pattern": "Coverage-Guided Fuzzing for Parser/Deserializer Blindness",
+        "when_to_use": "For any code that processes external input (parsers, deserializers, API input validation, file format readers). Finds crashes and unexpected exceptions on inputs nobody thought to write tests for.",
+        "example": "Use Atheris + FuzzedDataProvider to generate semi-structured inputs. Run for 60-300 seconds. Even a short fuzz run covers millions of input variations."
+      },
+      {
+        "pattern": "Organizational Independence for IV&V",
+        "when_to_use": "When formal certification or high-stakes verification is required. Requires separate personnel, separate management chain, separate budget.",
+        "example": "IV&V team derives expected behavior from requirements docs. Reports findings directly to project management — not through the development team lead. At NASA: reports to the Chief Software Management Authority."
+      },
+      {
+        "pattern": "Shrinking + Failure Database (Hypothesis)",
+        "when_to_use": "When debugging property-based test failures. Hypothesis automatically shrinks complex failures to minimal reproducible cases.",
+        "example": "If a 1000-element list triggers a bug, Hypothesis shrinks to the smallest list that reproduces the same failure. Saved to .hypothesis/examples/ so the minimal case replays deterministically in CI."
+      }
+    ],
+    "gotchas": [
+      {
+        "issue": "100% code coverage does NOT mean tests verify behavior",
+        "solution": "Always run mutation testing alongside coverage. A test suite with 100% line coverage and 4% mutation score executes every line but catches almost no bugs. Coverage measures execution; mutation score measures correctness verification.",
+        "example": "HumanEval-Java study: LLM-generated tests achieved 100% line/branch coverage but only 4% mutation score — missing corner cases like leap year date handling."
+      },
+      {
+        "issue": "Tests with no assertions survive all mutations (mutation score 0%)",
+        "solution": "Mutation testing immediately exposes this: if every mutation survives for a test, that test has no behavioral assertions. Fix by adding explicit assert statements that check return values, state changes, or side effects.",
+        "example": "def test_process():\n    process(data)  # No assertion = passes all mutations\n# Fix:\ndef test_process():\n    result = process(data)\n    assert result.status == 'done'  # Now mutations are caught"
+      },
+      {
+        "issue": "Mutation testing is slow on large codebases",
+        "solution": "Use incremental mutation analysis (PIT supports this). Run mutation testing only on changed files in CI. mutmut is fastest at 1,200 mutants/min; cosmic-ray supports distributed execution for large repos.",
+        "example": "mutmut run --paths-to-mutate src/core.py  # Only mutate specific file"
+      },
+      {
+        "issue": "Hypothesis health checks fail on slow strategies",
+        "solution": "Use @settings(suppress_health_check=[HealthCheck.too_slow]) or increase max_examples cautiously. For complex data structures, use st.builds() with targeted strategies rather than generating all fields randomly.",
+        "example": "from hypothesis import settings, HealthCheck\n@settings(max_examples=200, suppress_health_check=[HealthCheck.too_slow])\n@given(st.complex_strategy())\ndef test_invariant(data): ..."
+      },
+      {
+        "issue": "Atheris requires Linux or macOS (no Windows support)",
+        "solution": "Run fuzzing in CI on Linux containers. Use OSS-Fuzz integration for continuous 24/7 fuzzing. For Windows development, use a Docker container for fuzz runs.",
+        "example": "Supported: Python 3.11-3.13 on Linux (32/64-bit) and macOS. Not supported: Windows."
+      },
+      {
+        "issue": "IV&V verifier bias from reading implementation before writing tests",
+        "solution": "Write test cases from requirements documents BEFORE reading the implementation code. The verifier reads the spec and states expected behavior independently. Only then compare against actual implementation output.",
+        "example": "DO-178C mandates this: tests must be requirements-based, not source-code-based. The verifier should be able to write tests with only the specification in hand."
+      }
+    ]
+  },
+  "sources": [
+    {
+      "title": "NASA IV&V Overview",
+      "url": "https://www.nasa.gov/ivv-overview/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "NASA IV&V Capabilities and Services FY25 Handout",
+      "url": "https://www.nasa.gov/wp-content/uploads/2025/02/ivv-capabilities-services-handout-fy25.pdf",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "NASA SWE-141: Software Independent Verification and Validation (Handbook Ver D)",
+      "url": "https://swehb.nasa.gov/spaces/SWEHBVD/pages/102695499/SWE-141+-+Software+Independent+Verification+and+Validation",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Complete Verification and Validation for DO-178C (Vector Whitepaper)",
+      "url": "https://cdn.vector.com/cms/content/know-how/aerospace/Documents/Complete_Verification_and_Validation_for_DO-178C.pdf",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "An Empirical Evaluation of Property-Based Testing in Python (OOPSLA 2025)",
+      "url": "https://cseweb.ucsd.edu/~mcoblenz/assets/pdf/OOPSLA_2025_PBT.pdf",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Agentic Property-Based Testing: Finding Bugs Across the Python Ecosystem (arXiv:2510.09907)",
+      "url": "https://arxiv.org/abs/2510.09907",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Hypothesis: The property-based testing library for Python (GitHub)",
+      "url": "https://github.com/HypothesisWorks/hypothesis",
+      "type": "github",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Hypothesis: What is property-based testing?",
+      "url": "https://hypothesis.works/articles/what-is-property-based-testing/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "PIT Mutation Testing (official site)",
+      "url": "https://pitest.org/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Cosmic Ray: Mutation Operators Documentation",
+      "url": "https://cosmic-ray.readthedocs.io/en/latest/how-tos/operators.html",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Trail of Bits: Use mutation testing to find the bugs your tests don't catch",
+      "url": "https://blog.trailofbits.com/2025/09/18/use-mutation-testing-to-find-the-bugs-your-tests-dont-catch/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Meta Engineering: LLMs Are the Key to Mutation Testing and Better Compliance",
+      "url": "https://engineering.fb.com/2025/09/30/security/llms-are-the-key-to-mutation-testing-and-better-compliance/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Evaluating LLM-Generated Unit Tests with Mutation Testing: ChatGPT vs DeepSeek",
+      "url": "https://sol.sbc.org.br/index.php/sbqs/article/download/39001/38773/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Static and Dynamic Comparison of Mutation Testing Tools for Python (ACM SBQS 2024)",
+      "url": "https://dl.acm.org/doi/10.1145/3701625.3701659",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Atheris: A Coverage-Guided, Native Python Fuzzer (PyPI)",
+      "url": "https://pypi.org/project/atheris/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Google Atheris GitHub",
+      "url": "https://github.com/google/atheris",
+      "type": "github",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "libFuzzer: LLVM Coverage-Guided Fuzzing Documentation",
+      "url": "https://llvm.org/docs/LibFuzzer.html",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "OSS-Fuzz Python Project Integration Guide",
+      "url": "https://google.github.io/oss-fuzz/getting-started/new-project-guide/python-lang/",
+      "type": "official_docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Python Fuzzing for Trustworthy Machine Learning Frameworks (arXiv:2403.12723)",
+      "url": "https://arxiv.org/html/2403.12723v1",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Mutation Testing with Mutmut: Python for Code Reliability 2026",
+      "url": "https://johal.in/mutation-testing-with-mutmut-python-for-code-reliability-2026/",
+      "type": "tutorial",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "An Analysis and Comparison of Mutation Testing Tools for Python (IEEE 2024)",
+      "url": "https://ieeexplore.ieee.org/document/10818231/",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Adaptive IV&V Reduces Risk (Aerospace Corporation 2023)",
+      "url": "https://aerospace.org/sites/default/files/2024-07/2023.AMA%201400_GEREK_IAASSS%20Conf%20Adaptive%20IV&V.pdf",
+      "type": "blog",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "title": "Getting Started with Property-Based Testing in Python with Hypothesis and Pytest (Semaphore)",
+      "url": "https://semaphore.io/blog/property-based-testing-python-hypothesis-pytest",
+      "type": "tutorial",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "created_at": "2026-02-28T00:00:00Z",
+    "last_updated": "2026-02-28T00:00:00Z",
+    "confidence": 0.88,
+    "merge_strategy": "consolidation",
+    "contributors": [
+      {
+        "agent_id": "researcher-sonnet-4-6",
+        "sections": ["documentation", "sources"],
+        "timestamp": "2026-02-28T00:00:00Z"
+      }
+    ],
+    "related_research": [],
+    "research_notes": {
+      "confidence_reason": "High: NASA official docs and DO-178C references are authoritative. OOPSLA 2025 is peer-reviewed. Trail of Bits and Meta Engineering are expert practitioners. Mutation tool speed metrics from 2025 benchmarks (medium confidence — vendor-reported). Atheris AI-code specific 2025 data limited (tool fundamentals well-covered, AI-specific applications extrapolated).",
+      "gaps": [
+        "DO-178C full standard text not directly accessible — referenced via Vector and AdaCore whitepapers",
+        "Specific NASA IV&V report exclusion lists not publicly documented — inferred from independence principles and SWE-141",
+        "Atheris-specific 2025 benchmarks on AI-generated code not found — general fuzzing effectiveness used"
+      ],
+      "key_findings": {
+        "property_based_testing_effectiveness": "Each property-based test finds ~50x as many mutations as the average unit test (OOPSLA 2025 empirical study)",
+        "llm_test_quality_gap": "LLM-generated tests can achieve 100% line/branch coverage at only 4% mutation score — mutation testing is essential for AI-generated test validation",
+        "do_178c_independence_threshold": "16/31 verification objectives require independence at Level A (catastrophic); 7/31 at Level B (hazardous)",
+        "mutation_score_target": "Scores above 80% indicate strong fault-detection capability in Python codebases",
+        "mutmut_speed": "mutmut: 1,200 mutants/min, 88.5% detection rate — fastest Python mutation tool",
+        "meta_llm_deployment": "Meta ACH tool (LLM + mutation): 73% engineer acceptance of generated tests across 4 major platforms in late 2024"
+      }
+    }
+  }
+}

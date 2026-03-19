@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Delegation Return",
+  "description": "Return schema for research delegation. The sub-agent returns findings with per-target confidence, citations, and gaps.",
+  "type": "object",
+  "required": ["delegation_type", "status", "findings", "essential_output_confidence", "citations"],
+  "properties": {
+    "delegation_type": {
+      "const": "research",
+      "description": "Must match the delegation type from the prompt."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "partial", "failed"],
+      "description": "Overall completion status."
+    },
+    "findings": {
+      "type": "object",
+      "description": "The research results. Structure varies by research topic."
+    },
+    "essential_output_confidence": {
+      "type": "object",
+      "description": "Confidence per essential_output target. Keys match essential_output items from the prompt.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["level", "reason"],
+        "properties": {
+          "level": { "type": "string", "enum": ["high", "medium", "low"] },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "citations": {
+      "type": "array",
+      "description": "Citations for claims made in findings.",
+      "items": {
+        "type": "object",
+        "required": ["claim", "url"],
+        "properties": {
+          "claim": { "type": "string", "description": "The claim being cited." },
+          "url": { "type": "string", "description": "Source URL." },
+          "source_name": { "type": "string", "description": "Human-readable source name." },
+          "section": { "type": "string", "description": "Section within the source." },
+          "retrieved": { "type": "string", "description": "Date retrieved (YYYY-MM-DD)." }
+        }
+      }
+    },
+    "unexpected_findings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scope_extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["extended_to", "reason"],
+        "properties": {
+          "extended_to": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "cross_scope_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding", "relevant_to"],
+        "properties": {
+          "finding": { "type": "string" },
+          "relevant_to": { "type": "string" }
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "carry_forward": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

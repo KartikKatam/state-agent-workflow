@@ -1,0 +1,27 @@
+{
+  "class_name": "ProductionConfig",
+  "source_file": "training/regression/production/config.py",
+  "fields": {
+    "ema_enabled": {
+      "type": "bool",
+      "default": "True"
+    },
+    "ema_decay": {
+      "type": "float",
+      "default": "0.9999"
+    },
+    "synthetic_data_dir": {
+      "type": "str",
+      "default": "'data/synthetic_crops'"
+    },
+    "synthetic_annotations_path": {
+      "type": "str",
+      "default": "'data/synthetic_annotations.json'"
+    },
+    "synthetic_ratio": {
+      "type": "float",
+      "default": "0.5"
+    }
+  },
+  "field_count": 5
+}

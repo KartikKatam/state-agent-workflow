@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "started_at": "2026-02-28T18:00:00Z",
+    "last_updated": "2026-02-28T19:30:00Z",
+    "completed_at": "2026-02-28T19:30:00Z",
+    "session_id": "ptc-plan-architect-session",
+    "session_label": "ptc-planning-2026-02-28",
+    "agent_model": "opus"
+  },
+  "source_design_doc": ".claude/designs/ptc.md",
+  "status": "complete",
+  "phase": "json_saved",
+  "phase_history": [
+    {
+      "phase": "context_loading",
+      "timestamp": "2026-02-28T18:00:00Z",
+      "details": "Loaded skills (implementation-plans, session-lifecycle, context-packets), design doc (~1900 lines), codebase context, feature context, packages doc, resume prompt"
+    },
+    {
+      "phase": "design_grounding",
+      "timestamp": "2026-02-28T18:05:00Z",
+      "details": "Design grounded: 12 types mapped, 6 roles, 15 tools, 5 dispatch strategies, 30 verification criteria. All domain concepts mapped to codebase constructs. No context gaps — design doc is self-contained with exact code."
+    },
+    {
+      "phase": "structure_proposed",
+      "timestamp": "2026-02-28T18:10:00Z",
+      "details": "14 chunks proposed: 3 for Phase 1 (IPC+Sandbox), 3 for Phase 2 (Host+Container+REPL), 3 for Phase 3 (ptc_tools+Dispatcher), 2 for Phase 4 (Docker+MCP), 1 for Phase 5 (Error+Cleanup), 1 for Phase 6 (Skills), plus REPL pool extension"
+    },
+    {
+      "phase": "details_writing",
+      "timestamp": "2026-02-28T18:15:00Z",
+      "details": "Wrote plain-text plan with full tasks, invariants, scope, out_of_scope, and design doc references per chunk"
+    },
+    {
+      "phase": "json_conversion",
+      "timestamp": "2026-02-28T18:25:00Z",
+      "details": "Converted plain-text to schema-compliant JSON. 14 chunks, 4 global invariants, quality gates, module_tests placeholder."
+    },
+    {
+      "phase": "json_saved",
+      "timestamp": "2026-02-28T18:30:00Z",
+      "details": "Both plan files written: .claude/plans/plan-plaintext/ptc-plan-text.md and .claude/plans/ptc-plan.json"
+    },
+    {
+      "phase": "test_architecture",
+      "timestamp": "2026-02-28T19:30:00Z",
+      "details": "Test architecture complete: 259 tests across 14 chunks (240 Pass A, 11 Pass B, 8 Pass C). All 30 verification criteria mapped. 11 test files, 11 shared fixtures. Per-chunk handoff blocks with TDD red-phase instructions. Written to .claude/plans/ptc-test-specs.md"
+    }
+  ],
+  "edit_history": [],
+  "design_deviations": [
+    {
+      "id": "dev-001",
+      "description": "Split Phase 2 Container Manager into two chunks (core + REPL pool)",
+      "design_doc_said": "Phase 2: IPC Host + Container Manager + REPL Pool as one phase",
+      "plan_instead": "chunk-06 (Container Manager core) + chunk-07 (REPL Pool + Handoff) as separate chunks",
+      "reason": "Container Manager has 9 verification criteria (15-23). Splitting gives better TDD focus: chunk-06 tests basic container lifecycle, chunk-07 tests multi-REPL and handoff independently.",
+      "timestamp": "2026-02-28T18:10:00Z"
+    },
+    {
+      "id": "dev-002",
+      "description": "Split Phase 3 ptc_tools into two chunks",
+      "design_doc_said": "Phase 3: Tool Dispatch + ptc_tools as one phase",
+      "plan_instead": "chunk-08 (ptc_tools direct-call: files, search, tokens) + chunk-09 (ptc_tools subprocess: testing, git, network) + chunk-10 (Tool Dispatcher)",
+      "reason": "ptc_tools has 7+ files. Single chunk would exceed 4-file limit and be too large for one TDD session. Split by dispatch strategy (direct-call vs subprocess).",
+      "timestamp": "2026-02-28T18:10:00Z"
+    }
+  ],
+  "files_created": [
+    {
+      "path": ".claude/plans/plan-plaintext/ptc-plan-text.md",
+      "type": "plain_text_plan"
+    },
+    {
+      "path": ".claude/plans/ptc-plan.json",
+      "type": "json_plan"
+    },
+    {
+      "path": ".claude/plans/ptc-test-specs.md",
+      "type": "test_spec"
+    }
+  ],
+  "decisions_made": [
+    {
+      "decision": "14 chunks total: 3 IPC/sandbox + 3 host/container + 3 tools/dispatch + 2 integration + 1 hardening + 1 skills + 1 REPL extension",
+      "reason": "Balances TDD session size (30-60 min each) with dependency complexity. Each chunk delivers testable capability.",
+      "chunk_scope": null
+    },
+    {
+      "decision": "chunk-01, chunk-04, chunk-08 are independent — can be implemented in parallel",
+      "reason": "No dependency relationship between IPC protocol, event logger, and ptc_tools. Three-lane parallel start possible.",
+      "chunk_scope": null
+    },
+    {
+      "decision": "chunk-14 (PTC Skills) has no code dependencies — can be done anytime",
+      "reason": "Documentation-only chunk. Content comes directly from design doc. No need to wait for code.",
+      "chunk_scope": "chunk-14"
+    },
+    {
+      "decision": "All Docker operations mocked in tests",
+      "reason": "Unit tests must not depend on Docker daemon. Integration testing with real Docker is manual verification.",
+      "chunk_scope": null
+    },
+    {
+      "decision": "Old tool_implementations/ kept for reference until chunk-13 cleanup",
+      "reason": "Chunk-coders extracting ptc_tools need to reference existing fallback() implementations. Delete make_kernel_code in chunk-13, keep fallback() for reference.",
+      "chunk_scope": "chunk-13"
+    },
+    {
+      "decision": "Pass C activated — multi-component IPC system with Docker, sockets, and concurrency",
+      "reason": "Feature has external system deps (Docker), multi-stage pipeline (IPC→executor→dispatch→result), and concurrent execution. Pass C essential for E2E and error recovery validation.",
+      "chunk_scope": null
+    },
+    {
+      "decision": "All async tests use @pytest.mark.asyncio — no manual event loop management",
+      "reason": "IPC, executor, container manager are all asyncio-based. pytest-asyncio provides clean async test support.",
+      "chunk_scope": null
+    },
+    {
+      "decision": "Pass B integration + Pass C system tests implemented during chunk-13 (hardening)",
+      "reason": "Cross-chunk tests require all components assembled. chunk-13 is the hardening chunk where the full system is wired. Integration tests are created alongside error handling tests.",
+      "chunk_scope": "chunk-13"
+    }
+  ],
+  "user_preferences": [],
+  "learning_signals": [],
+  "key_files_read": [
+    {"path": ".claude/designs/ptc.md", "relevance": "Source of truth — complete architecture, 10 components, exact code"},
+    {"path": ".claude/context/_codebase.json", "relevance": "Codebase structure, types, patterns, quality gates"},
+    {"path": ".claude/context/ptc-context.json", "relevance": "Feature context: touchpoints, tool signatures, strategies, permissions"},
+    {"path": "ptc-packages-per-agent.md", "relevance": "ROLE_PACKAGES dict, install times, package rationale"},
+    {"path": "PTC-RESUME.md", "relevance": "Implementation overview, phase summary, key decisions"},
+    {"path": ".claude/skills/implementation-plans/SKILL.md", "relevance": "Chunking rules, invariant requirements, plan schema"},
+    {"path": ".claude/skills/implementation-plans/schemas/implementation-plan.schema.json", "relevance": "JSON schema for plan output"}
+  ],
+  "pending_decisions": [],
+  "context_usage": {},
+  "timing": {
+    "structure_iterations": 1,
+    "details_iterations": 1,
+    "total_edits": 0
+  }
+}

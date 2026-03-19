@@ -1,0 +1,4 @@
+# file: /ptc_runtime/runtime.py
+# hypothesis_version: 6.151.9
+
+['--socket', 'Socket filename', '__main__', 'code', 'connecting to %s', 'exec_id', 'execute', 'ping', 'pong sent', 'repl-0.sock', 'runtime loop started', 'type']

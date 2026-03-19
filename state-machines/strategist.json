@@ -1,0 +1,308 @@
+{
+  "name": "strategist",
+  "description": "Design-to-plan converter. Persistent within planning phase. Three gates: plain-text review \u2192 user approval \u2192 JSON conversion. Granular user review checkpoints at phase breakdown, task breakdown, task detailing, test planning, and plan completion. Delegates extraction to Haiku/Sonnet sub-agents.",
+  "version": "1.1.0",
+  "agent_role": "strategist",
+  "initial_state": "SPAWNED",
+  "terminal_states": [
+    "PLAN_COMPLETE",
+    "HANDOFF"
+  ],
+  "universal_transitions": [
+    {
+      "to_state": "HANDOFF",
+      "trigger": "context_pressure_exceeded",
+      "guards": [
+        "context_usage_above_threshold"
+      ],
+      "actions": [
+        "write_handoff_summary",
+        "notify_orchestrator_handoff"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "name": "SPAWNED",
+      "description": "Strategist spawned. Loading design doc, codebase context, and any existing plan state.",
+      "write_allowed": false
+    },
+    {
+      "name": "DESIGN_INGESTION",
+      "description": "Reading and analyzing design document. Fully read-only \u2014 understanding requirements before planning.",
+      "write_allowed": false,
+      "think_on_exit": true,
+      "think_prompt": "1) What are the core requirements vs nice-to-haves in the design doc? 2) What existing codebase patterns and conventions must the plan respect? 3) Are there ambiguities in the design doc that need user clarification before planning? 4) What are the highest-risk areas that need careful phasing? 5) Are there external dependencies or integration points that constrain the plan?"
+    },
+    {
+      "name": "PHASE_BREAKDOWN",
+      "description": "Breaking feature into implementation phases. Think required. Write to plan plaintext directory.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/plans/plan-plaintext/**"
+      ],
+      "think_on_exit": true,
+      "think_prompt": "1) Are phases ordered so each builds on the previous without requiring rework? 2) Is each phase independently testable and commitable? 3) Are phase boundaries at natural integration points where the system is in a consistent state? 4) Is the first phase small enough to validate the approach early? 5) Are there phases that could be parallelized?"
+    },
+    {
+      "name": "PHASE_REVIEW",
+      "description": "Phase breakdown awaiting user review. Read-only while user evaluates.",
+      "write_allowed": false
+    },
+    {
+      "name": "TASK_BREAKDOWN",
+      "description": "Breaking phases into individual tasks. Think required. Includes touched_functions, priority, model_recommendation per task.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/plans/plan-plaintext/**"
+      ],
+      "think_on_exit": true,
+      "think_prompt": "1) Is each task small enough for a single coder in one session? 2) Are task dependencies explicit \u2014 does task B truly need task A's output? 3) Are touched_functions accurate and non-overlapping between concurrent tasks? 4) Is the priority ordering correct \u2014 critical-path tasks before optional enhancements? 5) Are model_recommendations appropriate (Opus for complex logic, Sonnet for boilerplate)?"
+    },
+    {
+      "name": "TASK_REVIEW",
+      "description": "Task breakdown awaiting user review. Read-only while user evaluates.",
+      "write_allowed": false
+    },
+    {
+      "name": "TASK_DETAILING",
+      "description": "Adding per-task metadata: exploration_queries, research_queries, requires_research, requires_exploration, review_level. review_level values: light (boilerplate, mechanical, single-file), phase (important but no downstream task dependencies), full (other tasks depend on this task's output being correct). Think required.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/plans/plan-plaintext/**"
+      ],
+      "think_on_exit": true,
+      "think_prompt": "1) Are exploration_queries specific enough to produce useful context packets? 2) Are research_queries targeting the right APIs, libraries, or patterns? 3) Is the review_level justified \u2014 are 'light' tasks truly mechanical with no downstream dependencies? 4) Are requires_research and requires_exploration flags set correctly for each task? 5) Would any task benefit from additional context that is not currently requested?"
+    },
+    {
+      "name": "DETAIL_REVIEW",
+      "description": "Task detailing awaiting user review. User verifies exploration/research queries are correct before test planning.",
+      "write_allowed": false
+    },
+    {
+      "name": "TEST_PLANNING",
+      "description": "Designing Pass A/B/C test architecture per task. Invariants, golden examples, negative paths. Think required.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/plans/plan-plaintext/**"
+      ],
+      "think_on_exit": true,
+      "think_prompt": "1) Does every task have Pass A (unit), B (integration), and C (contract) test coverage where applicable? 2) Are invariants specific and machine-verifiable, not vague assertions? 3) Are golden examples representative of real usage patterns? 4) Do negative path tests cover the most likely failure modes? 5) Are test dependencies on external services properly mocked or isolated?"
+    },
+    {
+      "name": "TEST_PLAN_REVIEW",
+      "description": "Test plan awaiting user review. Read-only while user evaluates.",
+      "write_allowed": false
+    },
+    {
+      "name": "PLAN_TEXT_COMPLETE",
+      "description": "Full plain-text plan complete. Awaiting final user approval before JSON conversion.",
+      "write_allowed": false
+    },
+    {
+      "name": "PLAN_TEXT_APPROVED",
+      "description": "User approved plain-text plan. Ready for JSON conversion.",
+      "write_allowed": false
+    },
+    {
+      "name": "JSON_CONVERSION",
+      "description": "Converting approved plain-text plan to JSON with bidirectional source_ref links. Write restricted to JSON plan directory.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/plans/plan-json/**"
+      ],
+      "post_actions": {
+        "Write": [
+          "validate_plan_schema"
+        ]
+      }
+    },
+    {
+      "name": "JSON_VALIDATION",
+      "description": "Validating JSON plan against schema + bidirectional diff with plain-text.",
+      "write_allowed": false
+    },
+    {
+      "name": "PLAN_COMPLETE",
+      "description": "JSON plan validated. Strategist terminates. Orchestrator transitions system to PLAN_READY."
+    },
+    {
+      "name": "HANDOFF",
+      "description": "Context pressure exceeded. Writing handoff summary of planning progress, current state, decisions made. Strategist terminates, orchestrator spawns fresh strategist to continue.",
+      "write_allowed": true,
+      "write_globs": [
+        ".claude/handoffs/**"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from_state": "SPAWNED",
+      "to_state": "DESIGN_INGESTION",
+      "trigger": "context_loaded",
+      "guards": [
+        "design_doc_loaded",
+        "codebase_context_loaded"
+      ]
+    },
+    {
+      "from_state": "DESIGN_INGESTION",
+      "to_state": "PHASE_BREAKDOWN",
+      "trigger": "design_understood",
+      "guards": [
+        "think_completed"
+      ]
+    },
+    {
+      "from_state": "PHASE_BREAKDOWN",
+      "to_state": "PHASE_REVIEW",
+      "trigger": "phases_drafted",
+      "guards": [
+        "think_completed",
+        "phase_breakdown_file_exists"
+      ]
+    },
+    {
+      "from_state": "PHASE_REVIEW",
+      "to_state": "TASK_BREAKDOWN",
+      "trigger": "user_approved_phases",
+      "requires_user_approval": true
+    },
+    {
+      "from_state": "PHASE_REVIEW",
+      "to_state": "PHASE_BREAKDOWN",
+      "trigger": "user_requested_changes",
+      "guards": [
+        "user_feedback_received"
+      ],
+      "max_occurrences": 3
+    },
+    {
+      "from_state": "TASK_BREAKDOWN",
+      "to_state": "TASK_REVIEW",
+      "trigger": "tasks_drafted",
+      "guards": [
+        "think_completed",
+        "task_breakdown_file_exists"
+      ]
+    },
+    {
+      "from_state": "TASK_REVIEW",
+      "to_state": "TASK_DETAILING",
+      "trigger": "user_approved_tasks",
+      "requires_user_approval": true
+    },
+    {
+      "from_state": "TASK_REVIEW",
+      "to_state": "TASK_BREAKDOWN",
+      "trigger": "user_requested_task_changes",
+      "guards": [
+        "user_feedback_received"
+      ],
+      "max_occurrences": 3
+    },
+    {
+      "from_state": "TASK_DETAILING",
+      "to_state": "DETAIL_REVIEW",
+      "trigger": "detailing_complete",
+      "guards": [
+        "think_completed",
+        "all_tasks_have_metadata"
+      ]
+    },
+    {
+      "from_state": "DETAIL_REVIEW",
+      "to_state": "TEST_PLANNING",
+      "trigger": "user_approved_details",
+      "requires_user_approval": true
+    },
+    {
+      "from_state": "DETAIL_REVIEW",
+      "to_state": "TASK_DETAILING",
+      "trigger": "user_requested_detail_changes",
+      "guards": [
+        "user_feedback_received"
+      ],
+      "max_occurrences": 2
+    },
+    {
+      "from_state": "TEST_PLANNING",
+      "to_state": "TEST_PLAN_REVIEW",
+      "trigger": "test_plan_drafted",
+      "guards": [
+        "think_completed",
+        "test_plan_file_exists"
+      ]
+    },
+    {
+      "from_state": "TEST_PLAN_REVIEW",
+      "to_state": "PLAN_TEXT_COMPLETE",
+      "trigger": "user_approved_test_plan",
+      "requires_user_approval": true
+    },
+    {
+      "from_state": "TEST_PLAN_REVIEW",
+      "to_state": "TEST_PLANNING",
+      "trigger": "user_requested_test_changes",
+      "guards": [
+        "user_feedback_received"
+      ],
+      "max_occurrences": 3
+    },
+    {
+      "from_state": "PLAN_TEXT_COMPLETE",
+      "to_state": "PLAN_TEXT_APPROVED",
+      "trigger": "user_final_approval",
+      "requires_user_approval": true
+    },
+    {
+      "from_state": "PLAN_TEXT_COMPLETE",
+      "to_state": "PHASE_BREAKDOWN",
+      "trigger": "user_requested_major_rework",
+      "guards": [
+        "user_feedback_received"
+      ],
+      "max_occurrences": 1
+    },
+    {
+      "from_state": "PLAN_TEXT_APPROVED",
+      "to_state": "JSON_CONVERSION",
+      "trigger": "conversion_started",
+      "actions": [
+        "spawn_extraction_sub_agents"
+      ]
+    },
+    {
+      "from_state": "JSON_CONVERSION",
+      "to_state": "JSON_VALIDATION",
+      "trigger": "json_drafted",
+      "guards": [
+        "plan_json_file_exists"
+      ],
+      "actions": [
+        "run_validate_plan_conversion"
+      ]
+    },
+    {
+      "from_state": "JSON_VALIDATION",
+      "to_state": "PLAN_COMPLETE",
+      "trigger": "validation_passed",
+      "guards": [
+        "schema_valid",
+        "bidirectional_diff_clean"
+      ],
+      "actions": [
+        "notify_orchestrator_plan_ready"
+      ]
+    },
+    {
+      "from_state": "JSON_VALIDATION",
+      "to_state": "JSON_CONVERSION",
+      "trigger": "validation_failed",
+      "guards": [
+        "validation_errors_exist"
+      ],
+      "max_occurrences": 3
+    }
+  ]
+}

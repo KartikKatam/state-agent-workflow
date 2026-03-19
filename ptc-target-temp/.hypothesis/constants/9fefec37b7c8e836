@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/consumer/models.py
+# hypothesis_version: 6.151.5
+
+['FINAL_ONEPASS_AGREE', 'HIGH', 'INTERIM_AMBIGUOUS', 'INTERIM_CONFUSION', 'LOW', 'MED', 'TIEBREAK_CA_BIAS', 'TIEBREAK_DUP_AGREE']

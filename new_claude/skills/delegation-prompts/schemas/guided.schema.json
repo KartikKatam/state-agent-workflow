@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Guided Delegation Prompt",
+  "description": "The spawner has context and constraints but the delegate needs to make judgment calls. Unknowns and scope_boundary are required to frame the delegate's discretion.",
+  "type": "object",
+  "required": ["type", "task", "known_context", "output_contract", "unknowns", "scope_boundary"],
+  "properties": {
+    "type": {
+      "const": "guided",
+      "description": "Delegation type. Use 'guided' when the delegate needs to make decisions within bounded scope."
+    },
+    "task": {
+      "type": "string",
+      "description": "What the delegate should accomplish. One clear sentence."
+    },
+    "known_context": {
+      "type": "object",
+      "description": "Everything the spawner already knows.",
+      "properties": {
+        "file_coordinates": {
+          "type": "array",
+          "description": "Absolute file paths with line numbers.",
+          "items": {
+            "type": "object",
+            "required": ["path", "description"],
+            "properties": {
+              "path": { "type": "string" },
+              "lines": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "context_packets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "covers": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "minItems": 1,
+      "description": "What the delegate needs to discover or decide. Required for guided delegation -- if you have no unknowns, use 'targeted' instead.",
+      "items": { "type": "string" }
+    },
+    "output_contract": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "format": { "type": "string" },
+        "schema_example": { "description": "Example of expected output structure" }
+      }
+    },
+    "scope_boundary": {
+      "type": "object",
+      "description": "Required for guided delegation. The delegate has discretion -- bound it.",
+      "properties": {
+        "do_not": { "type": "array", "items": { "type": "string" } },
+        "tool_budget": { "type": "integer" },
+        "file_set": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "adjacent_context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "when": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "rejected_approaches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["approach", "reason"],
+        "properties": {
+          "approach": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "working_directory": { "type": "string" },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "ptc_available": { "type": "boolean" },
+        "mcp_servers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "ptc_hints": {
+      "type": "object",
+      "properties": {
+        "files_to_load": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "extract": { "type": "string" }
+            }
+          }
+        },
+        "namespace_variables": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "return_schema": {
+      "type": "object",
+      "description": "The JSON schema the sub-agent's return must match. Included in the prompt so the sub-agent knows the expected format."
+    },
+    "return_instruction": {
+      "type": "string",
+      "description": "Instruction text telling the sub-agent to output only JSON matching return_schema.",
+      "default": "Your final output MUST be a single JSON object matching return_schema. No text outside the JSON. Include delegation_type field set to 'guided'."
+    }
+  },
+  "additionalProperties": true
+}

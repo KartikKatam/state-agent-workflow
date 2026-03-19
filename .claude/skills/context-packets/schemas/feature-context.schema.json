@@ -1,0 +1,235 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "feature-context.schema.json",
+  "title": "Feature Context Packet",
+  "description": "Exploration results for a specific feature. Lives until feature is completed.",
+
+  "type": "object",
+  "required": ["meta", "feature", "touchpoints", "dependencies"],
+
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["type", "created", "updated", "schema_version", "feature_name"],
+      "properties": {
+        "type": {"const": "feature"},
+        "created": {"type": "string", "format": "date-time"},
+        "updated": {"type": "string", "format": "date-time"},
+        "schema_version": {"type": "string", "default": "1.0"},
+        "feature_name": {"type": "string"},
+        "design_doc": {"type": "string", "description": "Path to design document"},
+        "status": {"enum": ["exploring", "ready", "in_progress", "completed"]},
+        "contributors": {
+          "type": "array",
+          "description": "Agents that contributed to this feature exploration (for parallel mode)",
+          "items": {
+            "type": "object",
+            "required": ["agent_id", "sections"],
+            "properties": {
+              "agent_id": {"type": "string"},
+              "sections": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Which sections this agent explored (e.g., ['touchpoints[0-5]', 'dependencies.types_needed'])"
+              },
+              "blocks_explored": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Which code blocks this agent analyzed (e.g., ['producer/', 'common/'])"
+              },
+              "timestamp": {"type": "string", "format": "date-time"},
+              "status": {
+                "type": "string",
+                "enum": ["in_progress", "complete", "handed_off"]
+              }
+            }
+          }
+        },
+        "merge_strategy": {
+          "type": "string",
+          "enum": ["section_ownership", "consolidation", "single_agent"],
+          "default": "single_agent",
+          "description": "How parallel explorers merged their findings"
+        },
+        "last_consolidated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When consolidation pass ran (deduplication, dependency linking)"
+        }
+      }
+    },
+
+    "feature": {
+      "type": "object",
+      "description": "Summary from design document",
+      "properties": {
+        "summary": {"type": "string", "maxLength": 200},
+        "primary_block": {"type": "string", "description": "e.g., producer"},
+        "secondary_blocks": {"type": "array", "items": {"type": "string"}},
+        "goals": {"type": "array", "items": {"type": "string", "maxLength": 80}}
+      }
+    },
+
+    "touchpoints": {
+      "type": "array",
+      "description": "Files that will be read or modified",
+      "items": {
+        "type": "object",
+        "required": ["file", "action"],
+        "properties": {
+          "file": {"type": "string"},
+          "action": {"enum": ["read", "modify", "create"]},
+          "reason": {"type": "string", "maxLength": 50},
+          "lines_of_interest": {"type": "string", "description": "e.g., 45-80"},
+          "key_items": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Functions/classes we care about"
+          }
+        }
+      }
+    },
+
+    "dependencies": {
+      "type": "object",
+      "properties": {
+        "types_needed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "from": {"type": "string"},
+              "used_for": {"type": "string", "maxLength": 50}
+            }
+          }
+        },
+        "configs_needed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "fields_used": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        },
+        "functions_needed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "from": {"type": "string"},
+              "used_for": {"type": "string", "maxLength": 50}
+            }
+          }
+        }
+      }
+    },
+
+    "new_items": {
+      "type": "object",
+      "description": "New types/functions this feature will create",
+      "properties": {
+        "types": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "file": {"type": "string"},
+              "purpose": {"type": "string", "maxLength": 50},
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"},
+                    "type": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "functions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "file": {"type": "string"},
+              "signature": {"type": "string"},
+              "purpose": {"type": "string", "maxLength": 50}
+            }
+          }
+        },
+        "config_fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "config": {"type": "string"},
+              "field": {"type": "string"},
+              "type": {"type": "string"},
+              "default": {}
+            }
+          }
+        }
+      }
+    },
+
+    "patterns_to_follow": {
+      "type": "array",
+      "description": "Patterns from codebase that apply to this feature",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pattern": {"type": "string"},
+          "example_in": {"type": "string", "description": "path:lines"},
+          "apply_to": {"type": "string", "maxLength": 50}
+        }
+      }
+    },
+
+    "naming_constraints": {
+      "type": "array",
+      "description": "Names that already exist and must not be reused",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string"},
+          "avoid_because": {"type": "string", "maxLength": 50}
+        }
+      }
+    },
+
+    "related_context": {
+      "type": "object",
+      "description": "Links to other context packets",
+      "properties": {
+        "codebase": {"type": "string", "default": ".claude/context/_codebase.json"},
+        "load_sections": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Sections from codebase context to load"
+        }
+      }
+    },
+
+    "open_questions": {
+      "type": "array",
+      "description": "Unresolved questions to address during planning",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question": {"type": "string"},
+          "options": {"type": "array", "items": {"type": "string"}},
+          "recommendation": {"type": "string"}
+        }
+      }
+    }
+  }
+}

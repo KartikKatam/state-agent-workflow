@@ -1,0 +1,222 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "memory.schema.json",
+  "title": "Coding Memory Schema",
+  "description": "Schema for patterns, instances, and links in the coding memory system",
+  
+  "definitions": {
+    "pattern": {
+      "type": "object",
+      "description": "A generalized learning that may have multiple instances",
+      "required": ["id", "scope", "type", "learned", "category"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^pat-[0-9]{3}$",
+          "description": "Unique pattern identifier"
+        },
+        "scope": {
+          "type": "string",
+          "description": "universal or project:{name}",
+          "examples": ["universal", "project:lpr-module"]
+        },
+        "type": {
+          "type": "string",
+          "enum": ["mistake", "preference", "pattern", "insight"],
+          "description": "What kind of learning this is"
+        },
+        "learned": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "The generalized learning/rule"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["naming", "testing", "typing", "logic", "style", "architecture", "config", "imports", "documentation", "other"],
+          "description": "Category for grouping"
+        },
+        "trigger_patterns": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Regex patterns that should trigger recall of this memory"
+        },
+        "frequency": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of instances confirming this pattern"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.5,
+          "description": "Confidence in this pattern (increases with confirmations)"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "promoted_to_claude_md": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this pattern has been added to CLAUDE.md"
+        },
+        "promotion_text": {
+          "type": "string",
+          "description": "How to phrase this when promoting to CLAUDE.md"
+        }
+      }
+    },
+    
+    "instance": {
+      "type": "object",
+      "description": "A specific occurrence of a pattern",
+      "required": ["id", "scope", "what"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^inst-[0-9]{3}$",
+          "description": "Unique instance identifier"
+        },
+        "pattern_id": {
+          "type": ["string", "null"],
+          "description": "Link to parent pattern (can be null initially)"
+        },
+        "scope": {
+          "type": "string",
+          "description": "universal or project:{name}"
+        },
+        "what": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "What specifically happened"
+        },
+        "context": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Where it happened (file, function, task)"
+        },
+        "resolution": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "How it was fixed"
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Tags for categorization and search"
+        },
+        "source_session": {
+          "type": "string",
+          "description": "Path to session log that generated this"
+        },
+        "source_signal": {
+          "type": "string",
+          "description": "Signal ID that triggered this extraction"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    
+    "link": {
+      "type": "object",
+      "description": "A relationship between two memories (patterns or instances)",
+      "required": ["from_id", "to_id", "from_type", "to_type", "relationship"],
+      "properties": {
+        "from_id": {
+          "type": "string",
+          "description": "Source memory ID"
+        },
+        "to_id": {
+          "type": "string",
+          "description": "Target memory ID"
+        },
+        "from_type": {
+          "type": "string",
+          "enum": ["pattern", "instance"]
+        },
+        "to_type": {
+          "type": "string",
+          "enum": ["pattern", "instance"]
+        },
+        "relationship": {
+          "type": "string",
+          "enum": ["similar", "caused_by", "led_to", "supersedes"],
+          "description": "Type of relationship"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in this link"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    
+    "learning_signal": {
+      "type": "object",
+      "description": "A signal indicating a learning moment occurred",
+      "required": ["id", "type", "timestamp"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^sig-[0-9]{3}$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["test_fix_cycle", "user_correction", "stuck_then_solved", "deviation", "review_feedback"]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "default": "medium"
+        },
+        "context": {
+          "type": "object",
+          "description": "Type-specific context data",
+          "additionalProperties": true
+        },
+        "extracted": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether memory has been extracted from this signal"
+        }
+      }
+    }
+  },
+  
+  "type": "object",
+  "description": "The complete memory database export format",
+  "properties": {
+    "version": {"type": "string", "default": "1.0"},
+    "exported_at": {"type": "string", "format": "date-time"},
+    "patterns": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/pattern"}
+    },
+    "instances": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/instance"}
+    },
+    "links": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/link"}
+    }
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "design-review.schema.json",
+  "title": "Design Review Annotation",
+  "description": "Annotation file created by plan-architect after reviewing a design document for completeness. Used to cache review results and skip redundant reviews.",
+  "type": "object",
+  "required": [
+    "feature",
+    "design_doc_path",
+    "design_doc_hash",
+    "status",
+    "reviewed_at",
+    "reviewed_by"
+  ],
+  "properties": {
+    "feature": {
+      "type": "string",
+      "description": "Feature name this review pertains to"
+    },
+    "design_doc_path": {
+      "type": "string",
+      "description": "Path to the design document that was reviewed"
+    },
+    "design_doc_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the design document content for change detection. If document changes, review should be re-run."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["complete", "has_gaps"],
+      "description": "Review outcome: 'complete' means ready for planning, 'has_gaps' means user must address issues first"
+    },
+    "gaps_identified": {
+      "type": "array",
+      "description": "List of gaps found in the design document (only present if status is 'has_gaps')",
+      "items": {
+        "type": "object",
+        "required": ["location", "description", "why_it_matters", "severity"],
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "Section or line reference in the design document"
+          },
+          "description": {
+            "type": "string",
+            "description": "What is missing or unclear"
+          },
+          "why_it_matters": {
+            "type": "string",
+            "description": "Codebase context that makes this gap relevant (e.g., existing patterns that need consideration)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["blocking", "should_address", "minor"],
+            "description": "blocking = cannot proceed, should_address = highly recommended, minor = optional improvement"
+          }
+        }
+      }
+    },
+    "codebase_context_refs": {
+      "type": "array",
+      "description": "Paths to relevant code that informed the review",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "description": "Brief suggestions for the user or next planning steps",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when review was completed"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "Agent ID that performed the review (e.g., 'plan-architect-abc123')"
+    },
+    "sequential_thinking_used": {
+      "type": "boolean",
+      "description": "Whether Sequential Thinking MCP was used for this review",
+      "default": true
+    },
+    "review_duration_ms": {
+      "type": "integer",
+      "description": "Time taken to complete the review in milliseconds"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "feature": "batch-selection",
+      "design_doc_path": ".claude/designs/batch-selection.md",
+      "design_doc_hash": "a1b2c3d4e5f6...",
+      "status": "complete",
+      "gaps_identified": [],
+      "codebase_context_refs": [
+        "src/producer/models.py",
+        "src/producer/pipeline.py"
+      ],
+      "recommendations": [
+        "Consider adding BatchCandidate to existing models.py",
+        "Pipeline hook point exists at line 142"
+      ],
+      "reviewed_at": "2026-02-03T14:30:00Z",
+      "reviewed_by": "plan-architect-abc123",
+      "sequential_thinking_used": true,
+      "review_duration_ms": 45000
+    },
+    {
+      "feature": "error-handling",
+      "design_doc_path": ".claude/designs/error-handling.md",
+      "design_doc_hash": "f6e5d4c3b2a1...",
+      "status": "has_gaps",
+      "gaps_identified": [
+        {
+          "location": "Section 3: Error Categories",
+          "description": "No error handling defined for network timeouts",
+          "why_it_matters": "Existing codebase uses RetryPolicy in common/retry.py - design should specify retry behavior",
+          "severity": "blocking"
+        },
+        {
+          "location": "Section 5: Logging",
+          "description": "Log format not specified",
+          "why_it_matters": "Project uses structured logging - format should match existing patterns",
+          "severity": "should_address"
+        }
+      ],
+      "codebase_context_refs": [
+        "src/common/retry.py",
+        "src/common/logging.py"
+      ],
+      "recommendations": [
+        "Add retry behavior section using RetryPolicy pattern",
+        "Specify structured log fields matching existing format"
+      ],
+      "reviewed_at": "2026-02-03T15:00:00Z",
+      "reviewed_by": "plan-architect-def456",
+      "sequential_thinking_used": true,
+      "review_duration_ms": 62000
+    }
+  ]
+}

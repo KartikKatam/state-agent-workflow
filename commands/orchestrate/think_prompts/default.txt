@@ -1,0 +1,7 @@
+Before delegating, think through:
+
+1. TASK: What is the sub-agent's specific task and success criteria?
+2. CONTEXT: What known information (files, functions, constraints) do they need?
+3. OUTPUT: Where should results go, in what format, and how will you verify completion?
+4. ROLE: Which role and skills from ~/personal/agentic_workflow/.claude/skills/ apply?
+5. FAILURE: What should the sub-agent do if stuck after 2 attempts?

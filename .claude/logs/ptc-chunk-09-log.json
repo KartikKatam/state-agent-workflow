@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-09",
+    "started_at": "2026-02-28T20:20:00Z",
+    "last_updated": "2026-02-28T20:35:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-09-20260228",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "phase_history": [
+    {
+      "phase": "test_design",
+      "timestamp": "2026-02-28T20:22:00Z",
+      "details": "Designed 18 tests across 9 test classes for chunk-09"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T20:24:00Z",
+      "details": "18 tests failed: ModuleNotFoundError for ptc_tools.git, ptc_tools.testing, ptc_tools.network"
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T20:30:00Z",
+      "details": "40/40 tests passing (22 chunk-08 + 18 chunk-09)"
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T20:32:00Z",
+      "details": "All 3 invariants verified (inv-09-01 through inv-09-03)"
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T20:34:00Z",
+      "details": "ruff format + ruff check + pyright all passing"
+    }
+  ],
+  "resume_point": "Awaiting user approval",
+  "files_modified": [
+    {"file": "~/.claude/mcp/ptc-server/ptc_tools/testing.py", "action": "created"},
+    {"file": "~/.claude/mcp/ptc-server/ptc_tools/git.py", "action": "created"},
+    {"file": "~/.claude/mcp/ptc-server/ptc_tools/network.py", "action": "created"},
+    {"file": "~/.claude/mcp/ptc-server/ptc_tools/__init__.py", "action": "modified"},
+    {"file": "tests/ptc/test_ptc_tools.py", "action": "modified"}
+  ],
+  "tests_written": [
+    {"name": "test_run_tests_returns_dict_with_keys", "class": "TestRunTests", "status": "pass"},
+    {"name": "test_run_tests_with_markers", "class": "TestRunTests", "status": "pass"},
+    {"name": "test_run_tests_failure", "class": "TestRunTests", "status": "pass"},
+    {"name": "test_run_linter_returns_dict", "class": "TestRunLinter", "status": "pass"},
+    {"name": "test_run_linter_with_fix", "class": "TestRunLinter", "status": "pass"},
+    {"name": "test_coverage_summary_returns_dict", "class": "TestCoverageSummary", "status": "pass"},
+    {"name": "test_coverage_summary_with_source", "class": "TestCoverageSummary", "status": "pass"},
+    {"name": "test_git_diff_summary_returns_dict_with_keys", "class": "TestGitDiffSummary", "status": "pass"},
+    {"name": "test_git_diff_summary_default_branch", "class": "TestGitDiffSummary", "status": "pass"},
+    {"name": "test_git_diff_summary_no_changes", "class": "TestGitDiffSummary", "status": "pass"},
+    {"name": "test_diff_summary_returns_dict", "class": "TestDiffSummary", "status": "pass"},
+    {"name": "test_diff_summary_custom_head", "class": "TestDiffSummary", "status": "pass"},
+    {"name": "test_list_changes_returns_dict", "class": "TestListChanges", "status": "pass"},
+    {"name": "test_list_changes_default_ref", "class": "TestListChanges", "status": "pass"},
+    {"name": "test_web_fetch_summary_returns_dict", "class": "TestWebFetchSummary", "status": "pass"},
+    {"name": "test_web_fetch_summary_with_prompt", "class": "TestWebFetchSummary", "status": "pass"},
+    {"name": "test_mcp_call_summary_stub", "class": "TestMcpCallSummary", "status": "pass"},
+    {"name": "test_all_functions_importable_from_init", "class": "TestInitReexports", "status": "pass"}
+  ],
+  "invariants_status": {
+    "inv-09-01": "pass",
+    "inv-09-02": "pass",
+    "inv-09-03": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [],
+  "deviations": [
+    {
+      "type": "task_modification",
+      "description": "run_linter accepts list[str] instead of str for paths parameter",
+      "reason": "Test spec explicitly uses list syntax: run_linter(['src/'], root). List is cleaner for multiple paths.",
+      "plan_gap": "Plan says 'extract from fallback()' which uses str, but test spec overrides with list API",
+      "impact": "Low - improved API surface",
+      "user_approval_needed": false
+    },
+    {
+      "type": "task_modification",
+      "description": "Added _cov_report_path() helper to testing.py for testability",
+      "reason": "coverage_summary needs a temp file path for the coverage JSON report. Making it a separate function allows tests to patch the path.",
+      "plan_gap": "Plan didn't specify how to make coverage report path testable",
+      "impact": "Low - internal helper, no API change",
+      "user_approval_needed": false
+    }
+  ],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "run_linter accepts list[str] for paths, unpacked with *paths in cmd",
+      "reason": "Test spec passes list, consistent with count_tokens API from chunk-08"
+    },
+    {
+      "decision": "_cov_report_path() helper for testable coverage temp file location",
+      "reason": "Allows test to patch the coverage report path without touching the filesystem"
+    },
+    {
+      "decision": "web_fetch_summary uses urllib (not subprocess) matching original fallback",
+      "reason": "Original implementation used urllib.request, test spec's 'mock subprocess' was simplified notation"
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 1
+  }
+}

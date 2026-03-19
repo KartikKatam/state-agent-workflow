@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Delegation Prompt",
+  "description": "Research delegation with source targeting and citation requirements. The spawner defines research targets, preferred/blocked sources, required depth, and citation format. Use when spawning research sub-agents that query documentation, APIs, or external sources.",
+  "type": "object",
+  "required": ["type", "task", "known_context", "output_contract", "research_scope", "source_directives", "citation_requirements", "essential_output"],
+  "properties": {
+    "type": {
+      "const": "research",
+      "description": "Delegation type. Use 'research' when spawning research sub-agents with source targeting."
+    },
+    "task": {
+      "type": "string",
+      "description": "What the delegate should research. One clear sentence."
+    },
+    "known_context": {
+      "type": "object",
+      "description": "Everything the spawner already knows.",
+      "properties": {
+        "file_coordinates": {
+          "type": "array",
+          "description": "Absolute file paths with line numbers.",
+          "items": {
+            "type": "object",
+            "required": ["path", "description"],
+            "properties": {
+              "path": { "type": "string" },
+              "lines": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "context_packets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "covers": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "research_scope": {
+      "type": "object",
+      "description": "What this agent researches and how it relates to peers. Same structure as exploration_scope.",
+      "required": ["primary_targets"],
+      "properties": {
+        "primary_targets": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Specific research topics this agent must cover.",
+          "items": { "type": "string" }
+        },
+        "peer_scopes": {
+          "type": "array",
+          "description": "What other parallel research agents cover. Prevents overlap.",
+          "items": { "type": "string" }
+        },
+        "extension_policy": {
+          "type": "string",
+          "description": "Conditions under which the agent can extend beyond primary_targets."
+        }
+      }
+    },
+    "source_directives": {
+      "type": "object",
+      "description": "Where to look and how deep. Required for research delegation.",
+      "properties": {
+        "preferred_sources": {
+          "type": "array",
+          "description": "Specific sites, docs, MCP servers to prioritize.",
+          "items": { "type": "string" }
+        },
+        "blocked_sources": {
+          "type": "array",
+          "description": "Sources to avoid (outdated docs, unreliable sites).",
+          "items": { "type": "string" }
+        },
+        "required_depth": {
+          "type": "string",
+          "description": "How deep to go: 'api_signatures', 'usage_examples', 'full_guide', 'comparative_analysis'."
+        }
+      }
+    },
+    "citation_requirements": {
+      "type": "object",
+      "description": "How to cite findings. Required for research delegation.",
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "Citation format: 'inline', 'footnote', 'structured'."
+        },
+        "required_fields": {
+          "type": "array",
+          "description": "Required citation fields: 'url', 'retrieved_date', 'source_name', 'section'.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "essential_output": {
+      "type": "array",
+      "minItems": 1,
+      "description": "What MUST be answered with confidence. Each item is a specific question or deliverable.",
+      "items": { "type": "string" }
+    },
+    "output_contract": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "format": { "type": "string" },
+        "schema_example": { "description": "Example of expected output structure" }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scope_boundary": {
+      "type": "object",
+      "properties": {
+        "do_not": { "type": "array", "items": { "type": "string" } },
+        "tool_budget": { "type": "integer" },
+        "file_set": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "adjacent_context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "when": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "rejected_approaches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["approach", "reason"],
+        "properties": {
+          "approach": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "working_directory": { "type": "string" },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "ptc_available": { "type": "boolean" },
+        "mcp_servers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "ptc_hints": {
+      "type": "object",
+      "properties": {
+        "files_to_load": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "extract": { "type": "string" }
+            }
+          }
+        },
+        "namespace_variables": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "return_schema": {
+      "type": "object",
+      "description": "The JSON schema the sub-agent's return must match. Included in the prompt so the sub-agent knows the expected format."
+    },
+    "return_instruction": {
+      "type": "string",
+      "description": "Instruction text telling the sub-agent to output only JSON matching return_schema.",
+      "default": "Your final output MUST be a single JSON object matching return_schema. No text outside the JSON. Include delegation_type field set to 'research'."
+    }
+  },
+  "additionalProperties": true
+}

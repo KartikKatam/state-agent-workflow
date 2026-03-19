@@ -1,0 +1,469 @@
+{
+  "id": "scenario-acceptance-testing-frameworks",
+  "library": "behave, pytest-bdd, pact-python, approvaltests, litmuschaos",
+  "version": "2025-2026",
+  "type": "best_practices",
+  "documentation": {
+    "summary": "BDD frameworks (behave, pytest-bdd, Cucumber) separate scenario specification from implementation via Gherkin feature files, enabling non-technical stakeholders to define acceptance criteria without seeing code. Contract testing (Pact) verifies service interfaces in isolation — consumer defines expectations, provider verifies against them, neither needing to see the other's implementation. Approval/snapshot testing captures a 'golden master' output and flags deviations, making expected values implementation-independent. Chaos engineering tools (Gremlin, LitmusChaos) test system resilience against steady-state hypotheses defined in behavioral/SLO terms, with infrastructure-level fault injection requiring no code knowledge.",
+    "installation": {
+      "command": "pip install behave pytest-bdd pact-python approvaltests syrupy",
+      "requirements": [
+        "Python >= 3.8 for behave and pytest-bdd",
+        "pytest >= 7.0 for pytest-bdd",
+        "pact-python requires pact-mock-service binary (pact-python installs it)",
+        "approvaltests works with pytest or unittest"
+      ],
+      "notes": "For chaos engineering: LitmusChaos runs on Kubernetes (kubectl + Helm). Gremlin is SaaS with an agent installed on target infrastructure. Chaos Mesh also requires Kubernetes."
+    },
+    "endpoints": [
+      {
+        "name": "behave step definition decorators",
+        "signature": "@given(pattern) / @when(pattern) / @then(pattern)",
+        "description": "Decorators that map Gherkin step text to Python step definition functions. `pattern` is a string or regex matching the Gherkin step text.",
+        "parameters": [
+          {
+            "name": "pattern",
+            "type": "str",
+            "required": true,
+            "description": "Text or regex matching the Gherkin step. Captured groups become function arguments.",
+            "default": ""
+          }
+        ],
+        "returns": "Decorated function registered as a step handler",
+        "raises": ["StepDefinitionNotFoundError if no matching step exists at runtime"]
+      },
+      {
+        "name": "pytest-bdd scenario decorator",
+        "signature": "@scenario(feature_file, scenario_name)",
+        "description": "Marks a pytest test function as the entry point for a specific BDD scenario in a feature file.",
+        "parameters": [
+          {
+            "name": "feature_file",
+            "type": "str",
+            "required": true,
+            "description": "Path to the .feature file relative to the test file",
+            "default": ""
+          },
+          {
+            "name": "scenario_name",
+            "type": "str",
+            "required": true,
+            "description": "Exact title of the scenario in the feature file",
+            "default": ""
+          }
+        ],
+        "returns": "Decorated test function bound to the scenario",
+        "raises": ["ScenarioNotFound if scenario_name does not match any scenario in the feature file"]
+      },
+      {
+        "name": "pact consumer DSL",
+        "signature": "pact.given(state).upon_receiving(desc).with_request(method, path).will_respond_with(status, body)",
+        "description": "Fluent API for defining a consumer-side interaction expectation. Creates a mock provider that enforces this contract during consumer tests.",
+        "parameters": [
+          {
+            "name": "state",
+            "type": "str",
+            "required": false,
+            "description": "Provider state string (e.g., 'order 1 exists'). Provider uses this to set up test data before verifying.",
+            "default": ""
+          },
+          {
+            "name": "desc",
+            "type": "str",
+            "required": true,
+            "description": "Human-readable description of the interaction (e.g., 'a request for order 1')",
+            "default": ""
+          }
+        ],
+        "returns": "Pact context manager; use with `with pact:` block to run consumer code against mock",
+        "raises": ["PactException if consumer code does not match the defined interaction"]
+      },
+      {
+        "name": "approvaltests verify",
+        "signature": "verify(received, reporter=None)",
+        "description": "Core approval testing function. Compares `received` string to the approved file. If no approved file exists, creates a received file for review. If they differ, launches the configured diff reporter.",
+        "parameters": [
+          {
+            "name": "received",
+            "type": "str",
+            "required": true,
+            "description": "The actual output to be approved",
+            "default": ""
+          },
+          {
+            "name": "reporter",
+            "type": "Reporter",
+            "required": false,
+            "description": "Reporter to use for showing diffs (default: auto-detects system diff tool)",
+            "default": "auto"
+          }
+        ],
+        "returns": "None; raises AssertionError if received does not match approved",
+        "raises": ["AssertionError if received != approved file contents"]
+      },
+      {
+        "name": "approvaltests verify_as_json",
+        "signature": "verify_as_json(received_object, reporter=None)",
+        "description": "Serializes `received_object` to pretty-printed JSON and compares to the approved JSON file. Useful for testing complex data structures.",
+        "parameters": [
+          {
+            "name": "received_object",
+            "type": "Any",
+            "required": true,
+            "description": "Python object to serialize and compare (dict, list, dataclass, etc.)",
+            "default": ""
+          }
+        ],
+        "returns": "None; raises AssertionError if serialized JSON does not match approved",
+        "raises": ["AssertionError if JSON output differs from approved file"]
+      }
+    ],
+    "classes": [
+      {
+        "name": "behave Context",
+        "description": "Shared state object passed between step definitions within a scenario. Provides attribute-based storage for test data across Given/When/Then steps.",
+        "methods": [
+          {
+            "name": "context.<attribute>",
+            "signature": "context.<attribute> = value",
+            "description": "Any attribute can be set/read on the context object to share state between steps"
+          }
+        ],
+        "attributes": [
+          {
+            "name": "browser",
+            "type": "WebDriver (user-defined)",
+            "description": "Typically set in before_scenario hook for UI testing"
+          },
+          {
+            "name": "response",
+            "type": "requests.Response (user-defined)",
+            "description": "Typically set in When step for API testing"
+          }
+        ]
+      },
+      {
+        "name": "pact Consumer/Provider",
+        "description": "Pact contract builder. Consumer(...).has_pact_with(Provider(...)) creates a Pact object representing the contract between two services.",
+        "methods": [
+          {
+            "name": "has_pact_with",
+            "signature": "Consumer(name).has_pact_with(Provider(name), port=port, pact_dir=dir)",
+            "description": "Creates a Pact object and starts a mock provider on the specified port"
+          }
+        ],
+        "attributes": []
+      }
+    ],
+    "examples": [
+      {
+        "title": "behave: Feature File (Gherkin) — login scenario",
+        "description": "The feature file is written by a non-developer. It describes behavior in business language with no implementation details.",
+        "code": "# features/login.feature\nFeature: User Authentication\n  As a registered user\n  I want to log into the application\n  So that I can access my account\n\n  Scenario: Successful login with valid credentials\n    Given the user is on the login page\n    When the user enters valid credentials\n    Then the user is redirected to the dashboard\n\n  Scenario: Failed login with invalid credentials\n    Given the user is on the login page\n    When the user enters invalid credentials\n    Then an error message is displayed\n\n  Scenario Outline: Login with multiple user roles\n    Given a <role> user exists\n    When the user logs in\n    Then they see the <dashboard_type> dashboard\n\n    Examples:\n      | role    | dashboard_type |\n      | admin   | admin          |\n      | viewer  | read-only      |"
+      },
+      {
+        "title": "behave: Step Definitions (Python) — login steps",
+        "description": "Step definitions wire Gherkin steps to code. The developer writes this; the scenario author never needs to see it.",
+        "code": "# features/steps/login_steps.py\nfrom behave import given, when, then\n\n@given('the user is on the login page')\ndef step_user_on_login_page(context):\n    context.browser.get(context.base_url + '/login')\n\n@when('the user enters valid credentials')\ndef step_enter_valid_credentials(context):\n    context.browser.find_element_by_id('username').send_keys('admin')\n    context.browser.find_element_by_id('password').send_keys('secret')\n    context.browser.find_element_by_id('submit').click()\n\n@when('the user enters invalid credentials')\ndef step_enter_invalid_credentials(context):\n    context.browser.find_element_by_id('username').send_keys('wrong')\n    context.browser.find_element_by_id('password').send_keys('wrong')\n    context.browser.find_element_by_id('submit').click()\n\n@then('the user is redirected to the dashboard')\ndef step_redirected_to_dashboard(context):\n    assert '/dashboard' in context.browser.current_url\n\n@then('an error message is displayed')\ndef step_error_message_displayed(context):\n    error = context.browser.find_element_by_class_name('error-message')\n    assert error.is_displayed()"
+      },
+      {
+        "title": "pytest-bdd: Scenario test with fixtures",
+        "description": "pytest-bdd integrates with the full pytest fixture system. Best for teams already using pytest.",
+        "code": "# tests/test_login.py\nimport pytest\nfrom pytest_bdd import scenario, given, when, then\n\n# The test function is bound to the scenario\n@scenario('features/login.feature', 'Successful login with valid credentials')\ndef test_successful_login():\n    pass\n\n# Steps use pytest fixtures for dependency injection\n@given('the user is on the login page', target_fixture='browser')\ndef user_on_login_page(browser_fixture):  # browser_fixture is a pytest fixture\n    browser_fixture.get('/login')\n    return browser_fixture\n\n@when('the user enters valid credentials')\ndef enter_valid_credentials(browser):\n    browser.fill_form({'username': 'admin', 'password': 'secret'})\n    browser.submit()\n\n@then('the user is redirected to the dashboard')\ndef redirected_to_dashboard(browser):\n    assert browser.url == '/dashboard'"
+      },
+      {
+        "title": "Pact: Consumer-side test (Python)",
+        "description": "Consumer defines expected interactions. Tests run against a Pact mock, not the real provider. The consumer never needs to see provider code.",
+        "code": "# tests/test_order_consumer.py\nimport pytest\nfrom pact import Consumer, Provider\nfrom myapp.client import OrderClient  # The client under test\n\n@pytest.fixture(scope='session')\ndef pact():\n    pact = Consumer('frontend').has_pact_with(\n        Provider('order-service'),\n        port=1234,\n        pact_dir='./pacts'\n    )\n    pact.start_service()\n    yield pact\n    pact.stop_service()\n\ndef test_get_order(pact):\n    expected = {'id': 1, 'status': 'shipped', 'items': [{'sku': 'A1', 'qty': 2}]}\n\n    (\n        pact\n        .given('order 1 exists and is shipped')\n        .upon_receiving('a GET request for order 1')\n        .with_request('GET', '/orders/1')\n        .will_respond_with(200, body=expected)\n    )\n\n    with pact:\n        client = OrderClient('http://localhost:1234')\n        result = client.get_order(1)\n        assert result['status'] == 'shipped'\n        assert len(result['items']) == 1\n    # Pact writes ./pacts/frontend-order-service.json after this block"
+      },
+      {
+        "title": "Pact: Provider verification",
+        "description": "Provider team verifies their service meets all consumer contracts. They never need to see consumer code — only the .pact files.",
+        "code": "# tests/test_order_provider.py\nimport pytest\nfrom pact import Verifier\n\ndef test_provider_honors_consumer_contracts():\n    verifier = Verifier(\n        provider='order-service',\n        provider_base_url='http://localhost:8080'\n    )\n    output, _ = verifier.verify_with_broker(\n        broker_url='https://pact-broker.mycompany.com',\n        publish_verification_results=True,\n        provider_version='1.2.3'\n    )\n    assert output == 0  # 0 = all contracts verified"
+      },
+      {
+        "title": "ApprovalTests: Verify complex object output",
+        "description": "Approval testing for complex data structures. First run creates a .received file; after review, rename to .approved to set the golden master.",
+        "code": "# tests/test_report.py\nfrom approvaltests import verify_as_json, verify\nfrom myapp.reports import generate_monthly_report, serialize_user\n\ndef test_user_serialization():\n    user = create_test_user(name='Alice', role='admin', permissions=['read', 'write'])\n    # First run: creates tests/approved/test_user_serialization.received.json\n    # After review: rename .received.json to .approved.json to set golden master\n    verify_as_json(serialize_user(user))\n\ndef test_monthly_report_output():\n    report = generate_monthly_report(year=2026, month=1)\n    # Compares to tests/approved/test_monthly_report_output.approved.txt\n    verify(str(report))\n\n# To update snapshots after intentional changes:\n# 1. Run test (it will fail, showing the diff)\n# 2. Review the diff in the reporter tool\n# 3. If change is correct: rename .received file to .approved\n# 4. Commit the new .approved file"
+      },
+      {
+        "title": "syrupy: Jest-like snapshot testing for pytest",
+        "description": "syrupy provides pytest-native snapshot testing similar to Jest's toMatchSnapshot. Snapshots stored in __snapshots__ directories.",
+        "code": "# tests/test_snapshots.py\n# pip install syrupy\ndef test_api_response(snapshot, api_client):\n    response = api_client.get('/users/1')\n    # First run creates the snapshot; subsequent runs compare to it\n    assert response.json() == snapshot\n\ndef test_rendered_html(snapshot, template_renderer):\n    html = template_renderer.render('user_card.html', user={'name': 'Alice'})\n    assert html == snapshot\n\n# Update snapshots: pytest --snapshot-update\n# Review changes in git diff before committing"
+      },
+      {
+        "title": "LitmusChaos: Pod delete experiment (Kubernetes)",
+        "description": "Chaos experiment defined as a Kubernetes CRD. No application code changes needed — faults are injected at pod/infrastructure level.",
+        "code": "# chaos-experiment.yaml\napiVersion: litmuschaos.io/v1alpha1\nkind: ChaosEngine\nmetadata:\n  name: order-service-chaos\n  namespace: default\nspec:\n  # Target application — identified by labels, not implementation\n  appinfo:\n    appns: default\n    applabel: 'app=order-service'\n    appkind: deployment\n  # Steady-state hypothesis: checked before and after chaos\n  # (defined externally via Prometheus/SLO monitoring)\n  chaosServiceAccount: litmus-admin\n  experiments:\n    - name: pod-delete\n      spec:\n        components:\n          env:\n            - name: TOTAL_CHAOS_DURATION\n              value: '30'  # seconds\n            - name: CHAOS_INTERVAL\n              value: '10'\n            - name: FORCE\n              value: 'false'\n# Apply: kubectl apply -f chaos-experiment.yaml\n# Monitor: kubectl get chaosresult order-service-chaos-pod-delete -o yaml"
+      }
+    ],
+    "common_patterns": [
+      {
+        "pattern": "Specification by Example (BDD Discovery Phase)",
+        "when_to_use": "When defining acceptance criteria for a new feature. Write scenarios BEFORE any implementation code exists to prevent implementation bias.",
+        "example": "Three Amigos session: PO, Developer, QA collaboratively write Gherkin scenarios from user stories. Scenarios become the acceptance criteria. Development begins only after scenarios are agreed upon."
+      },
+      {
+        "pattern": "Consumer-Driven Contract (Pact workflow)",
+        "when_to_use": "When two services communicate via API and need to evolve independently without breaking each other. Especially valuable in microservices architectures.",
+        "example": "Consumer team writes Pact tests defining expected API shape, publishes .pact to Pact Broker. Provider team adds Pact verification to CI. Neither team blocked by the other's deployment schedule."
+      },
+      {
+        "pattern": "Golden Master / Characterization Testing",
+        "when_to_use": "Testing legacy code without known expected values, testing complex output structures, or regression testing where output stability matters more than specific value assertions.",
+        "example": "Run legacy report generator, capture output as the approved file. Now refactor freely — any unintended output change fails the test immediately."
+      },
+      {
+        "pattern": "Steady-State Hypothesis (Chaos Engineering)",
+        "when_to_use": "Before running any chaos experiment. Define what 'normal' looks like in measurable SLO terms so you have a clear pass/fail criterion.",
+        "example": "Hypothesis: 'p95 response time stays below 200ms and error rate stays below 0.1% while 20% of pods are randomly deleted'. Run experiment, compare observed metrics to hypothesis."
+      },
+      {
+        "pattern": "Three Amigos Review",
+        "when_to_use": "Before writing any code for a feature. Brings together three perspectives — business (what), development (how), QA (what could go wrong).",
+        "example": "Hold a 30-min session with PO, developer, QA. Walk through each scenario in the feature file. Developer flags implementation-biased steps. QA adds missing edge-case scenarios. PO confirms business language is accurate."
+      },
+      {
+        "pattern": "Scenario Outline with Examples Table (BDD parametrization)",
+        "when_to_use": "When the same behavior applies to multiple data sets (different user roles, different input values). Avoids duplicating scenario structure.",
+        "example": "Scenario Outline: Process order for <payment_method> / Examples: | visa | paypal | crypto | — runs the same scenario three times with different payment methods."
+      },
+      {
+        "pattern": "Blast Radius Expansion (Chaos Engineering)",
+        "when_to_use": "Starting a new chaos engineering practice. Begin with minimal blast radius (one pod, one region) and expand as confidence grows.",
+        "example": "Week 1: Kill one pod in staging. Week 2: Kill one pod in production (off-peak). Week 4: Kill 20% of pods in production. Week 8: Kill an entire AZ."
+      },
+      {
+        "pattern": "Provider State Setup (Pact)",
+        "when_to_use": "When provider verification needs test data that matches the consumer's expected state. Provider state handlers set up fixtures for each interaction.",
+        "example": "Consumer declares given('order 1 exists'). Provider implements a state handler that creates order 1 in the test database before Pact replays the interaction."
+      }
+    ],
+    "gotchas": [
+      {
+        "issue": "pytest-bdd has no data table support",
+        "solution": "Use Behave instead if your scenarios need data tables, or use Scenario Outline with Examples tables as a workaround (less flexible than inline data tables).",
+        "example": "behave: | field | value | rows work inline in steps. pytest-bdd: must restructure to Scenario Outline instead."
+      },
+      {
+        "issue": "BDD scenarios encoding implementation details",
+        "solution": "Write steps in declarative business language, not imperative UI actions. Use the Three Amigos review to catch technical leakage before implementation starts.",
+        "example": "BAD: 'When I click the button with id submit-btn'. GOOD: 'When I submit the login form'."
+      },
+      {
+        "issue": "Pact contracts becoming too strict (exact value matching)",
+        "solution": "Use Pact matchers (like, term, regex, integer) instead of exact values to avoid brittle contracts that fail on irrelevant data changes.",
+        "example": "Instead of body={'id': 1}, use body=Like({'id': 1}) to match type rather than exact value."
+      },
+      {
+        "issue": "Pact contracts not versioned or tagged",
+        "solution": "Always version and tag contracts in Pact Broker (e.g., tag with branch name and git SHA). Without tags, can-i-deploy cannot track consumer/provider compatibility.",
+        "example": "pact-broker publish --consumer-app-version=git-sha --tag=main"
+      },
+      {
+        "issue": "Approving bad output as the golden master",
+        "solution": "Establish a mandatory diff-review step before approving. Treat the approval action the same as a code review — only approve if the output is correct by design.",
+        "example": "Workflow: test fails -> open diff tool -> verify each change is intentional -> only then rename .received to .approved"
+      },
+      {
+        "issue": "Snapshot files not committed to version control",
+        "solution": "Always commit approved files / snapshot directories. Without them, every fresh checkout fails all approval/snapshot tests.",
+        "example": "git add tests/approved/ tests/__snapshots__/ && git commit"
+      },
+      {
+        "issue": "Chaos experiments run without steady-state baseline",
+        "solution": "Always measure and record baseline metrics (response time, error rate, throughput) BEFORE injecting any chaos. Without a baseline, you cannot tell if the system degraded.",
+        "example": "Record: p95=120ms, error_rate=0.05% for 10 minutes before starting the experiment."
+      },
+      {
+        "issue": "Chaos experiments with no abort conditions",
+        "solution": "Always configure abort conditions (rollback triggers). If the system breaches the steady-state bounds, the experiment should stop automatically.",
+        "example": "Gremlin: set abort if error rate > 1%. LitmusChaos: configure probes that halt the experiment if SLO is breached."
+      },
+      {
+        "issue": "Scenario tests that depend on each other (stateful scenarios)",
+        "solution": "Each scenario must be independently executable. Use Background steps or fixture setup/teardown, not execution order dependencies.",
+        "example": "BAD: Scenario 2 assumes Scenario 1 created a user. GOOD: Both scenarios use a Background step to create the user."
+      }
+    ],
+    "integration_points": []
+  },
+  "sources": [
+    {
+      "url": "https://martinfowler.com/bliki/GivenWhenThen.html",
+      "type": "official_docs",
+      "title": "Given When Then - Martin Fowler",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://framework.scaledagile.com/behavior-driven-development",
+      "type": "official_docs",
+      "title": "Behavior-Driven Development - Scaled Agile Framework (SAFe)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://docs.pact.io/",
+      "type": "official_docs",
+      "title": "Pact Documentation - Introduction",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://docs.pact.io/consumer",
+      "type": "official_docs",
+      "title": "Writing Consumer tests - Pact Docs",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Behavior-driven_development",
+      "type": "official_docs",
+      "title": "Behavior-driven development - Wikipedia",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Chaos_engineering",
+      "type": "official_docs",
+      "title": "Chaos engineering - Wikipedia",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://github.com/approvals/ApprovalTests.Python",
+      "type": "github",
+      "title": "ApprovalTests.Python - GitHub",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://github.com/dastergon/awesome-chaos-engineering",
+      "type": "github",
+      "title": "Awesome Chaos Engineering - GitHub curated list",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://approvaltests.com/",
+      "type": "official_docs",
+      "title": "ApprovalTests official site",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://devblogs.microsoft.com/ise/pact-contract-testing-because-not-everything-needs-full-integration-tests/",
+      "type": "blog",
+      "title": "PACT Contract Testing - ISE Developer Blog (Microsoft)",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.sachith.co.uk/contract-testing-with-pact-best-practices-in-2025-practical-guide-feb-10-2026/",
+      "type": "blog",
+      "title": "Contract testing with Pact — Best Practices in 2025",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://codoid.com/automation-testing/pytest-bdd-vs-behave-pick-the-best-python-bdd-framework/",
+      "type": "blog",
+      "title": "Pytest BDD vs Behave: Pick the Best Python BDD Framework - Codoid",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://thebddcoach.com/post/pytest-bdd-versus-behave/",
+      "type": "blog",
+      "title": "Pytest-BDD vs. Behave - The BDD Coach",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://automationpanda.com/2019/04/02/python-bdd-framework-comparison/",
+      "type": "blog",
+      "title": "Python BDD Framework Comparison - Automation Panda",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://testsigma.com/blog/behavior-driven-development-bdd-with-gherkin/",
+      "type": "blog",
+      "title": "Behavior Driven Development with Gherkin - TestSigma",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://testquality.com/how-to-write-effective-gherkin-acceptance-criteria/",
+      "type": "tutorial",
+      "title": "How to Write Effective Gherkin Acceptance Criteria - TestQuality",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.departmentofproduct.com/blog/writing-bdd-test-scenarios/",
+      "type": "blog",
+      "title": "Writing BDD Test Scenarios - Department of Product",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://blog.markpearl.co.za/Setting-Up-The-Golden-Master",
+      "type": "blog",
+      "title": "Setting up the Golden Master using ApprovalTests.Net",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "http://octopusinvitro.gitlab.io/blog/code-and-tech/approval-testing",
+      "type": "blog",
+      "title": "Approval testing: Golden Master and seams",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.gremlin.com/chaos-engineering",
+      "type": "official_docs",
+      "title": "Chaos Engineering - Gremlin",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.gremlin.com/community/tutorials/chaos-engineering-tools-comparison",
+      "type": "tutorial",
+      "title": "Comparing Chaos Engineering tools - Gremlin",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.harness.io/blog/chaos-engineering-tools",
+      "type": "blog",
+      "title": "Top Chaos Engineering Tools - Harness",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://steadybit.com/blog/chaos-experiments/",
+      "type": "blog",
+      "title": "Chaos Engineering: Types, Experiments, and Best Practices - Steadybit",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://kindatechnical.com/test-driven-development/lesson-29-acceptance-testing-vs-unitintegration-testing.html",
+      "type": "tutorial",
+      "title": "Acceptance Testing vs. Unit/Integration Testing - Kinda Technical",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://www.indeed.com/career-advice/career-development/acceptance-testing-vs-integration-testing",
+      "type": "blog",
+      "title": "Differences Between Acceptance and Integration Testing - Indeed",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://zetcode.com/terms-testing/scenario-testing/",
+      "type": "tutorial",
+      "title": "Scenario Testing Tutorial: Definition, Types, and Best Practices - ZetCode",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    },
+    {
+      "url": "https://medium.com/@mohsenny/stop-breaking-my-api-a-practical-guide-to-contract-testing-with-pact-33858d113386",
+      "type": "blog",
+      "title": "Stop Breaking My API: A Practical Guide to Contract Testing with Pact",
+      "accessed_at": "2026-02-28T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "created_at": "2026-02-28T00:00:00Z",
+    "last_updated": "2026-02-28T00:00:00Z",
+    "confidence": 0.78,
+    "contributors": [
+      {
+        "agent_id": "researcher-sonnet-4-6",
+        "sections": ["bdd_frameworks", "contract_testing", "approval_testing", "chaos_engineering", "key_questions", "examples", "common_patterns", "gotchas"],
+        "timestamp": "2026-02-28T00:00:00Z"
+      }
+    ],
+    "merge_strategy": "consolidation",
+    "related_research": []
+  }
+}

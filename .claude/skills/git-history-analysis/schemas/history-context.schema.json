@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "history-context.schema.json",
+  "title": "Git History Context",
+  "description": "Consumer-specific git history analysis for plan-architect or chunk-coder",
+  "type": "object",
+  "required": ["meta", "answers"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["type", "consumer", "feature", "scope", "created"],
+      "properties": {
+        "type": {
+          "const": "git-history"
+        },
+        "consumer": {
+          "type": "string",
+          "enum": ["plan-architect", "chunk-coder"],
+          "description": "Who requested this analysis"
+        },
+        "feature": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "description": "Path analyzed"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "answers": {
+      "type": "object",
+      "description": "Direct answers to the questions asked",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 200
+      }
+    },
+    "for_planning": {
+      "type": "object",
+      "description": "Output for plan-architect consumer",
+      "properties": {
+        "design_decisions": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["decision", "rationale"],
+            "properties": {
+              "decision": { "type": "string" },
+              "rationale": { "type": "string" },
+              "source": { "type": "string" }
+            }
+          }
+        },
+        "failed_approaches": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["approach", "why_failed"],
+            "properties": {
+              "approach": { "type": "string" },
+              "why_failed": { "type": "string" },
+              "evidence": { "type": "string" }
+            }
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "maxItems": 5,
+          "items": { "type": "string" }
+        },
+        "related_prs": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "related_issues": {
+          "type": "array",
+          "items": { "type": "integer" }
+        }
+      }
+    },
+    "for_implementation": {
+      "type": "object",
+      "description": "Output for chunk-coder consumer",
+      "properties": {
+        "gotchas": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["issue", "solution"],
+            "properties": {
+              "issue": { "type": "string" },
+              "solution": { "type": "string" },
+              "evidence": { "type": "string" }
+            }
+          }
+        },
+        "edge_cases_to_test": {
+          "type": "array",
+          "maxItems": 5,
+          "items": { "type": "string" }
+        },
+        "patterns_to_follow": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["pattern"],
+            "properties": {
+              "pattern": { "type": "string" },
+              "example_file": { "type": "string" }
+            }
+          }
+        },
+        "avoid": {
+          "type": "array",
+          "maxItems": 5,
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "meta": {
+          "properties": {
+            "consumer": { "const": "plan-architect" }
+          }
+        }
+      },
+      "required": ["for_planning"]
+    },
+    {
+      "properties": {
+        "meta": {
+          "properties": {
+            "consumer": { "const": "chunk-coder" }
+          }
+        }
+      },
+      "required": ["for_implementation"]
+    }
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "planning-log.schema.json",
+  "title": "Planning Session Log",
+  "description": "Tracks plan-architect sessions: design doc conversion, user edits, design deviations, and plan file creation. Enables plan modification by recording the edit trail that produced the final plan. Used by orchestrator (session awareness), plan-architect (state tracking/handoff), and future plan modification sessions.",
+  "type": "object",
+  "required": ["meta", "status", "phase", "source_design_doc"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Session identification and timing metadata",
+      "required": ["feature", "started_at", "session_id"],
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "Feature name (matches plan filename)",
+          "examples": ["batch-selector", "recipe-processor"]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when planning session started"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of last update"
+        },
+        "completed_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO timestamp when planning completed (null if in progress)"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Claude Code session ID for tracking and hook matching"
+        },
+        "session_label": {
+          "type": "string",
+          "description": "Human-readable session label"
+        },
+        "agent_model": {
+          "type": "string",
+          "description": "Model used for this session",
+          "enum": ["haiku", "sonnet", "opus"],
+          "default": "opus"
+        }
+      }
+    },
+    "source_design_doc": {
+      "type": "string",
+      "description": "Path to the design document being converted to a plan",
+      "examples": [".claude/designs/batch-selector.md", ".claude/designs/recipe-processor.md"]
+    },
+    "status": {
+      "type": "string",
+      "description": "Overall planning session status",
+      "enum": [
+        "in_progress",
+        "structure_proposed",
+        "structure_approved",
+        "details_written",
+        "details_approved",
+        "json_saved",
+        "complete",
+        "blocked",
+        "failed"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "description": "Current planning phase for granular tracking",
+      "enum": [
+        "context_loading",
+        "design_grounding",
+        "structure_proposed",
+        "structure_approved",
+        "details_writing",
+        "details_approved",
+        "json_conversion",
+        "json_saved",
+        "test_architecture",
+        "complete"
+      ]
+    },
+    "phase_history": {
+      "type": "array",
+      "description": "Timestamped record of phase transitions. Logged at each gate approval.",
+      "items": {
+        "type": "object",
+        "required": ["phase", "timestamp"],
+        "properties": {
+          "phase": {
+            "type": "string",
+            "description": "Phase entered"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "details": {
+            "type": "string",
+            "description": "Phase-specific summary",
+            "examples": [
+              "Design grounded: 12 types mapped, 3 config patterns reused",
+              "Structure approved: 6 chunks, vertical slices, no orphan plumbing",
+              "Details approved after 2 revision rounds (3 user edits)"
+            ]
+          }
+        }
+      }
+    },
+    "edit_history": {
+      "type": "array",
+      "description": "User-requested changes to the plan. Core section for auditability. Captures structural changes (chunk boundary moves, task additions/removals, scope changes) at the time they happen. Does NOT include cosmetic wording changes.",
+      "items": {
+        "type": "object",
+        "required": ["id", "gate", "timestamp", "request", "change_summary"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^edit-\\d{3}$",
+            "examples": ["edit-001", "edit-002"]
+          },
+          "gate": {
+            "type": "string",
+            "description": "Which approval gate this edit occurred at",
+            "enum": ["structure", "details", "test_architecture", "post_approval"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "request": {
+            "type": "string",
+            "description": "What the user asked for",
+            "examples": ["Move GPU warp from chunk-02 to chunk-04"]
+          },
+          "user_reasoning": {
+            "type": ["string", "null"],
+            "description": "Why the user requested this change, if stated",
+            "examples": ["chunk-02 is too large, warp depends on planner output"]
+          },
+          "chunks_affected": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Which chunk IDs were affected by this edit",
+            "examples": [["chunk-02", "chunk-04"]]
+          },
+          "change_summary": {
+            "type": "string",
+            "description": "What actually changed in the plan",
+            "examples": ["Removed 'perspective warp on GPU' from chunk-02, added to chunk-04 after planner functions"]
+          },
+          "deviates_from_design": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this edit departs from the design document"
+          },
+          "design_doc_said": {
+            "type": ["string", "null"],
+            "description": "What the design doc specifies (only when deviates_from_design is true)",
+            "examples": ["CLAHE applied as part of gain normalization (section 4.2)"]
+          },
+          "plan_instead": {
+            "type": ["string", "null"],
+            "description": "What the plan does instead (only when deviates_from_design is true)",
+            "examples": ["CLAHE as separate post-gain stage with configurable clip range and tile sizes"]
+          }
+        }
+      }
+    },
+    "design_deviations": {
+      "type": "array",
+      "description": "Planner-initiated departures from the design document. User-requested deviations are tracked in edit_history with deviates_from_design=true; this section is for deviations the planner discovers independently.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "design_doc_said", "plan_instead", "reason"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^dev-\\d{3}$"
+          },
+          "description": {
+            "type": "string"
+          },
+          "design_doc_said": {
+            "type": "string"
+          },
+          "plan_instead": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "files_created": {
+      "type": "array",
+      "description": "Plan files produced during this session",
+      "items": {
+        "type": "object",
+        "required": ["path", "type"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative file path from project root"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["plain_text_plan", "json_plan", "test_spec", "design_review"],
+            "description": "Type of plan artifact"
+          }
+        }
+      }
+    },
+    "decisions_made": {
+      "type": "array",
+      "description": "Architectural decisions made during planning. Consumed by chunk-coders for implementation guidance.",
+      "items": {
+        "type": "object",
+        "required": ["decision", "reason"],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "examples": ["Clean replacement of ops_batch_select.py rather than incremental refactor"]
+          },
+          "reason": {
+            "type": "string",
+            "examples": ["Existing function is 400 lines with no tests; incremental changes risk breaking untested paths"]
+          },
+          "chunk_scope": {
+            "type": ["string", "null"],
+            "description": "Which chunk this decision applies to, or null for plan-wide"
+          }
+        }
+      }
+    },
+    "user_preferences": {
+      "type": "array",
+      "description": "Planning preferences expressed by the user during this session",
+      "items": {"type": "string"},
+      "examples": [
+        ["Prefer vertical slices over horizontal layers", "Keep chunk count under 8"]
+      ]
+    },
+    "learning_signals": {
+      "type": "array",
+      "description": "Captured events for memory extraction by scribe",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "context"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^sig-\\d{3}$"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "design_gap",
+              "pattern_discovery",
+              "user_correction",
+              "chunking_lesson"
+            ]
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "extracted": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "resume_point": {
+      "type": ["string", "null"],
+      "description": "Human-readable description of where to resume"
+    },
+    "resume_from_phase": {
+      "type": "string",
+      "description": "Phase to resume from on handoff"
+    },
+    "resume_from_step": {
+      "type": "string",
+      "description": "Specific step within the phase to resume from"
+    },
+    "key_files_read": {
+      "type": "array",
+      "description": "Files read during this session, for handoff context",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": {"type": "string"},
+          "relevance": {"type": "string"}
+        }
+      }
+    },
+    "pending_decisions": {
+      "type": "array",
+      "description": "Decisions that need to be made by a replacement agent or escalated",
+      "items": {"type": "string"}
+    },
+    "context_usage": {
+      "type": "object",
+      "properties": {
+        "estimated_tokens": {"type": "integer"},
+        "context_percentage": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "timing": {
+      "type": "object",
+      "description": "Iteration metrics for workflow optimization",
+      "properties": {
+        "structure_iterations": {
+          "type": "integer",
+          "description": "Number of structure revision rounds before approval"
+        },
+        "details_iterations": {
+          "type": "integer",
+          "description": "Number of details revision rounds before approval"
+        },
+        "total_edits": {
+          "type": "integer",
+          "description": "Total user edits processed (length of edit_history)"
+        }
+      }
+    }
+  }
+}

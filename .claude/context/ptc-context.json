@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "type": "feature",
+    "created": "2026-02-28T17:00:00Z",
+    "updated": "2026-03-07T00:00:00Z",
+    "schema_version": "1.0",
+    "feature_name": "ptc",
+    "design_doc": ".claude/designs/ptc.md",
+    "status": "implemented (V2)"
+  },
+  "feature": {
+    "summary": "PTC V2 — persistent REPL pool with bridge-networked containers. Agents write direct Python, only print() enters context.",
+    "primary_block": "ptc-server",
+    "secondary_blocks": ["agentic-workflow-infra", "tests-ptc"],
+    "goals": [
+      "persistent container namespaces (state survives across ptc_execute calls)",
+      "REPL pool: sub-agents share parent container",
+      "bridge networking: containers can make HTTP requests, read/write /workspace",
+      "pre-built role images: no runtime pip install",
+      "JSONL observability for all events",
+      "no fallback mode — Docker required"
+    ],
+    "v2_changes": [
+      "removed tool dispatch layer (tool_dispatcher.py, tool_registry.py, ptc_tools/)",
+      "removed ipc_sandbox.py (container-side IPC client for tool calls)",
+      "reduced IPC from 8 to 5 message types (removed ToolCallMsg, ToolResultMsg, CancelMsg)",
+      "changed from --network=none to --network=bridge",
+      "changed from /workspace:ro to /workspace:rw",
+      "pre-built role images instead of runtime pip install",
+      "TTL-based container cleanup",
+      "poll-based REPL readiness instead of sleep(0.5)"
+    ]
+  },
+  "server": {
+    "location": "~/.claude/mcp/ptc-server/",
+    "description": "5 MCP tools backed by persistent Docker containers with REPL pool",
+    "key_files": [
+      {"file": "server.py", "purpose": "MCP entry point — 5 tools, output capping, Docker detection"},
+      {"file": "container_manager.py", "purpose": "Container lifecycle, REPL pool, sub-agent routing, TTL cleanup"},
+      {"file": "ipc_host.py", "purpose": "Unix socket server, send_execute → complete/error flow"},
+      {"file": "ipc_protocol.py", "purpose": "5 NDJSON message types (ExecuteMsg, CompleteMsg, ErrorMsg, PingMsg, PongMsg)"},
+      {"file": "event_logger.py", "purpose": "JSONL observability for container and execution events"},
+      {"file": "config.json", "purpose": "resource_limits, repl_pool, docker, ipc, observability"},
+      {"file": "Dockerfile", "purpose": "Base image: python:3.11-slim + git + pytest + ruff"},
+      {"file": "Dockerfile.{role}", "purpose": "6 role-specific images with pre-installed packages"},
+      {"file": "build-images.sh", "purpose": "Builds base + all 6 role images"},
+      {"file": "sandbox_runtime/runtime.py", "purpose": "Container entry point: receive code, execute, return stdout"},
+      {"file": "sandbox_runtime/executor.py", "purpose": "Persistent namespace, memory eviction"}
+    ],
+    "deleted_in_v2": [
+      "tool_dispatcher.py — no tools to dispatch",
+      "tool_registry.py — no role-tool permissions needed",
+      "ipc_sandbox.py — container-side IPC client for tool calls",
+      "ptc_tools/ — 7 modules implementing 15 internal tools"
+    ]
+  },
+  "ipc_protocol": {
+    "transport": "Unix domain socket, bind-mounted /tmp/ptc-ipc/{container_name}/ <-> /ptc_ipc/",
+    "format": "NDJSON (newline-delimited JSON), max 1MB/message",
+    "message_types": {
+      "host_to_container": [
+        {"type": "execute", "fields": "exec_id, code"},
+        {"type": "ping", "fields": "none"}
+      ],
+      "container_to_host": [
+        {"type": "complete", "fields": "exec_id, stdout, stderr, return_code, namespace_keys, namespace_size_kb"},
+        {"type": "error", "fields": "exec_id, message, traceback"},
+        {"type": "pong", "fields": "none"}
+      ]
+    },
+    "flow": "send execute → receive complete/error"
+  },
+  "container_architecture": {
+    "docker_cmd": "docker run -d --name {name} --memory 1024m --cpus 1 --network bridge --tmpfs /tmp -v {project}:/workspace:rw -v {socket_dir}:/ptc_ipc -v {runtime}:/ptc_runtime:ro ptc-{role}:latest sleep infinity",
+    "repl_start": "docker exec -d {container} python3 /ptc_runtime/runtime.py --socket repl-{N}.sock",
+    "repl_routing": "sub-agents → same container as parent, new REPL index; handoffs → kill old REPL, start fresh REPL",
+    "limits": {"memory_mb": 1024, "cpu_cores": 1, "timeout_seconds": 60, "max_containers": 8, "max_repls_per_container": 6},
+    "ttl": "containers expire after 600s idle, auto-renewed on each execution"
+  },
+  "mcp_tools": [
+    {"name": "ptc_execute", "sig": "(agent_id, role, code, timeout=0) -> str", "purpose": "main tool: run code in persistent sandbox"},
+    {"name": "ptc_status", "sig": "(agent_id='') -> str", "purpose": "container health + status"},
+    {"name": "ptc_reset_namespace", "sig": "(agent_id) -> str", "purpose": "clear namespace without killing container"},
+    {"name": "ptc_shutdown", "sig": "(agent_id) -> str", "purpose": "stop one container"},
+    {"name": "ptc_shutdown_all", "sig": "() -> str", "purpose": "stop all containers (session end)"}
+  ],
+  "code_patterns": {
+    "description": "V2 agents write direct Python — no tool stubs or await patterns",
+    "file_access": "open('/workspace/path', 'r').read()",
+    "http_requests": "import requests; resp = requests.get(url)",
+    "git_operations": "import subprocess; subprocess.run(['git', 'log', '--oneline'], cwd='/workspace')",
+    "analysis": "import radon, networkx, ast — all pre-installed in role images",
+    "output": "only print() output returns to agent context"
+  },
+  "touchpoints": {
+    "ptc_server": [
+      {"file": "~/.claude/mcp/ptc-server/server.py", "action": "implemented", "reason": "5 MCP tools, no tool dispatch"},
+      {"file": "~/.claude/mcp/ptc-server/container_manager.py", "action": "implemented", "reason": "REPL pool, bridge networking, pre-built images, TTL cleanup"},
+      {"file": "~/.claude/mcp/ptc-server/ipc_host.py", "action": "implemented", "reason": "simplified send_execute → complete/error flow"},
+      {"file": "~/.claude/mcp/ptc-server/ipc_protocol.py", "action": "implemented", "reason": "5 message types (down from 8)"},
+      {"file": "~/.claude/mcp/ptc-server/event_logger.py", "action": "implemented", "reason": "container + execution events only"},
+      {"file": "~/.claude/mcp/ptc-server/config.json", "action": "implemented", "reason": "stripped config — no role_tools, tool_strategies"},
+      {"file": "~/.claude/mcp/ptc-server/sandbox_runtime/runtime.py", "action": "implemented", "reason": "simplified — no tool_result routing"},
+      {"file": "~/.claude/mcp/ptc-server/sandbox_runtime/executor.py", "action": "implemented", "reason": "no ipc_client or tool stubs"}
+    ],
+    "workflow_repo": [
+      {"file": "skills/ptc-sandbox/SKILL.md", "action": "update", "reason": "show direct Python patterns"},
+      {"file": "skills/ptc-sandbox/role-specs/*.md", "action": "update", "reason": "direct Python recipes"},
+      {"file": "tests/ptc/", "action": "update", "reason": "rewrite for V2 architecture"}
+    ]
+  },
+  "dependencies": {
+    "types_needed": [],
+    "configs_needed": [
+      {"name": "config.json", "from": "~/.claude/mcp/ptc-server/config.json", "used_for": "resource limits + docker config"}
+    ],
+    "external_deps": [
+      {"package": "mcp[cli]", "version": ">=1.0.0", "used_by": "server.py (FastMCP)"},
+      {"package": "Docker", "used_by": "container_manager.py", "note": "required, no fallback"}
+    ]
+  },
+  "observability": {
+    "log_file": "~/.claude/logs/ptc-events.jsonl",
+    "event_types": [
+      "container_create", "container_ready", "container_stop", "container_crash", "container_handoff",
+      "repl_start", "repl_stop", "repl_crash",
+      "exec_start", "exec_complete", "exec_error", "exec_timeout",
+      "ipc_connect", "ipc_disconnect", "ipc_ping"
+    ],
+    "envelope": "{ts, event, agent_id, exec_id, container, data}"
+  },
+  "error_handling": {
+    "docker_unavailable": "ptc_execute returns JSON error; agents use native Read/Bash",
+    "container_crash_during_exec": "return error, NEVER re-execute (side effects may have occurred)",
+    "container_crash_during_idle": "restart on next call, namespace lost, warn agent",
+    "repl_crash_sub_agent": "kill only that REPL; container + other REPLs unaffected",
+    "overall_timeout": "kill process, return timeout error"
+  },
+  "related_context": {
+    "codebase": ".claude/context/_codebase.json",
+    "v2_plan": ".claude/plans/ptc-v2-simplification.md",
+    "v1_plan_archived": ".claude/plans/ptc-plan.json"
+  }
+}

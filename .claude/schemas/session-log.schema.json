@@ -1,0 +1,511 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "session-log.schema.json",
+  "title": "Session Log",
+  "description": "Tracks chunk implementation progress, enables resumption, and captures learning signals for the coding memory system. Used by orchestrator (for session awareness), chunk-coder (for state tracking), scribe (for commit info and memory extraction), and SessionStart hook (for context loading).",
+  "type": "object",
+  "required": ["meta", "status", "phase"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Session identification and timing metadata",
+      "required": ["feature", "chunk", "started_at", "session_id"],
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "Feature name (matches plan filename)",
+          "examples": ["batch-selection", "lpr-tracking"]
+        },
+        "chunk": {
+          "type": "string",
+          "description": "Chunk ID from plan",
+          "pattern": "^chunk-\\d{2}$",
+          "examples": ["chunk-01", "chunk-02"]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when session started"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of last update"
+        },
+        "completed_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO timestamp when session completed (null if in progress)"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Unique session identifier for tracking",
+          "pattern": "^[a-z0-9-]+$",
+          "examples": ["batch-selection-chunk-01-20260127-1045"]
+        },
+        "agent_model": {
+          "type": "string",
+          "description": "Model used for this session",
+          "enum": ["haiku", "sonnet", "opus"],
+          "default": "sonnet"
+        },
+        "model_switches": {
+          "type": "array",
+          "description": "History of model changes during session",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from_model": {"type": "string"},
+              "to_model": {"type": "string"},
+              "at_phase": {"type": "string"},
+              "reason": {"type": "string"},
+              "timestamp": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "description": "Overall session status for quick orchestrator checks",
+      "enum": [
+        "in_progress",
+        "tests_written",
+        "implementation_done",
+        "verified",
+        "approved",
+        "committed",
+        "blocked",
+        "failed"
+      ]
+    },
+    "phase": {
+      "type": "string",
+      "description": "Current implementation phase for granular tracking",
+      "enum": [
+        "context_loading",
+        "test_design",
+        "test_writing",
+        "red_verified",
+        "implementation",
+        "iteration",
+        "green_verified",
+        "invariant_check",
+        "quality_gate",
+        "review",
+        "complete"
+      ]
+    },
+    "phase_history": {
+      "type": "array",
+      "description": "Timestamped record of phase transitions. REQUIRED — proves the TDD red→green cycle was followed. Must include red_verified (tests fail) and green_verified (tests pass) entries.",
+      "items": {
+        "type": "object",
+        "required": ["phase", "timestamp"],
+        "properties": {
+          "phase": {
+            "type": "string",
+            "description": "Phase entered"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO timestamp of phase transition"
+          },
+          "details": {
+            "type": "string",
+            "description": "Phase-specific evidence. For red_verified: test failure count and error types. For green_verified: all-pass confirmation.",
+            "examples": [
+              "18 tests failed: 7 ModuleNotFoundError, 4 ImportError, 7 NameError",
+              "18/18 tests passing",
+              "5/5 invariants passing"
+            ]
+          }
+        }
+      }
+    },
+    "resume_point": {
+      "type": "string",
+      "description": "Human-readable description of where to resume. Read by orchestrator and new agent instances.",
+      "examples": [
+        "Tests written, 3/5 passing. Need to fix edge case handling.",
+        "Implementation complete, waiting for user review.",
+        "Blocked on missing dependency in common/models.py"
+      ]
+    },
+    "files_modified": {
+      "type": "array",
+      "description": "All files touched during this session",
+      "items": {
+        "type": "object",
+        "required": ["path", "action"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative file path from project root"
+          },
+          "action": {
+            "type": "string",
+            "enum": ["created", "modified", "deleted"]
+          },
+          "in_scope": {
+            "type": "boolean",
+            "description": "Whether file was in plan's scope.touched_files",
+            "default": true
+          },
+          "lines_changed": {
+            "type": "integer",
+            "description": "Approximate lines added/modified"
+          }
+        }
+      }
+    },
+    "tests_written": {
+      "type": "array",
+      "description": "Tests created or modified during this session",
+      "items": {
+        "type": "object",
+        "required": ["name", "file", "status"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Test function name",
+            "examples": ["test_select_batch_empty_input"]
+          },
+          "file": {
+            "type": "string",
+            "description": "Test file path"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pass", "fail", "skip", "error"]
+          },
+          "category": {
+            "type": "string",
+            "description": "Test category for organization",
+            "enum": ["unit", "integration", "e2e", "property"]
+          },
+          "failure_count": {
+            "type": "integer",
+            "description": "How many times this test failed before passing (learning signal)",
+            "default": 0
+          },
+          "failure_messages": {
+            "type": "array",
+            "description": "History of failure messages for learning extraction",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "invariants_status": {
+      "type": "object",
+      "description": "Status of each invariant from the plan",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["pass", "fail", "skip", "not_run"]
+          },
+          "last_checked": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "failure_message": {
+            "type": ["string", "null"],
+            "description": "Error message if failed"
+          }
+        }
+      },
+      "examples": [
+        {
+          "inv-01-01": {"status": "pass", "last_checked": "2026-01-27T10:30:00Z"},
+          "inv-01-02": {"status": "fail", "last_checked": "2026-01-27T10:30:00Z", "failure_message": "ModuleNotFoundError"}
+        }
+      ]
+    },
+    "quality_gate": {
+      "type": "object",
+      "description": "Quality gate check results",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["pass", "fail", "not_run"]
+        },
+        "lint": {
+          "type": "string",
+          "enum": ["pass", "fail", "not_run"]
+        },
+        "typecheck": {
+          "type": "string",
+          "enum": ["pass", "fail", "not_run"]
+        },
+        "tests": {
+          "type": "string",
+          "enum": ["pass", "fail", "not_run"]
+        },
+        "last_run": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "gate_script_path": {
+          "type": "string",
+          "default": "scripts/gate.sh"
+        },
+        "failure_output": {
+          "type": ["string", "null"],
+          "description": "Captured stderr/stdout if gate failed"
+        }
+      }
+    },
+    "learning_signals": {
+      "type": "array",
+      "description": "Captured events for memory extraction by scribe",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "context"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^sig-\\d{3}$"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "test_fix_cycle",
+              "scope_deviation",
+              "pattern_discovered",
+              "naming_choice",
+              "error_recovery",
+              "refactor_opportunity",
+              "invariant_violation",
+              "user_correction"
+            ]
+          },
+          "context": {
+            "type": "object",
+            "description": "Type-specific context data",
+            "additionalProperties": true
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "extracted": {
+            "type": "boolean",
+            "description": "Whether scribe has processed this signal",
+            "default": false
+          }
+        }
+      },
+      "examples": [
+        {
+          "id": "sig-001",
+          "type": "test_fix_cycle",
+          "context": {
+            "test_name": "test_select_batch_empty_input",
+            "failure_count": 2,
+            "failure_reason": "Forgot to handle empty list",
+            "resolution": "Added early return for empty input"
+          },
+          "timestamp": "2026-01-27T10:25:00Z",
+          "extracted": false
+        }
+      ]
+    },
+    "deviations": {
+      "type": "array",
+      "description": "Plan deviations documented for transparency",
+      "items": {
+        "type": "object",
+        "required": ["type", "description"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["scope_addition", "scope_removal", "approach_change", "dependency_change"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "user_approved": {
+            "type": "boolean",
+            "default": false
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "user_interactions": {
+      "type": "array",
+      "description": "Key user interactions during session for learning",
+      "items": {
+        "type": "object",
+        "required": ["type", "content"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["question", "correction", "approval", "rejection", "clarification"]
+          },
+          "content": {
+            "type": "string",
+            "description": "Summary of the interaction"
+          },
+          "agent_response": {
+            "type": "string",
+            "description": "How agent responded (for correction learning)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "context_usage": {
+      "type": "object",
+      "description": "Context window tracking for handoff decisions",
+      "properties": {
+        "estimated_tokens": {
+          "type": "integer",
+          "description": "Estimated tokens used in agent context"
+        },
+        "context_percentage": {
+          "type": "number",
+          "description": "Percentage of context window used (0-100)",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "warnings_issued": {
+          "type": "array",
+          "description": "Context warnings issued during session",
+          "items": {
+            "type": "object",
+            "properties": {
+              "level": {"type": "string", "enum": ["50_percent", "70_percent", "90_percent"]},
+              "timestamp": {"type": "string", "format": "date-time"},
+              "action_taken": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "handoff": {
+      "type": ["object", "null"],
+      "description": "Populated if session was handed off due to context limits",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": ["context_limit", "model_switch", "user_requested", "error"]
+        },
+        "partial_work_saved": {
+          "type": "boolean"
+        },
+        "continuation_notes": {
+          "type": "string",
+          "description": "Instructions for the next agent instance"
+        },
+        "previous_session_id": {
+          "type": "string",
+          "description": "Link to previous session if this is a continuation"
+        }
+      }
+    },
+    "resume_from_phase": {
+      "type": "string",
+      "description": "Phase to resume from when a replacement teammate picks up this session (e.g., 'implementation', 'test_writing'). Written by teammate before context pressure shutdown.",
+      "examples": ["implementation", "test_design", "iteration"]
+    },
+    "resume_from_step": {
+      "type": "string",
+      "description": "Specific step within the phase to resume from (e.g., '4/7 — test case for batch validation'). Written by teammate before context pressure shutdown.",
+      "examples": ["4/7 — test case for batch validation", "2/3 — implementing error handler"]
+    },
+    "pending_decisions": {
+      "type": "array",
+      "description": "Decisions that need to be made by the replacement teammate or escalated to lead/user",
+      "items": { "type": "string" },
+      "examples": [
+        ["Whether to use sync or async for the DB session factory", "Error handling strategy for batch overflow"]
+      ]
+    },
+    "key_files_read": {
+      "type": "array",
+      "description": "Files the agent read that were important for the current work. Enables replacement teammate to load the same context without guessing. Written by teammate before context pressure shutdown.",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative file path from project root"
+          },
+          "relevance": {
+            "type": "string",
+            "description": "Why this file matters for the current task",
+            "examples": ["Contains BatchProcessor base class being extended", "Test fixtures used by all batch tests"]
+          }
+        }
+      }
+    },
+    "decisions_made": {
+      "type": "array",
+      "description": "Design and implementation decisions made during this session. Prevents replacement teammate from re-deciding differently. Written by teammate before context pressure shutdown.",
+      "items": {
+        "type": "object",
+        "required": ["decision", "reason"],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "description": "What was decided",
+            "examples": ["Use async generators for DB session factory"]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why this choice was made",
+            "examples": ["Matches existing pattern in producer/deps.py lines 12-28"]
+          }
+        }
+      }
+    },
+    "user_preferences": {
+      "type": "array",
+      "description": "User preferences expressed during this session. Ensures replacement teammate follows the same style. Written by teammate before context pressure shutdown.",
+      "items": { "type": "string" },
+      "examples": [
+        ["Prefers parametrized tests over individual test functions", "Wants early returns for empty inputs, not nested ifs"]
+      ]
+    },
+    "context_handoff_count": {
+      "type": "integer",
+      "description": "Number of times this chunk's session has been handed off to a replacement teammate due to context pressure",
+      "default": 0,
+      "minimum": 0
+    },
+    "timing": {
+      "type": "object",
+      "description": "Timing metrics for workflow optimization",
+      "properties": {
+        "test_writing_duration_sec": {
+          "type": "integer"
+        },
+        "implementation_duration_sec": {
+          "type": "integer"
+        },
+        "iteration_count": {
+          "type": "integer",
+          "description": "Number of red→green→refactor cycles"
+        },
+        "total_duration_sec": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

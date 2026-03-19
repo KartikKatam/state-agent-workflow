@@ -1,0 +1,214 @@
+{
+  "topic": "MCP Integration Patterns & Observability for Multi-Agent AI Workflows",
+  "researcher": "researcher",
+  "date": "2026-02-25",
+  "confidence": 0.92,
+  "sections": [
+    {
+      "id": "mcp-server-patterns",
+      "title": "MCP Server Patterns for Agentic Workflows",
+      "findings": [
+        {
+          "subtopic": "MCP Ecosystem Overview",
+          "content": "MCP (Model Context Protocol) is Anthropic's open standard for LLM-tool integration, donated to the Linux Foundation's Agentic AI Foundation (AAIF) in Dec 2025 alongside OpenAI and Block. MCP 1.0 shipped early 2026 with a mature spec. Tens of thousands of MCP servers exist, searchable on MCP.so. MCP handles vertical connections (agents→tools/databases/APIs) while ACP (Agent Communication Protocol by IBM) handles horizontal (agent↔agent) communication.",
+          "sources": ["https://en.wikipedia.org/wiki/Model_Context_Protocol", "https://modelcontextprotocol.io/specification/2025-11-25"]
+        },
+        {
+          "subtopic": "Sequential Thinking MCP",
+          "content": "Official Anthropic MCP server (@modelcontextprotocol/server-sequential-thinking) providing structured multi-step analytical reasoning. Breaks complex problems into manageable steps with branching logic and context persistence. Supports decision-making by working through decisions methodically, problem-solving by breaking into components, research planning, and project analysis. An advanced variant (FradSer/mcp-server-mas-sequential-thinking) uses a Multi-Agent System built with the Agno framework — orchestrating specialized cognitive agents in parallel for deeper problem analysis.",
+          "sources": ["https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking", "https://github.com/FradSer/mcp-server-mas-sequential-thinking"],
+          "relevance": "Currently used by orchestrator and plan-architect in the workflow. Good fit for mandatory decision points."
+        },
+        {
+          "subtopic": "Context7 MCP",
+          "content": "Built by Upstash, Context7 injects up-to-date, version-specific library documentation directly into the LLM's context window. Two tools: resolve-library-id (name→ID lookup) and get-library-docs (ID+topic→doc chunks, configurable up to full context window, default 5000 tokens). Available as remote HTTP server or local npx. Prevents hallucinated API usage by feeding latest docs instead of relying on training data.",
+          "sources": ["https://github.com/upstash/context7", "https://upstash.com/blog/context7-mcp"],
+          "relevance": "Currently used as primary tool for researcher agent. Working well for library/API documentation lookup."
+        },
+        {
+          "subtopic": "GitHub MCP",
+          "content": "Official Anthropic GitHub MCP server (@modelcontextprotocol/server-github) provides repository operations — issues, PRs, file browsing, search. Useful for codebase-explorer's git history analysis. Can be supplemented with gh CLI as fallback.",
+          "sources": ["https://github.com/modelcontextprotocol/servers"],
+          "relevance": "Currently used by codebase-explorer for history analysis."
+        },
+        {
+          "subtopic": "Custom MCP for Agent Coordination",
+          "content": "Several frameworks demonstrate custom MCP servers for agent coordination: (1) Agent-MCP (rinadelph) — uses MCP as coordination backbone with persistent knowledge graph for shared state, task assignment/tracking tools (assign_task, view_tasks, update_task_status), inter-agent messaging (send_agent_message), and real-time dashboard showing agent collaborations as a graph. (2) Brainstorm MCP — enables multiple AI agent instances to coordinate through structured communication, shared resources, and persistent state management. (3) Context-Aware MCP (CA-MCP academic work) — offloads execution logic to specialized servers that read/write to shared context memory for autonomous real-time coordination.",
+          "sources": ["https://github.com/rinadelph/Agent-MCP", "https://mcpservers.org/servers/theodorstorm/brainstorm-mcp", "https://arxiv.org/html/2601.11595"],
+          "relevance": "HIGH — potential model for building a coordination MCP server for the workflow system. Agent-MCP's knowledge graph + task tools pattern closely mirrors what we need."
+        },
+        {
+          "subtopic": "mcp-agent Framework (LastMile AI)",
+          "content": "Batteries-included MCP runtime implementing every pattern from Anthropic's 'Building Effective Agents'. Supports: fan-out/fan-in specialists, routing to best agent/server, plan-and-coordinate workers, multi-agent handoffs (OpenAI Swarm compatible), deep orchestrator for long-horizon tasks. Can switch execution_engine to Temporal for pause/resume, retries, human input, and durable history without changing workflow code.",
+          "sources": ["https://github.com/lastmile-ai/mcp-agent"],
+          "relevance": "Architecture reference for workflow orchestration patterns. The Temporal integration concept is interesting for session durability."
+        }
+      ]
+    },
+    {
+      "id": "agent-state-observability",
+      "title": "Observability for Agent State Machines",
+      "findings": [
+        {
+          "subtopic": "OpenTelemetry GenAI Semantic Conventions for Agent Spans",
+          "content": "OpenTelemetry has defined semantic conventions (Development status) for tracing agent operations. Three span types: (1) create_agent — span name 'create_agent {name}', CLIENT kind, attributes: gen_ai.agent.id/name/description/version, gen_ai.request.model, gen_ai.provider.name. (2) invoke_agent — 'invoke_agent {name}', CLIENT for remote agents / INTERNAL for in-process, attributes: gen_ai.conversation.id for session tracking, token usage metrics, optional content recording (messages, system instructions, tool definitions). (3) execute_tool — INTERNAL kind, captures tool execution details. Conversation IDs connect related invocations within sessions. Multi-agent interactions distinguished by span kind (CLIENT=inter-process, INTERNAL=same-process delegation).",
+          "sources": ["https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/", "https://opentelemetry.io/docs/specs/semconv/gen-ai/"],
+          "relevance": "HIGH — these are the emerging industry standards. Our state-transition-log and decision-log schemas should align with these semantic conventions for future interoperability."
+        },
+        {
+          "subtopic": "AgentTrace Three-Surface Taxonomy",
+          "content": "AgentTrace (academic paper, Feb 2026) defines three observability surfaces: (1) Operational — method-level execution via Python function wrapping, captures invocation start/completion, args, return values, duration. (2) Cognitive — introspects LLM interactions, extracts raw prompts/completions/reasoning chains, parses <thinking> segments, XML tags, JSON fields from model output. (3) Contextual — tracks external I/O via OTel auto-instrumentation (HTTP, SQL, caching, vector stores). All events share a common envelope: UUID, surface type, trace_id, span_id, UTC timestamp, event body. Dual output: JSONL files for offline inspection + OTel spans for distributed tracing. Non-intrusive decorator-based wrapping with batched async export.",
+          "sources": ["https://arxiv.org/html/2602.10133"],
+          "relevance": "HIGH — the three-surface taxonomy maps well to our needs: operational=state transitions, cognitive=decision logs, contextual=message bus logs. The JSONL+OTel dual output pattern is exactly right for our file-based-first approach."
+        },
+        {
+          "subtopic": "State Machine Visualization Approaches",
+          "content": "No dedicated agent state machine visualization tools found. The closest approaches are: (1) Timeline/waterfall views in OTel backends (Jaeger, Grafana Tempo) showing span hierarchies. (2) Langfuse's multi-agent conversation flow views. (3) Custom dashboards using Textual/Rich TUI frameworks for terminal-based real-time monitoring. (4) Graph-based views (Agent-MCP dashboard) showing agents as nodes and collaborations as edges. For our workflow, state machine visualization would need to be custom-built — either as a TUI (Textual) or as a lightweight web dashboard (Vue/Svelte).",
+          "sources": ["https://langfuse.com/blog/2024-07-ai-agent-observability-with-langfuse", "https://github.com/rinadelph/Agent-MCP"],
+          "relevance": "Gap area — no off-the-shelf solution. Custom visualization needed."
+        }
+      ]
+    },
+    {
+      "id": "message-bus-observability",
+      "title": "Agent Message Bus Observability",
+      "findings": [
+        {
+          "subtopic": "Event-Driven Multi-Agent Design Patterns (Confluent)",
+          "content": "Four key patterns for event-driven multi-agent systems: (1) Orchestrator-Worker — central orchestrator assigns tasks to workers via event streams, workers focus on independent tasks. (2) Hierarchical Agent — layered agent organization, higher agents delegate to lower, event-driven makes it async and resilient to topology changes. (3) Blackboard — shared knowledge base as a data streaming topic, agents post/retrieve information, keying strategy annotates message origin. (4) Market-Based — decentralized marketplace where agents negotiate/compete for task allocation, bidding rounds, aggregator compiles final answers. All use event streaming (Kafka-style) to decouple senders/receivers, enabling async communication, replay, and built-in observability through event logs.",
+          "sources": ["https://www.confluent.io/blog/event-driven-multi-agent-systems/"],
+          "relevance": "Our workflow uses orchestrator-worker + blackboard hybrid. The blackboard pattern (shared context files) is already how context packets work. Event-driven decoupling via JSONL logs provides natural observability."
+        },
+        {
+          "subtopic": "Agentic Service Bus Architecture",
+          "content": "Inter-agent communication scaling requires a bus architecture rather than point-to-point. Key principles: (1) Decouple reasoning from signaling — agents use LLM for decisions but communicate via rigid, pre-defined 'Standardized Intents'. (2) Every intent gets a unique trace identifier for end-to-end flow visualization. (3) Event buses provide built-in event logs with history and replay capability, unlike direct protocols (A2A/ACP) where messages have no history. (4) Dependencies scale from quadratic (NxM) to linear (N+M) with a shared broker.",
+          "sources": ["https://www.arionresearch.com/blog/the-agentic-service-bus-a-new-architecture-for-inter-agent-communication"],
+          "relevance": "Our message-bus-log schema already captures message flow. Adding trace IDs to correlate message chains would enable visualization of complete conversation flows."
+        },
+        {
+          "subtopic": "Microsoft Multi-Agent Observability Recommendations",
+          "content": "Key patterns from Microsoft's multi-agent reference architecture: (1) Correlation IDs must be consistently generated and propagated with each message. (2) Trace context propagation essential for distributed tracing (OpenTelemetry W3C Trace Context). (3) Instrument all agent operations and handoffs. (4) Track performance and resource usage metrics per agent. (5) Observability and evaluation are complementary — observability gives metrics, evaluation determines performance quality. Four monitoring domains: Agent Communication, Performance Monitoring, Error Handling, Security & Compliance.",
+          "sources": ["https://microsoft.github.io/multi-agent-reference-architecture/docs/observability/Observability.html", "https://github.com/microsoft/multi-agent-reference-architecture"],
+          "relevance": "Correlation ID propagation is the key missing piece in our current message protocol. Adding W3C-style trace context would unlock distributed tracing."
+        },
+        {
+          "subtopic": "Message Flow Visualization",
+          "content": "Multiple approaches for visualizing inter-agent messages: (1) Interactive flowcharts showing agent communications step-by-step (Arize). (2) Timeline views with trace/span hierarchies (OTel backends). (3) Graph views with agents as nodes and messages as edges (Agent-MCP). (4) Real-time WebSocket-powered dashboards with filtering by agent/session/message-type (disler's claude-code-hooks project). (5) Sequence diagrams auto-generated from message logs. The most practical for terminal-based workflows: Textual TUI with live-updating message stream, filterable by source/target agent.",
+          "sources": ["https://arize.com/ai-agents/agent-observability/", "https://github.com/disler/claude-code-hooks-multi-agent-observability"],
+          "relevance": "For our workflow, a combination of JSONL logging + optional TUI viewer would be most practical. The disler project is the closest existing reference implementation."
+        }
+      ]
+    },
+    {
+      "id": "observability-infrastructure",
+      "title": "Observability Infrastructure Patterns",
+      "findings": [
+        {
+          "subtopic": "Claude Code Native OpenTelemetry Integration",
+          "content": "Claude Code has built-in OTel export capabilities. Environment variables: CLAUDE_CODE_ENABLE_TELEMETRY=1, OTEL_METRICS_EXPORTER=otlp, OTEL_LOGS_EXPORTER=otlp, OTEL_EXPORTER_OTLP_ENDPOINT=<backend-url>. Events exported: claude_code.user_prompt, claude_code.tool_result, claude_code.api_request, claude_code.api_error, claude_code.tool_decision. Metrics: session counts, lines of code, token usage, cost in USD, accept/reject ratios. Supports multiple export backends (console, OTLP/gRPC, Prometheus). Enterprise Compliance API provides real-time automated access to usage data and conversation logs.",
+          "sources": ["https://signoz.io/blog/claude-code-monitoring-with-opentelemetry/", "https://signoz.io/docs/claude-code-monitoring/"],
+          "relevance": "HIGH — Claude Code already supports OTel export. Our hooks can augment this with workflow-specific events (state transitions, message bus, decisions) without replacing the built-in telemetry."
+        },
+        {
+          "subtopic": "disler's Claude Code Hooks Observability System",
+          "content": "Complete reference implementation: Pipeline is Claude Agents → Hook Scripts (Python/uv) → HTTP POST → Bun Server → SQLite (WAL mode) → WebSocket → Vue Client. Tracks 12 event types: PreToolUse, PostToolUse, UserPromptSubmit, Stop, SessionStart, SessionEnd, SubagentStart, SubagentStop, PermissionRequest, Notification, PreCompact, PostToolUseFailure. Features: real-time WebSocket streaming, multi-session tracking with color-coded agents, event timeline with auto-scroll, live pulse chart (canvas-based), chat transcript viewer, dual-color system (app color + session color). Defines Builder (read-write, PostToolUse validation) and Validator (read-only) agent roles. 900+ GitHub stars.",
+          "sources": ["https://github.com/disler/claude-code-hooks-multi-agent-observability"],
+          "relevance": "CRITICAL — this is the most directly relevant reference implementation for our workflow. Same hook system, same multi-agent paradigm. Key differences from our needs: (1) we need state machine awareness, (2) we need message protocol tracking, (3) we need decision log correlation. But the architecture pattern (hooks → server → websocket → dashboard) is proven."
+        },
+        {
+          "subtopic": "File-Based Observability (JSONL + Viewers)",
+          "content": "JSONL (JSON Lines) is the optimal format for file-based agent observability: one JSON object per line, streamable, appendable, greppable. AgentTrace demonstrates dual-output (JSONL local + OTel remote) with graceful degradation to local-only when remote is unavailable. Best practices: (1) Use structured fields for machine parsability. (2) Include trace_id and span_id for correlation. (3) Separate files by surface/concern (state transitions, decisions, messages). (4) Ship to Elasticsearch via Filebeat for search if needed. For lightweight setups: JSONL files + jq queries + optional TUI viewer script.",
+          "sources": ["https://jsonl.help/use-cases/log-processing/", "https://arxiv.org/html/2602.10133"],
+          "relevance": "HIGH — aligns perfectly with our current approach. Our schemas already define JSONL-compatible structures. Adding the viewer layer (TUI or simple web) is the main gap."
+        },
+        {
+          "subtopic": "Terminal-Based Dashboards (Rich/Textual)",
+          "content": "Python Textual framework by Textualize: full TUI application framework built on Rich, async-native, 60 FPS rendering, widget-based layout system. Ideal for real-time monitoring dashboards. Key capabilities: live-updating tables, tree views, log panels, input handling, CSS-like styling. Can be used to build agent monitoring TUIs that show: state machine current states, message flow timeline, decision log stream, quality gate results. Alternative: Rich's Live display for simpler real-time output without full TUI scaffolding.",
+          "sources": ["https://textual.textualize.io/", "https://www.textualize.io/"],
+          "relevance": "Good option for a terminal-native observability viewer. Fits the tmux-based workflow layout. Could run in a dedicated tmux pane showing live agent status."
+        },
+        {
+          "subtopic": "Open-Source Observability Platforms",
+          "content": "Top platforms for agent observability: (1) Langfuse — MIT open source, 19k+ GitHub stars, self-hostable, tracing/analytics/prompt management/evaluation, multi-agent conversation flow views. (2) Arize Phoenix — open-source on OpenTelemetry, PostgreSQL backend, deep agent evaluation with multi-step trace capture. (3) AgentOps — focused on agent lifecycle tracking. (4) SigNoz — OTel-native, self-hosted, direct Claude Code integration support. (5) Maxim AI — enterprise-focused agent evaluation. For lightweight/self-hosted: Langfuse or Phoenix are best. For OTel-native: SigNoz or Phoenix.",
+          "sources": ["https://langfuse.com/blog/2024-07-ai-agent-observability-with-langfuse", "https://github.com/Arize-ai/phoenix", "https://signoz.io/docs/claude-code-monitoring/"],
+          "relevance": "If we need more than file-based observability, Langfuse (MIT, self-hosted) is the best fit. But for our workflow, the file-based JSONL + optional TUI approach is simpler and has zero infrastructure dependencies."
+        }
+      ]
+    },
+    {
+      "id": "industry-examples",
+      "title": "Industry Examples & Reference Implementations",
+      "findings": [
+        {
+          "subtopic": "OpenHands (formerly OpenDevin)",
+          "content": "OpenHands integrates Laminar for observability. Automatically instruments: every LLM call with inputs/outputs/token usage, tool executions (bash, file ops, browser actions), timing per step, cost tracking per model call. The OpenHands Index includes a 'Visualization' column with Laminar trace viewer links for evaluation runs — explore individual sessions, see action sequences, understand model approaches per task.",
+          "sources": ["https://docs.openhands.dev/sdk", "https://openhands.dev/blog/analyzing-and-improving-openhands-index"],
+          "relevance": "Reference for how production coding agents handle observability. Laminar-style instrumentation is similar to what our PostToolUse hook already captures."
+        },
+        {
+          "subtopic": "Claude Code Agent Teams Built-in Features",
+          "content": "Claude Code's Agent Teams (experimental, CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=true) provides: shared task list, mailbox/messaging system, teammate lifecycle management — all built-in with no external dependencies. The team lead coordinates via SendMessage and TaskCreate/TaskUpdate. Teammates communicate via structured messages. No built-in state machine visualization, but the task list provides workflow progress tracking. For monitoring: hooks can augment built-in features, Claude Code's native OTel export covers API/tool events, and the Compliance API (Enterprise) provides conversation logs.",
+          "sources": ["https://code.claude.com/docs/en/agent-teams", "https://signoz.io/blog/claude-code-monitoring-with-opentelemetry/"],
+          "relevance": "This IS our runtime. Understanding its built-in observability gaps helps us design the right augmentation layer via hooks and schemas."
+        },
+        {
+          "subtopic": "AG2 (AutoGen v2) OpenTelemetry Tracing",
+          "content": "AG2 provides full OpenTelemetry tracing for multi-agent systems: every conversation, agent turn, LLM call, tool execution, and speaker selection captured as structured spans connected by shared trace IDs. Exportable to any OTel-compatible backend. Event-driven architecture with built-in observability. Reference for how a production multi-agent framework integrates OTel end-to-end.",
+          "sources": ["https://docs.ag2.ai/latest/docs/blog/2026/02/08/AG2-OpenTelemetry-Tracing/"],
+          "relevance": "Architecture reference for OTel integration patterns in multi-agent systems."
+        },
+        {
+          "subtopic": "Kagent Observability Agent",
+          "content": "Kagent defines an 'observability agent' system prompt that specializes in monitoring Kubernetes-based systems. Uses structured tool calls for metrics queries, log analysis, and trace inspection. Interesting pattern: the observability system itself is an agent with specialized tools.",
+          "sources": ["https://kagent.dev/agents/observability-agent"],
+          "relevance": "Low direct relevance, but the 'observability-as-agent' pattern is interesting — could we have an observer agent that monitors other agents?"
+        }
+      ]
+    }
+  ],
+  "synthesis": {
+    "key_recommendations": [
+      {
+        "priority": "P0",
+        "area": "Correlation IDs",
+        "recommendation": "Add trace_id and span_id fields to all log schemas (state-transition-log, decision-log, message-bus-log). Propagate trace context through message protocol. This is the single highest-leverage change for observability — it connects all events into traceable workflows."
+      },
+      {
+        "priority": "P0",
+        "area": "JSONL Dual Output",
+        "recommendation": "Adopt AgentTrace's dual-output pattern: JSONL files as primary (always available, zero dependencies) + optional OTel export for backends like Langfuse/SigNoz. Hooks already write to files; add OTel span emission as an opt-in layer."
+      },
+      {
+        "priority": "P1",
+        "area": "Hook-Based Event Pipeline",
+        "recommendation": "Follow disler's architecture pattern (hooks → HTTP → server → WebSocket → dashboard) for real-time observability. Our hooks already capture state transitions, decisions, and messages — adding an HTTP event collector and WebSocket broadcaster enables live monitoring."
+      },
+      {
+        "priority": "P1",
+        "area": "Three-Surface Taxonomy",
+        "recommendation": "Adopt AgentTrace's three-surface model mapped to our schemas: Operational (state-transition-log) = state machine transitions, Cognitive (decision-log) = reasoning and decision points, Contextual (message-bus-log) = inter-agent communication. This creates a clean conceptual framework for what we observe."
+      },
+      {
+        "priority": "P1",
+        "area": "OTel Semantic Convention Alignment",
+        "recommendation": "Align agent span attributes with OpenTelemetry GenAI conventions: gen_ai.agent.name, gen_ai.agent.id, gen_ai.operation.name, gen_ai.conversation.id. This ensures future interoperability with OTel backends and industry tooling."
+      },
+      {
+        "priority": "P2",
+        "area": "TUI Dashboard",
+        "recommendation": "Build a Textual-based TUI dashboard for terminal-native monitoring. Fits the tmux layout, shows: agent states (color-coded), message flow timeline, decision stream, quality gate results. Run in a dedicated tmux pane."
+      },
+      {
+        "priority": "P2",
+        "area": "MCP Coordination Server",
+        "recommendation": "Consider building a custom MCP server for agent coordination (inspired by Agent-MCP), providing tools like: get_agent_state, send_coordination_message, query_shared_context. This could replace or augment the current file-based coordination with structured MCP tool calls."
+      },
+      {
+        "priority": "P3",
+        "area": "Event-Driven Blackboard",
+        "recommendation": "Our context packet system is already a blackboard pattern. Adding event notification when context packets are updated (via hooks or file watchers) would enable reactive agent behavior — agents subscribe to context changes rather than polling."
+      }
+    ],
+    "architecture_recommendation": "Layered observability: (1) JSONL file logs as foundation (always works, grep/jq queryable), (2) Optional HTTP event collector for real-time streaming, (3) Optional OTel export for platform integration, (4) Optional TUI/web dashboard for visualization. Each layer is additive — the system works at layer 1 alone but improves with each additional layer."
+  }
+}

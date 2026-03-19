@@ -1,0 +1,14 @@
+Before delegating this task to a teammate, reason through:
+
+1. TASK DECOMPOSITION: Is this a single coherent task, or should it be split further?
+   If it can be parallelized, spawn multiple teammates — don't serialize unnecessarily.
+
+2. ROLE SELECTION: Which role fits? (coder, explorer, researcher, auditor, planner, scribe)
+   What skills from ~/personal/agentic_workflow/.claude/skills/ should they use?
+
+3. CONTEXT TRANSFER: What do you already know that the teammate would waste time rediscovering?
+   List specific file paths, function signatures, data structures, recent git changes.
+
+4. OUTPUT CONTRACT: Where should results go? What format? How will you know it succeeded?
+
+5. FAILURE BOUNDARY: What should the teammate do if stuck? (Escalate after N attempts, not loop forever.)

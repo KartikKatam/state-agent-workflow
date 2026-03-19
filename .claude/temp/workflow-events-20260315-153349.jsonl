@@ -1,0 +1,39 @@
+{"ts": "2026-03-15T14:21:19.423058", "event": "session_started", "agent": "main", "agent_type": "interactive", "session_id": "b9c8ce1c-088c-4ba6-b91b-33ed4fbc0477"}
+{"ts": "2026-03-15T14:21:24.142980", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:32:05.964862", "event": "context_pressure", "percentage": 51.8, "level": "warning", "agent": "5f1357e6-fad4-4448-9e67-99a2be948b7b"}
+{"ts": "2026-03-15T14:36:10.689466", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:36:17.569050", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:36:25.926180", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:36:32.876141", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:36:49.614303", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:37:39.854079", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:37:39.992793", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:37:43.636996", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:37:44.946425", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:37:48.245358", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:40:36.906478", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:44:02.101410", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:49:17.731732", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:49:25.135279", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:49:28.139714", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:49:29.682833", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:49:33.177682", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T14:51:42.625357", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:00:29.566464", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:00:35.859217", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:01:37.730681", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:01:40.930446", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:03:26.181344", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:03:43.838533", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:03:48.963091", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:04:17.895567", "event": "context_pressure", "percentage": 50.4, "level": "warning", "agent": "b9c8ce1c-088c-4ba6-b91b-33ed4fbc0477"}
+{"ts": "2026-03-15T15:04:57.261353", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:05:00.445872", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:07:38.151418", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:12:23.236759", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:12:32.647442", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:12:40.639284", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:12:43.870475", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:20:00.725986", "event": "context_pressure", "percentage": 72.6, "level": "critical", "agent": "5f1357e6-fad4-4448-9e67-99a2be948b7b"}
+{"ts": "2026-03-15T15:20:54.585925", "event": "session_ended", "agent": "main"}
+{"ts": "2026-03-15T15:32:27.518565", "event": "session_ended", "agent": "main"}

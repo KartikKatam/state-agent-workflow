@@ -1,0 +1,399 @@
+{
+  "class_name": "ProducerConfig",
+  "source_file": "producer/config.py",
+  "fields": {
+    "yolo_model_path": {
+      "type": "str",
+      "default": "'models/yolov11m.pt'"
+    },
+    "plate_class_id": {
+      "type": "int",
+      "default": "0"
+    },
+    "input_size": {
+      "type": "tuple[int, int]",
+      "default": "(960, 544)"
+    },
+    "conf_threshold": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "iou_threshold": {
+      "type": "float",
+      "default": "0.45"
+    },
+    "device": {
+      "type": "str",
+      "default": "'cuda'"
+    },
+    "max_detections": {
+      "type": "int",
+      "default": "200"
+    },
+    "warmup_runs": {
+      "type": "int",
+      "default": "1"
+    },
+    "corner_cnn_enabled": {
+      "type": "bool",
+      "default": "False"
+    },
+    "corner_cnn_model_path": {
+      "type": "str",
+      "default": "'models/corner_cnn.engine'"
+    },
+    "corner_cnn_input_h": {
+      "type": "int",
+      "default": "80"
+    },
+    "corner_cnn_input_w": {
+      "type": "int",
+      "default": "256"
+    },
+    "corner_cnn_confidence_threshold": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "corner_cnn_device": {
+      "type": "str",
+      "default": "'cuda'"
+    },
+    "frame_sample_interval_ms": {
+      "type": "float",
+      "default": "1000.0 / 15.0"
+    },
+    "tracking_alpha": {
+      "type": "float",
+      "default": "0.85"
+    },
+    "tracking_beta": {
+      "type": "float",
+      "default": "0.05"
+    },
+    "iou_threshold_confirmed": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "iou_threshold_tentative": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "min_hits": {
+      "type": "int",
+      "default": "3"
+    },
+    "max_frames_lost": {
+      "type": "int",
+      "default": "5"
+    },
+    "min_bbox_width": {
+      "type": "int",
+      "default": "100"
+    },
+    "min_bbox_height": {
+      "type": "int",
+      "default": "40"
+    },
+    "min_aspect_ratio": {
+      "type": "float",
+      "default": "1.5"
+    },
+    "max_aspect_ratio": {
+      "type": "float",
+      "default": "5.0"
+    },
+    "max_velocity_change_ratio": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "max_velocity_change_abs": {
+      "type": "float",
+      "default": "50.0"
+    },
+    "enable_lk_motion": {
+      "type": "bool",
+      "default": "True"
+    },
+    "lk_max_corners": {
+      "type": "int",
+      "default": "100"
+    },
+    "lk_quality_level": {
+      "type": "float",
+      "default": "0.01"
+    },
+    "lk_min_distance": {
+      "type": "int",
+      "default": "10"
+    },
+    "lk_win_size": {
+      "type": "tuple[int, int]",
+      "default": "(21, 21)"
+    },
+    "lk_max_level": {
+      "type": "int",
+      "default": "2"
+    },
+    "lk_max_frame_skip": {
+      "type": "int",
+      "default": "2"
+    },
+    "lk_reenable_delay_frames": {
+      "type": "int",
+      "default": "1"
+    },
+    "crop_padding_ratio": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "crop_padding_min_px": {
+      "type": "int",
+      "default": "12"
+    },
+    "crop_adaptive_resize_threshold": {
+      "type": "int",
+      "default": "800"
+    },
+    "crop_min_width": {
+      "type": "int",
+      "default": "100"
+    },
+    "crop_min_height": {
+      "type": "int",
+      "default": "40"
+    },
+    "fast_quality_enabled": {
+      "type": "bool",
+      "default": "True"
+    },
+    "fast_quality_gradient_histogram_bins": {
+      "type": "int",
+      "default": "16"
+    },
+    "fast_quality_spatial_quadrants": {
+      "type": "int",
+      "default": "9"
+    },
+    "fast_quality_h_metrics": {
+      "type": "int",
+      "default": "48"
+    },
+    "fast_quality_w_metrics": {
+      "type": "int",
+      "default": "160"
+    },
+    "fast_quality_h_thumb": {
+      "type": "int",
+      "default": "48"
+    },
+    "fast_quality_w_thumb": {
+      "type": "int",
+      "default": "160"
+    },
+    "fast_quality_focus_min": {
+      "type": "float",
+      "default": "0.0"
+    },
+    "fast_quality_contrast_min": {
+      "type": "float",
+      "default": "0.0"
+    },
+    "fast_quality_band_edge_min": {
+      "type": "float",
+      "default": "0.0"
+    },
+    "fast_quality_bright_min": {
+      "type": "float",
+      "default": "0.0"
+    },
+    "fast_quality_bright_max": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "fast_quality_over_exposed_max": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "fast_quality_under_exposed_max": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "fast_quality_bright_target": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "fast_quality_bright_tol": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "fast_quality_over_threshold": {
+      "type": "float",
+      "default": "0.94"
+    },
+    "fast_quality_under_threshold": {
+      "type": "float",
+      "default": "0.06"
+    },
+    "fast_quality_band_top_frac": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "fast_quality_band_bottom_frac": {
+      "type": "float",
+      "default": "0.7"
+    },
+    "fast_quality_focus_good": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "fast_quality_contrast_good": {
+      "type": "float",
+      "default": "0.1"
+    },
+    "fast_quality_band_edge_good": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "fast_quality_w_focus": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "fast_quality_w_contrast": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "fast_quality_w_band": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "fast_quality_w_bright": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "fast_quality_w_exposure": {
+      "type": "float",
+      "default": "0.05"
+    },
+    "fast_quality_over_weight": {
+      "type": "float",
+      "default": "1.0"
+    },
+    "fast_quality_under_weight": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "buffer_bin_capacity": {
+      "type": "int",
+      "default": "32"
+    },
+    "buffer_bootstrap_k_insertions": {
+      "type": "int",
+      "default": "3"
+    },
+    "buffer_min_quality": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "buffer_bootstrap_discount": {
+      "type": "float",
+      "default": "0.75"
+    },
+    "buffer_similarity_threshold": {
+      "type": "float",
+      "default": "0.8"
+    },
+    "buffer_novelty_weight_pixel": {
+      "type": "float",
+      "default": "0.6"
+    },
+    "buffer_novelty_weight_feature": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "buffer_quality_margin_similar": {
+      "type": "float",
+      "default": "0.02"
+    },
+    "buffer_quality_margin_worst": {
+      "type": "float",
+      "default": "0.05"
+    },
+    "buffer_band_edge_min": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "pipeline_frame_budget_ms": {
+      "type": "float",
+      "default": "66.0"
+    },
+    "pipeline_skip_on_no_detections": {
+      "type": "bool",
+      "default": "True"
+    },
+    "pipeline_skip_on_no_confirmed": {
+      "type": "bool",
+      "default": "True"
+    },
+    "pipeline_logging_mode": {
+      "type": "LoggingMode",
+      "default": "LoggingMode.PRODUCTION"
+    },
+    "logging_queue_size": {
+      "type": "int",
+      "default": "1000"
+    },
+    "pipeline_percentile_window_frames": {
+      "type": "int",
+      "default": "150"
+    },
+    "production_log_path": {
+      "type": "str",
+      "default": "'logs/production_metrics.jsonl'"
+    },
+    "debug_log_path": {
+      "type": "str",
+      "default": "'logs/debug_metrics.jsonl'"
+    },
+    "tuning_log_path": {
+      "type": "str",
+      "default": "'logs/tuning_metrics.jsonl'"
+    },
+    "production_stats_interval_frames": {
+      "type": "int",
+      "default": "4500"
+    },
+    "production_frame_interval": {
+      "type": "int",
+      "default": "300"
+    },
+    "debug_frame_interval": {
+      "type": "int",
+      "default": "1"
+    },
+    "debug_stats_interval_frames": {
+      "type": "int",
+      "default": "150"
+    },
+    "debug_log_detections": {
+      "type": "bool",
+      "default": "True"
+    },
+    "debug_log_tracks": {
+      "type": "bool",
+      "default": "True"
+    },
+    "debug_log_quality": {
+      "type": "bool",
+      "default": "True"
+    },
+    "tuning_frame_interval": {
+      "type": "int",
+      "default": "1"
+    },
+    "tuning_stats_interval_frames": {
+      "type": "int",
+      "default": "300"
+    }
+  },
+  "field_count": 98
+}

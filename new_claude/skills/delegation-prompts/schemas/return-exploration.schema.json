@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exploration Delegation Return",
+  "description": "Return schema for exploration delegation. The sub-agent returns findings with per-target confidence levels.",
+  "type": "object",
+  "required": ["delegation_type", "status", "findings", "essential_output_confidence"],
+  "properties": {
+    "delegation_type": {
+      "const": "exploration",
+      "description": "Must match the delegation type from the prompt."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "partial", "failed"],
+      "description": "Overall completion status."
+    },
+    "findings": {
+      "type": "object",
+      "description": "The discovered information. Structure varies by exploration target."
+    },
+    "essential_output_confidence": {
+      "type": "object",
+      "description": "Confidence per essential_output target. Keys match essential_output items from the prompt.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["level", "reason"],
+        "properties": {
+          "level": { "type": "string", "enum": ["high", "medium", "low"] },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "unexpected_findings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scope_extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["extended_to", "reason"],
+        "properties": {
+          "extended_to": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "cross_scope_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding", "relevant_to"],
+        "properties": {
+          "finding": { "type": "string" },
+          "relevant_to": { "type": "string" }
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "carry_forward": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

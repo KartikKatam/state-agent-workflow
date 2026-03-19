@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/producer/buffer.py
+# hypothesis_version: 6.151.5
+
+[0.0, 255, 'append', 'drop', 'replace']

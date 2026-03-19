@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-07",
+    "started_at": "2026-02-28T21:00:00Z",
+    "last_updated": "2026-02-28T21:20:00Z",
+    "completed_at": "2026-02-28T21:20:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-07-2026-02-28",
+    "agent_model": "opus"
+  },
+  "status": "approved",
+  "phase": "complete",
+  "resume_point": "Chunk approved, ready for commit",
+  "phase_history": [
+    {
+      "phase": "context_loading",
+      "timestamp": "2026-02-28T21:00:00Z",
+      "details": "Loaded plan JSON chunk-07, test specs, chunk-06 session log, container_manager.py, existing tests"
+    },
+    {
+      "phase": "test_design",
+      "timestamp": "2026-02-28T21:01:00Z",
+      "details": "Designed 17 tests across 7 test classes matching spec"
+    },
+    {
+      "phase": "test_writing",
+      "timestamp": "2026-02-28T21:03:00Z",
+      "details": "Wrote all 17 tests in tests/ptc/test_repl_pool.py"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T21:04:00Z",
+      "details": "7 tests failed (handle_handoff/stop_repl/max_repls not yet implemented), 10 passed (existing chunk-06 functionality)"
+    },
+    {
+      "phase": "implementation",
+      "timestamp": "2026-02-28T21:05:00Z",
+      "details": "Implemented stop_repl(), handle_handoff(), and max_repls enforcement in _start_repl_in_container"
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T21:08:00Z",
+      "details": "17/17 tests passing in 0.12s — first GREEN run, 0 iterations needed"
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T21:10:00Z",
+      "details": "All 4 invariants verified: inv-07-01 through inv-07-04"
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T21:12:00Z",
+      "details": "ruff format passed, ruff check passed, 40 total tests pass (chunks 06+07)"
+    }
+  ],
+  "files_modified": [
+    {
+      "path": "~/.claude/mcp/ptc-server/container_manager.py",
+      "action": "modify",
+      "description": "Added stop_repl() (kill specific REPL via docker exec pkill, remove from tracking), handle_handoff() (stop old REPL + start fresh in same container + log event), max_repls enforcement in _start_repl_in_container (RuntimeError at limit)"
+    },
+    {
+      "path": "tests/ptc/test_repl_pool.py",
+      "action": "create",
+      "description": "17 tests across 7 classes: sub-agent routing (3), REPL isolation (2), handoff (4), idle reuse (3), max REPL enforcement (2), stop REPL (2), concurrent execution (1)"
+    }
+  ],
+  "tests_written": [
+    {"name": "test_sub_agent_routes_to_parent_container", "class": "TestSubAgentRouting", "status": "pass"},
+    {"name": "test_sub_agent_gets_new_repl_index", "class": "TestSubAgentRouting", "status": "pass"},
+    {"name": "test_sub_agent_unregistered_creates_new", "class": "TestSubAgentRouting", "status": "pass"},
+    {"name": "test_separate_ipc_hosts", "class": "TestReplIsolation", "status": "pass"},
+    {"name": "test_separate_socket_paths", "class": "TestReplIsolation", "status": "pass"},
+    {"name": "test_handoff_preserves_container", "class": "TestHandoff", "status": "pass"},
+    {"name": "test_handoff_kills_old_repl", "class": "TestHandoff", "status": "pass"},
+    {"name": "test_handoff_starts_fresh_repl", "class": "TestHandoff", "status": "pass"},
+    {"name": "test_handoff_logs_event", "class": "TestHandoff", "status": "pass"},
+    {"name": "test_idle_container_reused_same_role", "class": "TestIdleReuse", "status": "pass"},
+    {"name": "test_idle_container_not_reused_different_role", "class": "TestIdleReuse", "status": "pass"},
+    {"name": "test_idle_reuse_starts_new_repl", "class": "TestIdleReuse", "status": "pass"},
+    {"name": "test_max_repls_rejected", "class": "TestMaxReplEnforcement", "status": "pass"},
+    {"name": "test_below_max_repls_allowed", "class": "TestMaxReplEnforcement", "status": "pass"},
+    {"name": "test_stop_repl_kills_only_that_repl", "class": "TestStopRepl", "status": "pass"},
+    {"name": "test_stop_repl_container_survives", "class": "TestStopRepl", "status": "pass"},
+    {"name": "test_concurrent_repls_execute_independently", "class": "TestConcurrentExecution", "status": "pass"}
+  ],
+  "invariants_status": {
+    "inv-07-01": "pass",
+    "inv-07-02": "pass",
+    "inv-07-03": "pass",
+    "inv-07-04": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [],
+  "deviations": [],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "Mock asyncio.create_subprocess_exec for all Docker commands",
+      "reason": "Carried forward from chunk-06 — no real Docker in tests"
+    },
+    {
+      "decision": "IpcHost mocked via patch('container_manager.IpcHost')",
+      "reason": "Carried forward from chunk-06 — tests REPL logic without real sockets"
+    },
+    {
+      "decision": "stop_repl uses docker exec pkill -f to kill REPL process by socket name pattern",
+      "reason": "No PID tracking available — pattern match on repl-{index}.sock is reliable"
+    },
+    {
+      "decision": "handle_handoff delegates to stop_repl + _start_repl_in_container",
+      "reason": "Reuses existing methods, keeps handoff logic simple"
+    },
+    {
+      "decision": "Max REPL enforcement raises RuntimeError in _start_repl_in_container",
+      "reason": "Fail-fast at the choke point for all REPL creation"
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 0
+  }
+}

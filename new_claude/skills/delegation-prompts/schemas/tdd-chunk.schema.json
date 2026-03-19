@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TDD Chunk Delegation Prompt",
+  "description": "TDD implementation chunk with test specifications and pass gates. Used by plan-architect for chunk specs and orchestrator for chunk-coder spawning.",
+  "type": "object",
+  "required": ["type", "task", "known_context", "output_contract", "test_specifications", "success_criteria"],
+  "properties": {
+    "type": {
+      "const": "tdd_chunk",
+      "description": "Delegation type. Use 'tdd_chunk' when delegating a plan chunk with test specifications."
+    },
+    "task": {
+      "type": "string",
+      "description": "What the delegate should implement. One clear sentence."
+    },
+    "known_context": {
+      "type": "object",
+      "properties": {
+        "file_coordinates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "description"],
+            "properties": {
+              "path": { "type": "string" },
+              "lines": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "context_packets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "covers": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "output_contract": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "format": { "type": "string" },
+        "schema_example": {}
+      }
+    },
+    "test_specifications": {
+      "type": "object",
+      "description": "Test specs from the plan. pass_a (unit) is required.",
+      "required": ["pass_a"],
+      "properties": {
+        "pass_a": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Unit tests. Required -- TDD starts here.",
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "pass_b": {
+          "type": "array",
+          "description": "Integration tests.",
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "pass_c": {
+          "type": "array",
+          "description": "Acceptance tests.",
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "success_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Required for TDD. Must include pass gate conditions.",
+      "items": { "type": "string" }
+    },
+    "previous_chunk_decisions": {
+      "type": "array",
+      "description": "Decisions from prior chunks that constrain this one.",
+      "items": { "type": "string" }
+    },
+    "cross_chunk_continuity": {
+      "type": "array",
+      "description": "Artifacts from prior chunks this delegate must integrate with.",
+      "items": {
+        "type": "object",
+        "required": ["artifact", "source"],
+        "properties": {
+          "artifact": { "type": "string", "description": "What the artifact is (class, type, config)" },
+          "source": { "type": "string", "description": "Absolute path to the artifact" },
+          "from_chunk": { "type": "string", "description": "Which chunk created it" }
+        }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scope_boundary": {
+      "type": "object",
+      "properties": {
+        "do_not": { "type": "array", "items": { "type": "string" } },
+        "tool_budget": { "type": "integer" },
+        "file_set": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "adjacent_context": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "when": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "rejected_approaches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["approach", "reason"],
+        "properties": {
+          "approach": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "working_directory": { "type": "string" },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "ptc_available": { "type": "boolean" },
+        "mcp_servers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "ptc_hints": {
+      "type": "object",
+      "properties": {
+        "files_to_load": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "extract": { "type": "string" }
+            }
+          }
+        },
+        "namespace_variables": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "return_schema": {
+      "type": "object",
+      "description": "The JSON schema the sub-agent's return must match. Included in the prompt so the sub-agent knows the expected format."
+    },
+    "return_instruction": {
+      "type": "string",
+      "description": "Instruction text telling the sub-agent to output only JSON matching return_schema.",
+      "default": "Your final output MUST be a single JSON object matching return_schema. No text outside the JSON. Include delegation_type field set to 'tdd_chunk'."
+    }
+  },
+  "additionalProperties": true
+}

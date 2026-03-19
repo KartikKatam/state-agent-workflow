@@ -1,0 +1,370 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    BATCH SELECTOR PIPELINE FLOW                               ║
+║                  (Tight Filter + Diversity + Enhancement)                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+INPUT: BinSnapshot with up to 32 ROIs
+Each ROI has:
+  - Rich quality metrics (30+ photometric/geometric)
+  - Eligibility flags (top8_eligible, enhance_eligible, etc.)
+  - Pose signature (11D diversity vector)
+  - Quality score (from Producer)
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 0: STRICT ELIGIBILITY GATING                                            │
+│ ────────────────────────────────────────────────────────────────────────     │
+│ Purpose: "Only signal through" - reject noise early                          │
+│                                                                               │
+│ Gates:                                                                        │
+│   ✓ top8_eligible == True (coarse viability from rich analyzer)             │
+│   ✓ plate_height_px >= 40px (minimum size for OCR)                          │
+│   ✓ Optional: tenengrad >= floor (signal floor if enabled)                  │
+│                                                                               │
+│ Behavior:                                                                     │
+│   • If 0 pass → return EMPTY batch (no filler)                              │
+│   • If 1-2 pass → return small batch (quality over quantity)                │
+│   • If 8+ pass → continue to selection                                      │
+│                                                                               │
+│ Config:                                                                       │
+│   - plate_height_min_px = 40                                                 │
+│   - batch_tenengrad_floor = 0 (disabled by default)                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+              ┌───────────────────────────────────┐
+              │ Eligible ROIs (filtered subset)   │
+              │ Range: 0-32 (typically 5-15)      │
+              └───────────────────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: COMPUTE OCR-LIKELIHOOD SCORE (q)                                     │
+│ ────────────────────────────────────────────────────────────────────────     │
+│ Purpose: Rank candidates by predicted OCR success                            │
+│                                                                               │
+│ High-weight factors:                                                          │
+│   • Sharpness (tenengrad): 35% - Critical for character recognition         │
+│   • Size (plate_height): 25% - More pixels = better OCR                     │
+│   • Contrast (global+local): 20% - Character clarity                         │
+│   • Exposure (luminance): 15% - Balanced lighting                            │
+│   • Noise (std): 5% - Penalty for noisy images                              │
+│                                                                               │
+│ Tie-breakers (low weight):                                                   │
+│   • Detection confidence: 2% - YOLO confidence                               │
+│   • Recency (frame_idx): implicit via bin-level normalization                │
+│                                                                               │
+│ Normalization:                                                                │
+│   • Each metric normalized to [0,1] using robust percentiles (p10-p90)      │
+│   • Prevents outliers from dominating                                        │
+│   • Adaptive per bin (handles varying lighting/distance)                     │
+│                                                                               │
+│ Output:                                                                       │
+│   • q score ∈ [0, 1] for each eligible ROI                                  │
+│   • Higher = better OCR likelihood                                           │
+│                                                                               │
+│ Config:                                                                       │
+│   - ocr_score_weight_sharpness = 0.35                                        │
+│   - ocr_score_weight_size = 0.25                                             │
+│   - ocr_score_weight_contrast = 0.20                                         │
+│   - ocr_score_weight_exposure = 0.15                                         │
+│   - ocr_score_weight_noise = 0.05                                            │
+│   - ocr_score_weight_detection = 0.02                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+              ┌───────────────────────────────────┐
+              │ Ranked by q score (descending)    │
+              │ Best quality candidates first     │
+              └───────────────────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: SELECT ANCHORS (Quality First)                                       │
+│ ────────────────────────────────────────────────────────────────────────     │
+│ Purpose: Guarantee high-quality baseline                                     │
+│                                                                               │
+│ Selection:                                                                    │
+│   • Take top-2 ROIs by q score                                               │
+│   • If only 1 eligible → take 1                                              │
+│   • If 0 eligible → return empty (already handled)                           │
+│                                                                               │
+│ Rationale:                                                                    │
+│   • Ensures at least some high-quality images included                       │
+│   • Serves as diversity reference points                                     │
+│   • Prevents "all novel but low quality" batches                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+              ┌───────────────────────────────────┐
+              │ Anchors: Top-2 by quality         │
+              │ Selected = [best, 2nd_best]       │
+              └───────────────────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 3: DIVERSITY FILL (Novelty Constraint)                                  │
+│ ────────────────────────────────────────────────────────────────────────     │
+│ Purpose: "Avoid carbon copies" - enforce pose/viewpoint diversity            │
+│                                                                               │
+│ Algorithm:                                                                    │
+│   1. Remaining = eligible - anchors                                          │
+│   2. Sort remaining by q score (descending)                                  │
+│   3. For each candidate (greedy):                                            │
+│      a. Compute pose distance d to ALL selected ROIs                         │
+│      b. min_d = min(d to each selected)                                      │
+│      c. If min_d >= d_min → NOVEL, add to batch                             │
+│      d. If min_d < d_min → CARBON COPY, skip                                │
+│   4. Stop when batch size = 8 OR no more novel candidates                   │
+│                                                                               │
+│ Pose Distance (weighted):                                                    │
+│   d = w_skew × Δskew + w_quad × Δquad + w_persp × Δpersp + w_scale × Δscale│
+│                                                                               │
+│   Component weights (scenario-driven):                                       │
+│     • Skew (rotation): 50% - HIGH (rotation changes OCR difficulty)         │
+│     • Quad coords: 30% - MEDIUM (viewpoint variation)                        │
+│     • Perspective: 10% - LOW (minor diversity factor)                        │
+│     • Scale: 10% - LOW (already in quality score)                            │
+│                                                                               │
+│   Jitter handling:                                                            │
+│     • Quad distance clamped: max(0, Δquad - jitter_threshold)               │
+│     • Ignores tiny camera shake (< 0.05 normalized)                          │
+│                                                                               │
+│ Behavior:                                                                     │
+│   • Returns FEWER than 8 if no novel candidates remain                       │
+│   • No filling with non-novel images (strict diversity)                      │
+│   • Typical output: 4-8 ROIs (depends on bin diversity)                     │
+│                                                                               │
+│ Config:                                                                       │
+│   - diversity_min_distance = 0.15 (novelty threshold)                        │
+│   - diversity_weight_skew = 0.50                                             │
+│   - diversity_weight_quad = 0.30                                             │
+│   - diversity_weight_persp = 0.10                                            │
+│   - diversity_weight_scale = 0.10                                            │
+│   - diversity_quad_jitter_threshold = 0.05                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+              ┌───────────────────────────────────┐
+              │ Base Batch: 1-8 diverse ROIs      │
+              │ (quality + diversity balanced)    │
+              └───────────────────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 4: ENHANCEMENT SELECTION (Upside-Only Duplicates)                       │
+│ ────────────────────────────────────────────────────────────────────────     │
+│ Purpose: "Enhancement only when upside is likely" - risk-aware duplicates    │
+│                                                                               │
+│ Input: Base batch from Step 3 (1-8 ROIs)                                     │
+│                                                                               │
+│ For each ROI in base batch:                                                  │
+│   1. Check enhance_eligible flag (pre-computed)                              │
+│      → Must be: viable + fixable + motivated                                 │
+│                                                                               │
+│   2. Compute enhancement upside score u ∈ [0, 1]:                            │
+│                                                                               │
+│      High upside when:                                                        │
+│        • Low contrast (40%) → CLAHE likely helps                             │
+│        • Bad exposure (25%) → Gamma adjustment helps                         │
+│        • Mildly soft (20%) → Unsharp masking helps                           │
+│        • Noisy (15%) → Denoising helps                                       │
+│                                                                               │
+│      Guardrails (prevent bad enhancement):                                   │
+│        • Don't enhance "already excellent" (q > 0.85)                        │
+│        • Don't enhance severely blurred (amplifies noise)                    │
+│        • Don't enhance blown highlights (CLAHE creates halos)                │
+│                                                                               │
+│   3. Rank by upside score (descending)                                       │
+│   4. Take top-4 with u > 0                                                   │
+│                                                                               │
+│ Behavior:                                                                     │
+│   • If no ROIs have upside > 0 → return EMPTY (no duplicates)               │
+│   • If only 2 ROIs have upside → return 2 duplicates (not 4)                │
+│   • Max 4 duplicates even if more have upside (compute budget)               │
+│                                                                               │
+│ Output Metadata:                                                              │
+│   • Each duplicate has group_id = "{track_id}_{frame_idx}"                  │
+│   • Allows OCR aggregator to link duplicates to base                         │
+│   • Enables "pick best of {base, enhanced}" per image                        │
+│                                                                               │
+│ Config:                                                                       │
+│   - max_enhance_duplicates = 4                                               │
+│   - enhance_upside_weight_contrast = 0.40                                    │
+│   - enhance_upside_weight_exposure = 0.25                                    │
+│   - enhance_upside_weight_sharpness = 0.20                                   │
+│   - enhance_upside_weight_noise = 0.15                                       │
+│   - enhance_excellence_threshold = 0.85                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+              ┌───────────────────────────────────┐
+              │ Enhanced Duplicates: 0-4 ROIs     │
+              │ (references to base batch)        │
+              └───────────────────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 5: PACKAGE OUTPUT                                                       │
+│ ────────────────────────────────────────────────────────────────────────     │
+│ Purpose: Explicit contract for downstream (Recipe, Preprocessor, OCR)        │
+│                                                                               │
+│ EnhancedBatchSelection:                                                       │
+│   • track_id: TrackId                                                        │
+│   • version: int                                                             │
+│   • base_rois: List[RoiRichQuality] (1-8 ROIs)                              │
+│   • enhance_rois: List[RoiRichQuality] (0-4 ROIs, refs to base)             │
+│   • duplicate_groups: Dict[group_id, [base_idx, enhance_idx]]               │
+│                                                                               │
+│ OCR Batch Order:                                                              │
+│   [base_rois] + [enhance_rois]                                               │
+│   Indices: [0..N-1] base, [N..N+M-1] enhanced                               │
+│                                                                               │
+│ Total images to OCR:                                                          │
+│   len(base_rois) + len(enhance_rois) ≤ 12                                   │
+│   Typical: 4-8 base + 0-4 enhanced = 4-12 images                            │
+│                                                                               │
+│ Downstream Usage:                                                             │
+│   • Recipe Generator: Use duplicate_groups to assign processing intensity    │
+│   • Preprocessor: Minimal photometric for base, full for enhanced            │
+│   • OCR Aggregator: Deduplicate using groups, pick best confidence           │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ STEP 6: LOGGING (Tuning Visibility)                                          │
+│ ────────────────────────────────────────────────────────────────────────     │
+│ Purpose: Enable offline tuning of thresholds and weights                     │
+│                                                                               │
+│ Logged Metrics:                                                               │
+│   1. Eligibility funnel:                                                     │
+│      • total_candidates → eligible → selected_base + selected_enhanced       │
+│      • Rejection reasons (too_small, very_blurry, etc.)                      │
+│                                                                               │
+│   2. Diversity verification:                                                 │
+│      • Pairwise distances among selected (min, mean, max)                    │
+│      • Check if min_dist >= threshold (verify no carbon copies)              │
+│                                                                               │
+│   3. Enhancement selection:                                                  │
+│      • Which ROIs got enhanced duplicates + why (reasons)                    │
+│      • Upside scores for enhanced vs rejected                                │
+│      • Track enhancement success (enhanced confidence > base)                │
+│                                                                               │
+│   4. Quality distribution:                                                   │
+│      • OCR-likelihood scores (q) for selected vs rejected                    │
+│      • Histogram of q scores in bin                                          │
+│                                                                               │
+│ Config:                                                                       │
+│   - enable_batch_selection_logging = True                                    │
+│   - Log level: DEBUG for detailed, INFO for summary                          │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+              ┌───────────────────────────────────┐
+              │ OUTPUT: EnhancedBatchSelection    │
+              │                                    │
+              │ • base_rois: 1-8 diverse ROIs     │
+              │ • enhance_rois: 0-4 duplicates    │
+              │ • duplicate_groups: mapping       │
+              │ • Total to OCR: 1-12 images       │
+              └───────────────────────────────────┘
+                                      │
+                                      ▼
+                            ┌─────────────────────┐
+                            │ Recipe Generator    │
+                            │ (next stage)        │
+                            └─────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         KEY DESIGN DECISIONS                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+1. TIGHT FILTER (Step 0)
+   ✓ Strict gates: top8_eligible + height >= 40px
+   ✓ No degraded mode: return empty if nothing passes
+   ✓ Quality over quantity: prefer 2 good images over 8 bad ones
+
+2. QUALITY FIRST (Steps 1-2)
+   ✓ OCR-likelihood score: multi-metric composite (sharpness, size, contrast)
+   ✓ Anchors guarantee baseline: top-2 always included
+   ✓ Weights empirically tuned: sharpness (35%) + size (25%) dominate
+
+3. DIVERSITY ENFORCEMENT (Step 3)
+   ✓ Pose-based distance: rotation (50%) + viewpoint (30%) weighted
+   ✓ Minimum novelty threshold: d >= 0.15 (tunable)
+   ✓ Jitter tolerance: ignore tiny quad changes (< 0.05 normalized)
+   ✓ No carbon copies: skip similar images even if high quality
+
+4. RISK-AWARE ENHANCEMENT (Step 4)
+   ✓ Upside-driven: only enhance if clear benefit expected
+   ✓ Guardrails: don't enhance excellent, blurred, or blown highlights
+   ✓ Limited budget: max 4 duplicates (compute constraint)
+   ✓ Explicit linking: group_id for OCR deduplication
+
+5. TUNING VISIBILITY (Step 6)
+   ✓ Comprehensive logging: funnel, diversity, enhancement reasons
+   ✓ Offline analysis: adjust thresholds based on production metrics
+   ✓ A/B testing: compare old vs new batch selector
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      EXPECTED BEHAVIOR EXAMPLES                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Example 1: High-Quality Bin (12 eligible from 32 total)
+────────────────────────────────────────────────────────
+Input: 32 ROIs, 12 pass eligibility (diverse poses, good quality)
+Step 0: 12 eligible
+Step 2: Anchors = [best, 2nd_best] (q=0.92, q=0.88)
+Step 3: Diversity fill → 8 total (6 more novel candidates added)
+Step 4: Enhancement → 3 duplicates (mild exposure issues, low contrast)
+Output: 8 base + 3 enhanced = 11 images to OCR
+
+Example 2: Low-Quality Bin (3 eligible from 32 total)
+────────────────────────────────────────────────────────
+Input: 32 ROIs, 3 pass eligibility (most blurry, small, or clipped)
+Step 0: 3 eligible
+Step 2: Anchors = [best, 2nd_best] (q=0.65, q=0.58)
+Step 3: Diversity fill → 3 total (3rd is novel, d=0.18)
+Step 4: Enhancement → 2 duplicates (both have low contrast + noise)
+Output: 3 base + 2 enhanced = 5 images to OCR
+
+Example 3: Homogeneous Bin (20 eligible, all similar poses)
+────────────────────────────────────────────────────────
+Input: 32 ROIs, 20 pass eligibility (straight-on view, slight jitter)
+Step 0: 20 eligible
+Step 2: Anchors = [best, 2nd_best] (q=0.89, q=0.87)
+Step 3: Diversity fill → 4 total (only 2 more novel, rest d < 0.15)
+Step 4: Enhancement → 1 duplicate (most already excellent, q > 0.85)
+Output: 4 base + 1 enhanced = 5 images to OCR
+Note: Strict diversity prevents carbon copies, even with 20 eligible
+
+Example 4: Hopeless Bin (0 eligible from 32 total)
+────────────────────────────────────────────────────────
+Input: 32 ROIs, 0 pass eligibility (all too small, blurry, or clipped)
+Step 0: 0 eligible
+Output: EMPTY batch (downstream OCR skips this track)
+Note: No degraded mode, no filler - wait for better frames
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                       INTEGRATION WITH PIPELINE                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Producer Buffer → Consumer Batch Selector → Recipe Generator → Preprocessor → OCR
+                        ▲                           │
+                        │                           ▼
+                  BinSnapshot              EnhancedBatchSelection
+                  (up to 32 ROIs)         (1-8 base + 0-4 enhanced)
+
+Recipe Generator receives:
+  • base_rois: apply minimal-risk photometric (gamma, mild CLAHE)
+  • enhance_rois: apply full photometric (CLAHE, denoise, unsharp)
+  • duplicate_groups: map which enhanced ROIs duplicate which base ROIs
+
+OCR Aggregator receives:
+  • Combined batch: [base_rois] + [enhance_rois] (1-12 images)
+  • duplicate_groups: for each group, pick max confidence of {base, enhanced}
+  • Then aggregate across all images for final plate read
+
+State Machine:
+  • Empty batch → keep tracking (wait for better frames)
+  • Small batch (1-3) → run OCR, mark needs_retry if low confidence
+  • Full batch (8+) → run OCR, mark confident if high confidence

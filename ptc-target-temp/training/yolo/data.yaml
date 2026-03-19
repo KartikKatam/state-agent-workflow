@@ -1,0 +1,8 @@
+# YOLO LPR dataset configuration (auto-generated with absolute paths)
+train: /home/kartik/work/firefly/LPR-SingleDrone/data/roboflow_dataset/train/images
+val: /home/kartik/work/firefly/LPR-SingleDrone/data/roboflow_dataset/valid/images
+test: /home/kartik/work/firefly/LPR-SingleDrone/data/roboflow_dataset/test/images
+
+nc: 1
+names:
+  0: License_Plate

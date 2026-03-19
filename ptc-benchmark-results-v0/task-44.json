@@ -1,0 +1,806 @@
+{
+  "validation_rules": [
+    {
+      "file": "common/geometry.py",
+      "function": "order_keypoints_by_angle",
+      "condition": "len(keypoints) != 4",
+      "exception_class": "ValueError",
+      "message": "'Expected exactly 4 keypoints'",
+      "line_number": 21
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.canonical_crop_width % 8 != 0",
+      "exception_class": "ValueError",
+      "message": "f'canonical_crop_width must be divisible by 8 (for 4\u00d78 local contrast grid), got {self.canonical_crop_width}'",
+      "line_number": 442
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.canonical_crop_height % 4 != 0",
+      "exception_class": "ValueError",
+      "message": "f'canonical_crop_height must be divisible by 4 (for 4\u00d78 local contrast grid), got {self.canonical_crop_height}'",
+      "line_number": 447
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.flat_region_var_threshold < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'flat_region_var_threshold must be >= 0.0, got {self.flat_region_var_threshold}'",
+      "line_number": 454
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.flat_region_min_pixels < 0",
+      "exception_class": "ValueError",
+      "message": "f'flat_region_min_pixels must be >= 0, got {self.flat_region_min_pixels}'",
+      "line_number": 459
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "not 0 <= self.luminance_black_threshold < self.luminance_white_threshold <= 255",
+      "exception_class": "ValueError",
+      "message": "f'luminance thresholds must satisfy 0 <= black < white <= 255, got black={self.luminance_black_threshold}, white={self.luminance_white_threshold}'",
+      "line_number": 464
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "not self.tenengrad_floor <= self.tenengrad_good",
+      "exception_class": "ValueError",
+      "message": "f'tenengrad_floor must be <= tenengrad_good, got floor={self.tenengrad_floor}, good={self.tenengrad_good}'",
+      "line_number": 470
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.plate_height_ideal <= 0",
+      "exception_class": "ValueError",
+      "message": "f'plate_height_ideal must be > 0, got {self.plate_height_ideal}'",
+      "line_number": 488
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.tenengrad_ideal <= 0",
+      "exception_class": "ValueError",
+      "message": "f'tenengrad_ideal must be > 0, got {self.tenengrad_ideal}'",
+      "line_number": 491
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.commit_margin < 0",
+      "exception_class": "ValueError",
+      "message": "f'commit_margin must be >= 0, got {self.commit_margin}'",
+      "line_number": 495
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.max_staleness_ms <= 0",
+      "exception_class": "ValueError",
+      "message": "f'max_staleness_ms must be > 0, got {self.max_staleness_ms}'",
+      "line_number": 497
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "not 0.0 <= self.stale_min_score <= 1.0",
+      "exception_class": "ValueError",
+      "message": "f'stale_min_score must be in [0.0, 1.0], got {self.stale_min_score}'",
+      "line_number": 499
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.in_flight_timeout_ms <= 0",
+      "exception_class": "ValueError",
+      "message": "f'in_flight_timeout_ms must be > 0, got {self.in_flight_timeout_ms}'",
+      "line_number": 501
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.parseq_temperature <= 0",
+      "exception_class": "ValueError",
+      "message": "f'parseq_temperature must be > 0, got {self.parseq_temperature}'",
+      "line_number": 505
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.parseq_warmup_runs < 0",
+      "exception_class": "ValueError",
+      "message": "f'parseq_warmup_runs must be >= 0, got {self.parseq_warmup_runs}'",
+      "line_number": 507
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.parseq_max_batch_size < 1",
+      "exception_class": "ValueError",
+      "message": "f'parseq_max_batch_size must be >= 1, got {self.parseq_max_batch_size}'",
+      "line_number": 509
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "not self.parseq_allowed_chars",
+      "exception_class": "ValueError",
+      "message": "'parseq_allowed_chars must be non-empty'",
+      "line_number": 513
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "not self.parseq_vocab_path",
+      "exception_class": "ValueError",
+      "message": "'parseq_vocab_path must be non-empty'",
+      "line_number": 515
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "len(self.parseq_norm_mean) != 3",
+      "exception_class": "ValueError",
+      "message": "f'parseq_norm_mean must have 3 elements, got {len(self.parseq_norm_mean)}'",
+      "line_number": 517
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "len(self.parseq_norm_std) != 3",
+      "exception_class": "ValueError",
+      "message": "f'parseq_norm_std must have 3 elements, got {len(self.parseq_norm_std)}'",
+      "line_number": 521
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "any((s <= 0 for s in self.parseq_norm_std))",
+      "exception_class": "ValueError",
+      "message": "f'parseq_norm_std elements must be > 0, got {self.parseq_norm_std}'",
+      "line_number": 525
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.parseq_max_plate_chars < 1",
+      "exception_class": "ValueError",
+      "message": "f'parseq_max_plate_chars must be >= 1, got {self.parseq_max_plate_chars}'",
+      "line_number": 527
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.parseq_max_plate_chars + 1 != self.agg_max_positions",
+      "exception_class": "ValueError",
+      "message": "f'parseq_max_plate_chars + 1 must equal agg_max_positions: {self.parseq_max_plate_chars} + 1 = {self.parseq_max_plate_chars + 1} != {self.agg_max_positions}'",
+      "line_number": 532
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.max_enhance_duplicates < 0",
+      "exception_class": "ValueError",
+      "message": "f'max_enhance_duplicates must be >= 0, got {self.max_enhance_duplicates}'",
+      "line_number": 552
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "not 0 <= self.enhance_excellence_threshold <= 1",
+      "exception_class": "ValueError",
+      "message": "f'enhance_excellence_threshold must be in [0, 1], got {self.enhance_excellence_threshold}'",
+      "line_number": 564
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "diversity_weight_sum <= 0",
+      "exception_class": "ValueError",
+      "message": "f'Sum of diversity weights must be > 0, got {diversity_weight_sum}'",
+      "line_number": 576
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.diversity_min_distance < 0",
+      "exception_class": "ValueError",
+      "message": "f'diversity_min_distance must be >= 0, got {self.diversity_min_distance}'",
+      "line_number": 578
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.diversity_quad_jitter_threshold < 0",
+      "exception_class": "ValueError",
+      "message": "f'diversity_quad_jitter_threshold must be >= 0, got {self.diversity_quad_jitter_threshold}'",
+      "line_number": 582
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.anchor_min_pose_distance < 0",
+      "exception_class": "ValueError",
+      "message": "f'anchor_min_pose_distance must be >= 0, got {self.anchor_min_pose_distance}'",
+      "line_number": 586
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "not 0.0 <= self.target_luma <= 255.0",
+      "exception_class": "ValueError",
+      "message": "f'target_luma must be in [0, 255], got {self.target_luma}'",
+      "line_number": 592
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.target_contrast < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'target_contrast must be >= 0, got {self.target_contrast}'",
+      "line_number": 594
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.target_sharpness < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'target_sharpness must be >= 0, got {self.target_sharpness}'",
+      "line_number": 596
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.target_noise_max < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'target_noise_max must be >= 0, got {self.target_noise_max}'",
+      "line_number": 598
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.luma_range <= 0.0",
+      "exception_class": "ValueError",
+      "message": "f'luma_range must be > 0, got {self.luma_range}'",
+      "line_number": 600
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.gain_min > self.gain_max",
+      "exception_class": "ValueError",
+      "message": "f'gain_min must be <= gain_max, got {self.gain_min} > {self.gain_max}'",
+      "line_number": 609
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.gamma_min > self.gamma_max",
+      "exception_class": "ValueError",
+      "message": "f'gamma_min must be <= gamma_max, got {self.gamma_min} > {self.gamma_max}'",
+      "line_number": 611
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.contrast_max < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'contrast_max must be >= 0, got {self.contrast_max}'",
+      "line_number": 617
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.denoise_max < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'denoise_max must be >= 0, got {self.denoise_max}'",
+      "line_number": 619
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.sharpen_max < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'sharpen_max must be >= 0, got {self.sharpen_max}'",
+      "line_number": 621
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.clahe_clip_min > self.clahe_clip_max",
+      "exception_class": "ValueError",
+      "message": "f'clahe_clip_min must be <= clahe_clip_max, got {self.clahe_clip_min} > {self.clahe_clip_max}'",
+      "line_number": 625
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.clahe_tiles_min > self.clahe_tiles_max",
+      "exception_class": "ValueError",
+      "message": "f'clahe_tiles_min must be <= clahe_tiles_max, got {self.clahe_tiles_min} > {self.clahe_tiles_max}'",
+      "line_number": 630
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.clahe_blend_max < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'clahe_blend_max must be >= 0, got {self.clahe_blend_max}'",
+      "line_number": 635
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "not 0.0 <= self.warp_margin <= 0.5",
+      "exception_class": "ValueError",
+      "message": "f'warp_margin must be in [0.0, 0.5], got {self.warp_margin}'",
+      "line_number": 639
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.recipe_output_width <= 0",
+      "exception_class": "ValueError",
+      "message": "f'recipe_output_width must be > 0, got {self.recipe_output_width}'",
+      "line_number": 641
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.recipe_output_height <= 0",
+      "exception_class": "ValueError",
+      "message": "f'recipe_output_height must be > 0, got {self.recipe_output_height}'",
+      "line_number": 643
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "self.contrast_steepness <= 0.0",
+      "exception_class": "ValueError",
+      "message": "f'contrast_steepness must be > 0, got {self.contrast_steepness}'",
+      "line_number": 647
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "getattr(self, weight_name) < 0",
+      "exception_class": "ValueError",
+      "message": "f'{weight_name} must be >= 0, got {getattr(self, weight_name)}'",
+      "line_number": 485
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "getattr(self, weight_name) < 0",
+      "exception_class": "ValueError",
+      "message": "f'{weight_name} must be >= 0, got {getattr(self, weight_name)}'",
+      "line_number": 562
+    },
+    {
+      "file": "consumer/config.py",
+      "function": "__post_init__",
+      "condition": "getattr(self, gain_name) < 0.0",
+      "exception_class": "ValueError",
+      "message": "f'{gain_name} must be >= 0, got {getattr(self, gain_name)}'",
+      "line_number": 605
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "load_vocab",
+      "condition": "not path.exists()",
+      "exception_class": "FileNotFoundError",
+      "message": "f'Vocab file not found: {path}. Run scripts/export_parseq_trt.py to generate it.'",
+      "line_number": 71
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "load_vocab",
+      "condition": "not tokens",
+      "exception_class": "ValueError",
+      "message": "f'Vocab file is empty: {path}'",
+      "line_number": 82
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "build_allowed_indices",
+      "condition": "eos_vocab_idx is None",
+      "exception_class": "ValueError",
+      "message": "f'EOS token not found in vocabulary. Expected one of {_EOS_TOKENS}, got tokens: {full_vocab[:5]}...'",
+      "line_number": 124
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "build_allowed_indices",
+      "condition": "ch not in token_to_idx",
+      "exception_class": "ValueError",
+      "message": "f\"Character '{ch}' not found in vocabulary. Vocab has {len(full_vocab)} tokens. First 10: {full_vocab[:10]}\"",
+      "line_number": 134
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "__init__",
+      "condition": "not torch.cuda.is_available()",
+      "exception_class": "RuntimeError",
+      "message": "'CUDA is not available \u2014 ParseqEngine requires GPU'",
+      "line_number": 226
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "__init__",
+      "condition": "not engine_path.exists()",
+      "exception_class": "FileNotFoundError",
+      "message": "f'TRT engine not found: {engine_path}\\n\\nRun scripts/export_parseq_trt.py to generate it.'",
+      "line_number": 235
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "__init__",
+      "condition": "len(full_vocab) != self._full_vocab_size",
+      "exception_class": "ValueError",
+      "message": "f'Vocab size mismatch: vocab file has {len(full_vocab)} tokens but TRT engine output has {self._full_vocab_size} classes. Re-export the engine or fix the vocab file.'",
+      "line_number": 271
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "_run_impl",
+      "condition": "batch_tensor.ndim != 4",
+      "exception_class": "ValueError",
+      "message": "f'Expected 4D tensor, got {batch_tensor.ndim}D'",
+      "line_number": 337
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "_run_impl",
+      "condition": "batch_tensor.shape[1] != 3 or batch_tensor.shape[2] != self._img_h or batch_tensor.shape[3] != self._img_w",
+      "exception_class": "ValueError",
+      "message": "f'Expected shape (N, 3, {self._img_h}, {self._img_w}), got {tuple(batch_tensor.shape)}'",
+      "line_number": 339
+    },
+    {
+      "file": "consumer/ops_parseq.py",
+      "function": "_run_impl",
+      "condition": "not batch_tensor.is_cuda",
+      "exception_class": "ValueError",
+      "message": "'Input tensor must be on CUDA device'",
+      "line_number": 347
+    },
+    {
+      "file": "producer/ops_corner_cnn.py",
+      "function": "_load_model",
+      "condition": "not engine_path.exists()",
+      "exception_class": "FileNotFoundError",
+      "message": "f'Corner CNN engine not found: {engine_path}\\n\\nPlease build the engine first or set corner_cnn_enabled=False.'",
+      "line_number": 84
+    },
+    {
+      "file": "producer/ops_detection.py",
+      "function": "__init__",
+      "condition": "not self.device.startswith('cuda') or not torch.cuda.is_available()",
+      "exception_class": "RuntimeError",
+      "message": "f'TensorRT FP16 requires CUDA. Current device: {self.device}, CUDA available: {torch.cuda.is_available()}'",
+      "line_number": 69
+    },
+    {
+      "file": "producer/ops_detection.py",
+      "function": "_load_model",
+      "condition": "not engine_path.exists()",
+      "exception_class": "FileNotFoundError",
+      "message": "f'TensorRT engine not found: {engine_path}\\n\\nPlease build the engine first:\\n  python scripts/build_tensorrt_engine.py --model {self.model_path} --imgsz {self.input_size[0]} {self.input_size[1]}\\n\\nThis is a one-time optimization step that takes 2-5 minutes.'",
+      "line_number": 97
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "load_parseq_model",
+      "condition": "not checkpoint.exists()",
+      "exception_class": "FileNotFoundError",
+      "message": "f'Checkpoint not found: {checkpoint_path}\\nRun: bash scripts/setup_parseq.sh'",
+      "line_number": 44
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "extract_vocab",
+      "condition": "vocab[0] not in ('[E]', '<eos>')",
+      "exception_class": "ValueError",
+      "message": "f\"Expected EOS token '[E]' or '<eos>' at index 0, got '{vocab[0]}'. Tokenizer layout may have changed.\"",
+      "line_number": 121
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "extract_vocab",
+      "condition": "len(vocab) != 95",
+      "exception_class": "ValueError",
+      "message": "f'Expected 95 vocab entries (charset + EOS), got {len(vocab)}. Full _itos length: {len(full_itos)}'",
+      "line_number": 126
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "build_trt_engine",
+      "condition": "serialized is None",
+      "exception_class": "RuntimeError",
+      "message": "'TRT engine build failed (build_serialized_network returned None)'",
+      "line_number": 245
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "verify_engine",
+      "condition": "engine is None",
+      "exception_class": "RuntimeError",
+      "message": "f'Failed to deserialize TRT engine: {engine_path}'",
+      "line_number": 285
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "verify_engine",
+      "condition": "out_vocab != vocab_size",
+      "exception_class": "ValueError",
+      "message": "f'Vocab size mismatch: engine outputs {out_vocab} classes, vocab file has {vocab_size} entries'",
+      "line_number": 324
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "verify_engine",
+      "condition": "np.isnan(output_1).any()",
+      "exception_class": "ValueError",
+      "message": "'Engine output contains NaN (batch=1)'",
+      "line_number": 332
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "verify_engine",
+      "condition": "np.isinf(output_1).any()",
+      "exception_class": "ValueError",
+      "message": "'Engine output contains Inf (batch=1)'",
+      "line_number": 334
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "verify_engine",
+      "condition": "np.isnan(output_12).any()",
+      "exception_class": "ValueError",
+      "message": "'Engine output contains NaN (batch=12)'",
+      "line_number": 343
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "verify_engine",
+      "condition": "np.isinf(output_12).any()",
+      "exception_class": "ValueError",
+      "message": "'Engine output contains Inf (batch=12)'",
+      "line_number": 345
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "verify_engine",
+      "condition": "max_diff < 0.0001",
+      "exception_class": "ValueError",
+      "message": "f'Engine appears to ignore input: zeros vs random max_diff={max_diff:.2e}. This usually means FP16 LayerNorm overflow \u2014 re-export with opset >= 17.'",
+      "line_number": 354
+    },
+    {
+      "file": "scripts/export_parseq_trt.py",
+      "function": "build_trt_engine",
+      "condition": "not parser.parse(f.read())",
+      "exception_class": "RuntimeError",
+      "message": "f'Failed to parse ONNX model: {onnx_path}'",
+      "line_number": 212
+    },
+    {
+      "file": "tests/conftest_training.py",
+      "function": "make_synthetic_dataset",
+      "condition": "tmp_path is None",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 105
+    },
+    {
+      "file": "tests/test_parseq.py",
+      "function": "agg_side_effect",
+      "condition": "agg_call_count == 2",
+      "exception_class": "RuntimeError",
+      "message": "'aggregation explosion'",
+      "line_number": 1028
+    },
+    {
+      "file": "tools/synthetic_data/generate_composites.py",
+      "function": "generate_all",
+      "condition": "plate_id in val_set",
+      "exception_class": "ValueError",
+      "message": "f\"Data leakage: train plate '{plate_id}' found in val split!\"",
+      "line_number": 657
+    },
+    {
+      "file": "tools/synthetic_data/validate_synthetic.py",
+      "function": "check_annotations_format",
+      "condition": "errors > 0",
+      "exception_class": "ValueError",
+      "message": "f'Annotation format check failed with {errors} errors.'",
+      "line_number": 95
+    },
+    {
+      "file": "tools/synthetic_data/validate_synthetic.py",
+      "function": "check_no_val_leakage",
+      "condition": "source_id in val_set",
+      "exception_class": "ValueError",
+      "message": "f\"Data leakage: source '{source_id}' used in synthetic data is in the validation split!\"",
+      "line_number": 42
+    },
+    {
+      "file": "training/dataset.py",
+      "function": "generate_heatmap_target",
+      "condition": "sigma <= 0",
+      "exception_class": "ValueError",
+      "message": "f'sigma must be positive, got {sigma}'",
+      "line_number": 139
+    },
+    {
+      "file": "training/dataset.py",
+      "function": "__getitem__",
+      "condition": "not img_path.exists()",
+      "exception_class": "FileNotFoundError",
+      "message": "f'Image not found: {img_path}'",
+      "line_number": 317
+    },
+    {
+      "file": "training/dataset.py",
+      "function": "__getitem__",
+      "condition": "img is None",
+      "exception_class": "FileNotFoundError",
+      "message": "f'Failed to read image: {img_path}'",
+      "line_number": 321
+    },
+    {
+      "file": "training/train.py",
+      "function": "train",
+      "condition": "cfg.total_epochs <= 0",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 509
+    },
+    {
+      "file": "training/efficientnet_b3/train.py",
+      "function": "train",
+      "condition": "cfg.total_epochs <= 0",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 509
+    },
+    {
+      "file": "training/regression/dataset.py",
+      "function": "__getitem__",
+      "condition": "not img_path.exists()",
+      "exception_class": "FileNotFoundError",
+      "message": "f'Image not found: {img_path}'",
+      "line_number": 140
+    },
+    {
+      "file": "training/regression/dataset.py",
+      "function": "__getitem__",
+      "condition": "img is None",
+      "exception_class": "FileNotFoundError",
+      "message": "f'Failed to read image: {img_path}'",
+      "line_number": 144
+    },
+    {
+      "file": "training/regression/train.py",
+      "function": "train",
+      "condition": "cfg.total_epochs <= 0",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 451
+    },
+    {
+      "file": "training/regression/train_ema.py",
+      "function": "train",
+      "condition": "cfg.total_epochs <= 0",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 467
+    },
+    {
+      "file": "training/regression/train_progressive.py",
+      "function": "train_progressive",
+      "condition": "cfg.total_epochs <= 0",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 180
+    },
+    {
+      "file": "training/regression/production/train.py",
+      "function": "train",
+      "condition": "cfg.total_epochs <= 0",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 608
+    },
+    {
+      "file": "training/regression/production/train.py",
+      "function": "__getitem__",
+      "condition": "img is None",
+      "exception_class": "FileNotFoundError",
+      "message": "f'Failed to read image: {img_path}'",
+      "line_number": 181
+    },
+    {
+      "file": "training/regression/stride2/run.py",
+      "function": "train_stride2",
+      "condition": "cfg.total_epochs <= 0",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 77
+    },
+    {
+      "file": "training/regression/variance/train.py",
+      "function": "train",
+      "condition": "cfg.total_epochs <= 0",
+      "exception_class": "ValueError",
+      "message": "msg",
+      "line_number": 405
+    },
+    {
+      "file": "training/yolo/export.py",
+      "function": "main",
+      "condition": "not weights_path.exists()",
+      "exception_class": "SystemExit",
+      "message": "f'Weights file not found: {weights_path}'",
+      "line_number": 165
+    },
+    {
+      "file": "training/yolo/train.py",
+      "function": "main",
+      "condition": "not checkpoint.exists()",
+      "exception_class": "SystemExit",
+      "message": "1",
+      "line_number": 83
+    },
+    {
+      "file": "vendor/parseq/tools/coco_2_converter.py",
+      "function": "convert_textocr",
+      "condition": "not osp.exists(annotation_path)",
+      "exception_class": "Exception",
+      "message": "f'{annotation_path} not exists, please check and try again.'",
+      "line_number": 70
+    },
+    {
+      "file": "vendor/parseq/tools/lsvt_converter.py",
+      "function": "convert_lsvt",
+      "condition": "not osp.exists(annotation_path)",
+      "exception_class": "Exception",
+      "message": "f'{annotation_path} not exists, please check and try again.'",
+      "line_number": 65
+    },
+    {
+      "file": "vendor/parseq/tools/openvino_converter.py",
+      "function": "convert_openimages",
+      "condition": "not osp.exists(annotation_path)",
+      "exception_class": "Exception",
+      "message": "f'{annotation_path} not exists, please check and try again.'",
+      "line_number": 60
+    },
+    {
+      "file": "vendor/parseq/tools/textocr_converter.py",
+      "function": "convert_textocr",
+      "condition": "not osp.exists(annotation_path)",
+      "exception_class": "Exception",
+      "message": "f'{annotation_path} not exists, please check and try again.'",
+      "line_number": 88
+    },
+    {
+      "file": "tests/test_parseq.py",
+      "function": "test_mixed_ticks_no_orphan",
+      "condition": "agg_call_count == 2",
+      "exception_class": "RuntimeError",
+      "message": "'aggregation explosion'",
+      "line_number": 1028
+    }
+  ],
+  "total_count": 100,
+  "files_with_validation": 26
+}

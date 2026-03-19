@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "feature": "ptc",
+    "chunk": "chunk-05",
+    "started_at": "2026-02-28T20:10:00Z",
+    "last_updated": "2026-02-28T20:20:00Z",
+    "session_id": "eea0d64d-acb7-44c4-869d-c91faed3d424",
+    "session_label": "ptc-chunk-05-2026-02-28",
+    "agent_model": "opus"
+  },
+  "status": "verified",
+  "phase": "review",
+  "resume_point": "Awaiting user approval",
+  "phase_history": [
+    {
+      "phase": "test_design",
+      "timestamp": "2026-02-28T20:10:00Z",
+      "details": "Designed 14 tests across 5 test classes with mock reader/writer pattern"
+    },
+    {
+      "phase": "test_writing",
+      "timestamp": "2026-02-28T20:11:00Z",
+      "details": "Wrote all 14 tests in tests/ptc/test_ipc_host.py with MockReader/MockWriter helpers"
+    },
+    {
+      "phase": "red_verified",
+      "timestamp": "2026-02-28T20:11:30Z",
+      "details": "14 tests failed: ModuleNotFoundError for ipc_host"
+    },
+    {
+      "phase": "implementation",
+      "timestamp": "2026-02-28T20:12:00Z",
+      "details": "Implemented IpcHost with start/stop, send_execute, health_check, parallel tool dispatch"
+    },
+    {
+      "phase": "iteration",
+      "timestamp": "2026-02-28T20:14:00Z",
+      "details": "Fixed race condition: tool dispatch tasks must complete before returning CompleteMsg. Added pending_tasks tracking + gather before return."
+    },
+    {
+      "phase": "green_verified",
+      "timestamp": "2026-02-28T20:15:00Z",
+      "details": "14/14 tests passing in 0.32s"
+    },
+    {
+      "phase": "invariant_check",
+      "timestamp": "2026-02-28T20:16:00Z",
+      "details": "All 3 invariants verified: inv-05-01 through inv-05-03"
+    },
+    {
+      "phase": "quality_gate",
+      "timestamp": "2026-02-28T20:17:00Z",
+      "details": "ruff format passed, ruff check passed, pyright 0 errors, tests 14/14"
+    }
+  ],
+  "files_modified": [
+    {
+      "path": "~/.claude/mcp/ptc-server/ipc_host.py",
+      "action": "create",
+      "description": "IpcHost class — async Unix socket server with send_execute lifecycle, parallel tool dispatch, health_check, stop"
+    },
+    {
+      "path": "tests/ptc/test_ipc_host.py",
+      "action": "create",
+      "description": "14 async tests with MockReader/MockWriter helpers for testing without real sockets"
+    }
+  ],
+  "tests_written": [
+    {"name": "test_ipc_host_init", "class": "TestIpcHostInit", "status": "pass"},
+    {"name": "test_ipc_host_start_creates_socket", "class": "TestIpcHostInit", "status": "pass"},
+    {"name": "test_send_execute_simple_complete", "class": "TestIpcHostSendExecute", "status": "pass"},
+    {"name": "test_send_execute_with_tool_call", "class": "TestIpcHostSendExecute", "status": "pass"},
+    {"name": "test_send_execute_with_error_msg", "class": "TestIpcHostSendExecute", "status": "pass"},
+    {"name": "test_send_execute_timeout_sends_cancel", "class": "TestIpcHostSendExecute", "status": "pass"},
+    {"name": "test_send_execute_logs_events", "class": "TestIpcHostSendExecute", "status": "pass"},
+    {"name": "test_parallel_tool_calls_dispatched_concurrently", "class": "TestIpcHostParallelToolCalls", "status": "pass"},
+    {"name": "test_parallel_tool_calls_independent_results", "class": "TestIpcHostParallelToolCalls", "status": "pass"},
+    {"name": "test_parallel_tool_calls_one_fails", "class": "TestIpcHostParallelToolCalls", "status": "pass"},
+    {"name": "test_health_check_success", "class": "TestIpcHostHealthCheck", "status": "pass"},
+    {"name": "test_health_check_timeout", "class": "TestIpcHostHealthCheck", "status": "pass"},
+    {"name": "test_stop_closes_connection", "class": "TestIpcHostStop", "status": "pass"},
+    {"name": "test_stop_removes_socket_file", "class": "TestIpcHostStop", "status": "pass"}
+  ],
+  "invariants_status": {
+    "inv-05-01": "pass",
+    "inv-05-02": "pass",
+    "inv-05-03": "pass"
+  },
+  "quality_gate": {
+    "format": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "tests": "pass"
+  },
+  "learning_signals": [
+    {
+      "id": "sig-001",
+      "type": "test_fix_cycle",
+      "context": {
+        "test_name": "test_send_execute_with_tool_call + parallel tests",
+        "failure_count": 1,
+        "failure_reason": "asyncio.create_task dispatches tool calls in background, but _read_loop returns CompleteMsg immediately before tasks complete",
+        "resolution": "Track pending_tasks list, await asyncio.gather(*pending_tasks) before returning from _read_loop on complete/error"
+      },
+      "timestamp": "2026-02-28T20:14:00Z",
+      "extracted": false
+    }
+  ],
+  "deviations": [],
+  "user_interactions": [],
+  "decisions_made": [
+    {
+      "decision": "MockReader/MockWriter inline test helpers instead of real socket mocking",
+      "reason": "Simpler, faster, more deterministic — matches test spec's 'mock_socket_pair' strategy"
+    },
+    {
+      "decision": "tool_dispatcher and event_logger typed as Any instead of object",
+      "reason": "Pyright requires Any for duck-typed interfaces that use attribute access"
+    },
+    {
+      "decision": "Pending tool dispatch tasks gathered before returning complete/error",
+      "reason": "Race condition: create_task dispatches don't complete before _read_loop returns without gather"
+    }
+  ],
+  "user_preferences": [],
+  "context_usage": {},
+  "timing": {
+    "iteration_count": 1
+  }
+}

@@ -1,0 +1,4 @@
+# file: /home/kartik/work/firefly/LPR-SingleDrone/producer/__init__.py
+# hypothesis_version: 6.151.5
+
+['BinSnapshot', 'BufferStats', 'Detection', 'DetectionTimings', 'DetectorOutput', 'FastQualityMetrics', 'FrameResult', 'FrameSampler', 'IdBin', 'IdBufferManager', 'LoggingMode', 'PipelineStats', 'PlateTracker', 'ProducerConfig', 'ProducerPipeline', 'RoiFastQuality', 'RoiImage', 'Track', 'TrackId', 'TrackerOutput', 'TrackingTimings', 'YoloDetector', 'crop_track_roi', 'crop_tracks', 'detect_plate_rois', 'load_producer_config', 'track_detections']

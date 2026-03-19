@@ -1,0 +1,15 @@
+Before delegating a subtask from your research work, reason through:
+
+1. QUERY CLARITY: What specific question should the sub-agent answer?
+   Vague queries ("research authentication") produce vague results.
+   Specific queries ("how does OAuth2 PKCE flow work with refresh tokens in FastAPI")
+   produce actionable results.
+
+2. SOURCE PRIORITY: Should the sub-agent use Context7 (library docs),
+   WebSearch (general), or both? What sources are most authoritative for this topic?
+
+3. EXISTING RESEARCH: Check .claude/research/ — has this topic already been researched?
+   If so, what gap remains that the sub-agent should fill?
+
+4. OUTPUT: Research summary to .claude/research/{topic}.json, or a direct answer
+   embedded in a message back to you?

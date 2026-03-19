@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "query-result.schema.json",
+  "title": "Query Result Packet",
+  "description": "Answer to a specific question from another agent. Ephemeral - used once then can be discarded.",
+
+  "type": "object",
+  "required": ["meta", "query", "answer", "sources"],
+
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["type", "created", "schema_version", "requester"],
+      "properties": {
+        "type": {"const": "query"},
+        "created": {"type": "string", "format": "date-time"},
+        "schema_version": {"type": "string", "default": "1.0"},
+        "requester": {
+          "type": "string",
+          "description": "Agent that requested this query",
+          "examples": ["chunk-coder", "plan-architect"]
+        },
+        "query_id": {
+          "type": "string",
+          "description": "Unique ID for tracking, format: timestamp-topic"
+        }
+      }
+    },
+
+    "query": {
+      "type": "object",
+      "required": ["question", "scope"],
+      "properties": {
+        "question": {
+          "type": "string",
+          "description": "The original question asked",
+          "maxLength": 200
+        },
+        "scope": {
+          "type": "string",
+          "description": "Where to look",
+          "examples": ["producer/", "common/models.py", "entire codebase"]
+        },
+        "context": {
+          "type": "string",
+          "description": "Why this was asked (helps interpret answer)",
+          "maxLength": 100
+        }
+      }
+    },
+
+    "answer": {
+      "type": "object",
+      "required": ["summary", "confidence"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "Direct answer in 1-2 sentences",
+          "maxLength": 200
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How confident in this answer (1.0 = certain)"
+        },
+        "details": {
+          "type": "array",
+          "description": "Structured details supporting the answer",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": {"type": "string"},
+              "location": {"type": "string", "description": "path:line"},
+              "relevance": {"type": "string", "maxLength": 50}
+            }
+          }
+        },
+        "code_snippets": {
+          "type": "array",
+          "description": "Only include if essential to answer",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": {"type": "string"},
+              "lines": {"type": "string", "description": "e.g., 45-52"},
+              "content": {"type": "string", "maxLength": 500},
+              "why_included": {"type": "string", "maxLength": 50}
+            }
+          }
+        },
+        "not_found": {
+          "type": "boolean",
+          "description": "True if the answer couldn't be determined"
+        },
+        "uncertainty": {
+          "type": "string",
+          "description": "What's unclear or ambiguous",
+          "maxLength": 100
+        }
+      }
+    },
+
+    "sources": {
+      "type": "array",
+      "description": "Files examined to produce this answer",
+      "items": {
+        "type": "object",
+        "required": ["file"],
+        "properties": {
+          "file": {"type": "string"},
+          "lines_read": {"type": "string", "description": "e.g., 1-50, 120-150"},
+          "relevant": {"type": "boolean", "description": "Was this file useful?"}
+        }
+      }
+    },
+
+    "follow_up": {
+      "type": "object",
+      "description": "Suggestions if answer is incomplete",
+      "properties": {
+        "read_more": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Files to read for more detail"
+        },
+        "related_queries": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Other questions that might help"
+        }
+      }
+    }
+  }
+}

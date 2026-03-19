@@ -1,0 +1,132 @@
+{
+  "id": "agentic-coding-worktree-patterns",
+  "library": "agentic-coding-tools",
+  "version": "2026-02",
+  "type": "best_practices",
+  "documentation": {
+    "summary": "How 15+ agentic coding tools handle git isolation, worktrees, and parallel agents. The ecosystem has converged on two patterns: VM/container-per-task (hosted tools: Devin, Copilot Coding Agent, OpenHands) and git worktree-per-agent (local tools: Claude Code, Cursor, VS Code Background Agents). Claude Code CLI v2.1.49 shipped native worktree support in February 2026. Full report at .claude/research/agentic-coding-worktree-patterns.md",
+    "common_patterns": [
+      {
+        "pattern": "Claude Code native worktrees — --worktree flag",
+        "when_to_use": "Isolated parallel Claude Code sessions",
+        "example": "claude --worktree chunk-01 --tmux"
+      },
+      {
+        "pattern": "isolation: worktree in subagent frontmatter",
+        "when_to_use": "Each subagent/chunk-coder gets its own branch + directory automatically",
+        "example": "Add 'isolation: worktree' to chunk-coder agent YAML front matter"
+      },
+      {
+        "pattern": "git worktree add per agent (manual)",
+        "when_to_use": "Universal pattern for local multi-agent tools",
+        "example": "git worktree add -b chunk-01 .claude/worktrees/chunk-01 main"
+      },
+      {
+        "pattern": "VM/container per task",
+        "when_to_use": "Hosted cloud tools (Devin, GitHub Copilot Coding Agent, OpenHands)",
+        "example": "Each task gets its own ephemeral GitHub Actions runner or cloud VM"
+      },
+      {
+        "pattern": "Shadow git repo (core.worktree trick)",
+        "when_to_use": "Per-tool-use checkpointing without affecting user git history",
+        "example": "Used by Cline and Kiro — stores snapshots in ext global storage"
+      },
+      {
+        "pattern": "Patch-only output (no commits)",
+        "when_to_use": "Agent runs in Docker container, outputs git diff as patch file",
+        "example": "SWE-agent: git add -A && git diff --cached > patch.diff"
+      },
+      {
+        "pattern": "PR-as-isolation",
+        "when_to_use": "Each agent task creates its own branch + opens PR for human review",
+        "example": "GitHub Copilot Coding Agent uses copilot/* branch prefix"
+      },
+      {
+        "pattern": "File Claims registry",
+        "when_to_use": "Prevent dual-ownership of files across parallel agents",
+        "example": "parallel-cc: agents declare exclusive/shared access to files before modifying"
+      },
+      {
+        "pattern": "Competitive Implementation",
+        "when_to_use": "High-stakes chunks; exploit LLM non-determinism to get best solution",
+        "example": "N agents tackle same chunk; orchestrator picks best output via review"
+      }
+    ],
+    "gotchas": [
+      {
+        "issue": "Agent Teams do NOT automatically isolate agents into worktrees",
+        "solution": "Must add isolation: worktree to each agent's frontmatter, or manage worktrees manually in the orchestrator"
+      },
+      {
+        "issue": "Worktree proliferation without cleanup",
+        "solution": "Add .claude/worktrees/ to .gitignore; Claude Code auto-removes worktrees with no changes on exit; Cursor limits to 20"
+      },
+      {
+        "issue": "Shared resources (ports, databases) across worktrees",
+        "solution": "Per-worktree port allocation: BASE_PORT + (WORKTREE_INDEX * 10) + SERVICE_OFFSET; separate DB instances per worktree"
+      },
+      {
+        "issue": "No ExitWorktree tool — CWD is locked to worktree for session",
+        "solution": "Claude Code Issue #29436 (open); current workaround: start a new session outside the worktree"
+      },
+      {
+        "issue": "Parallel agents rewriting the same files",
+        "solution": "Plan phase must define file ownership per chunk; mark non-overlapping file regions; use File Claims registry"
+      },
+      {
+        "issue": "node_modules disk multiplication across worktrees",
+        "solution": "Symlink node_modules and other gitignored build dirs (parallel-code pattern)"
+      }
+    ],
+    "examples": [
+      {
+        "title": "Claude Code parallel chunk-coders with worktree isolation",
+        "description": "Spawn two parallel chunk-coder agents each in their own worktree",
+        "code": "# In agent frontmatter (.claude/agents/chunk-coder.md):\n---\nname: chunk-coder\nisolation: worktree\n---\n\n# Orchestrator spawns two coders — each gets .claude/worktrees/worktree-<name>/"
+      },
+      {
+        "title": "Manual worktree per chunk",
+        "description": "Manual worktree creation for chunk isolation",
+        "code": "git worktree add -b chunk-01 .claude/worktrees/chunk-01 main\ngit worktree add -b chunk-02 .claude/worktrees/chunk-02 main\n# Run agents in each directory"
+      },
+      {
+        "title": "WorktreeCreate hook for non-git VCS",
+        "description": "Replace git worktree with SVN checkout via hook in .claude/settings.json",
+        "code": "{\n  \"hooks\": {\n    \"WorktreeCreate\": [{\n      \"hooks\": [{\n        \"type\": \"command\",\n        \"command\": \"bash -c 'NAME=$(jq -r .name); DIR=\\\"$HOME/.claude/worktrees/$NAME\\\"; svn checkout url \\\"$DIR\\\" >&2 && echo \\\"$DIR\\\"'\"\n      }]\n    }]\n  }\n}"
+      }
+    ]
+  },
+  "sources": [
+    {"url": "https://code.claude.com/docs/en/common-workflows", "type": "official_docs", "title": "Claude Code Common Workflows — Worktrees", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://code.claude.com/docs/en/hooks", "type": "official_docs", "title": "Claude Code Hooks Reference — WorktreeCreate/Remove", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/anthropics/claude-code/issues/29436", "type": "github", "title": "Issue #29436: Add ExitWorktree tool", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://aider.chat/docs/git.html", "type": "official_docs", "title": "Aider Git Integration", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/SWE-agent/SWE-agent", "type": "github", "title": "SWE-agent GitHub", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://docs.openhands.dev/openhands/usage/sandboxes/docker", "type": "official_docs", "title": "OpenHands Docker Sandbox", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent", "type": "official_docs", "title": "GitHub Copilot Coding Agent", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://code.visualstudio.com/docs/copilot/agents/background-agents", "type": "official_docs", "title": "VS Code Background Agents", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://cursor.com/docs/configuration/worktrees", "type": "official_docs", "title": "Cursor Parallel Agents / Worktrees", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://cognition.ai/blog/devin-2", "type": "official_docs", "title": "Devin 2.0 — MultiDevin", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://docs.cline.bot/core-workflows/checkpoints", "type": "official_docs", "title": "Cline Checkpoints — Shadow Git Repo", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://kiro.dev/docs/cli/experimental/checkpointing/", "type": "official_docs", "title": "Kiro Checkpointing", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://windsurf.com/blog/windsurf-wave-13", "type": "official_docs", "title": "Windsurf Wave 13 — Git Worktrees", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/nwiizo/ccswarm", "type": "github", "title": "ccswarm — multi-agent orchestration with worktrees", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/johannesjo/parallel-code", "type": "github", "title": "parallel-code — 5 agents, 5 features, 1 repo", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/automazeio/ccpm", "type": "github", "title": "ccpm — GitHub Issues driven orchestration", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/frankbria/parallel-cc", "type": "github", "title": "parallel-cc — SQLite + File Claims + AST conflict detection", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/ComposioHQ/agent-orchestrator", "type": "github", "title": "agent-orchestrator — plugin-based autonomous CI loop", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/spillwavesolutions/parallel-worktrees", "type": "github", "title": "parallel-worktrees — Claude Code skill with 6 patterns", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://github.com/agenttools/worktree", "type": "github", "title": "agenttools/worktree — agent archetypes + WORKTREE_COORDINATION.md", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://devcenter.upsun.com/posts/git-worktrees-for-parallel-ai-coding-agents/", "type": "blog", "title": "Upsun: Git worktrees for parallel AI coding agents", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://nx.dev/blog/git-worktrees-ai-agents", "type": "blog", "title": "Nx Blog: How Git Worktrees Changed My AI Agent Workflow", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://docs.agentinterviews.com/blog/parallel-ai-coding-with-gitworktrees/", "type": "blog", "title": "Agent Interviews: Parallel AI Coding with Git Worktrees", "accessed_at": "2026-03-01T00:00:00Z"},
+    {"url": "https://www.threads.com/@boris_cherny/post/DVAAnexgRUj/introducing-built-in-git-worktree-support-for-claude-code-now-agents-can-run-in", "type": "blog", "title": "Boris Cherny: Claude Code worktree announcement", "accessed_at": "2026-03-01T00:00:00Z"}
+  ],
+  "meta": {
+    "created_at": "2026-03-01T00:00:00Z",
+    "last_updated": "2026-03-01T00:00:00Z",
+    "confidence": 0.9,
+    "merge_strategy": "consolidation",
+    "related_research": []
+  }
+}

@@ -1,0 +1,263 @@
+{
+  "class_name": "YoloTrainingConfig",
+  "source_file": "training/yolo/config.py",
+  "fields": {
+    "data_yaml": {
+      "type": "str",
+      "default": "'training/yolo/data.yaml'"
+    },
+    "checkpoint_path": {
+      "type": "str",
+      "default": "'models/yolov11m-lpr-base.pt'"
+    },
+    "project_dir": {
+      "type": "str",
+      "default": "'runs/yolo-lpr'"
+    },
+    "run_name": {
+      "type": "str",
+      "default": "'lpr-finetune'"
+    },
+    "epochs": {
+      "type": "int",
+      "default": "100"
+    },
+    "batch_size": {
+      "type": "int",
+      "default": "-1"
+    },
+    "imgsz": {
+      "type": "int",
+      "default": "640"
+    },
+    "device": {
+      "type": "str",
+      "default": "'cuda'"
+    },
+    "optimizer": {
+      "type": "str",
+      "default": "'AdamW'"
+    },
+    "lr0": {
+      "type": "float",
+      "default": "0.001"
+    },
+    "lrf": {
+      "type": "float",
+      "default": "0.01"
+    },
+    "warmup_epochs": {
+      "type": "float",
+      "default": "5.0"
+    },
+    "patience": {
+      "type": "int",
+      "default": "30"
+    },
+    "weight_decay": {
+      "type": "float",
+      "default": "0.0005"
+    },
+    "cos_lr": {
+      "type": "bool",
+      "default": "True"
+    },
+    "seed": {
+      "type": "int",
+      "default": "42"
+    },
+    "workers": {
+      "type": "int",
+      "default": "8"
+    },
+    "warm_end": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "peak_start": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "refine_start": {
+      "type": "float",
+      "default": "0.75"
+    },
+    "refine_floor": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "warm_aug": {
+      "type": "dict[str, float]",
+      "default": "field(default_factory=_default_warm_aug)"
+    },
+    "ramp_aug": {
+      "type": "dict[str, float]",
+      "default": "field(default_factory=_default_ramp_aug)"
+    },
+    "refine_aug": {
+      "type": "dict[str, float]",
+      "default": "field(default_factory=_default_refine_aug)"
+    },
+    "drone_aug_enabled": {
+      "type": "bool",
+      "default": "True"
+    },
+    "drone_affine_shear_x": {
+      "type": "tuple[int, int]",
+      "default": "(-15, 15)"
+    },
+    "drone_affine_shear_y": {
+      "type": "tuple[int, int]",
+      "default": "(-25, 25)"
+    },
+    "drone_affine_rotate": {
+      "type": "tuple[int, int]",
+      "default": "(-15, 15)"
+    },
+    "drone_affine_prob": {
+      "type": "float",
+      "default": "0.7"
+    },
+    "drone_perspective_limit": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "drone_perspective_prob": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "drone_scale_limit": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "drone_scale_prob": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "drone_occlusion_max_holes": {
+      "type": "int",
+      "default": "2"
+    },
+    "drone_occlusion_max_h_frac": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "drone_occlusion_max_w_frac": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "drone_occlusion_prob": {
+      "type": "float",
+      "default": "0.25"
+    },
+    "drone_distortion_limit": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "drone_distortion_prob": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "drone_motion_blur_limit": {
+      "type": "int",
+      "default": "7"
+    },
+    "drone_motion_blur_prob": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "drone_defocus_radius": {
+      "type": "tuple[int, int]",
+      "default": "(3, 7)"
+    },
+    "drone_defocus_prob": {
+      "type": "float",
+      "default": "0.2"
+    },
+    "drone_noise_var_limit": {
+      "type": "tuple[float, float]",
+      "default": "(10.0, 50.0)"
+    },
+    "drone_noise_prob": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "drone_compression_quality": {
+      "type": "tuple[int, int]",
+      "default": "(40, 85)"
+    },
+    "drone_compression_prob": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "drone_fog_coef": {
+      "type": "tuple[float, float]",
+      "default": "(0.1, 0.3)"
+    },
+    "drone_fog_prob": {
+      "type": "float",
+      "default": "0.15"
+    },
+    "drone_brightness_limit": {
+      "type": "float",
+      "default": "0.3"
+    },
+    "drone_brightness_prob": {
+      "type": "float",
+      "default": "0.4"
+    },
+    "mining_enabled": {
+      "type": "bool",
+      "default": "True"
+    },
+    "mining_min_epoch": {
+      "type": "int",
+      "default": "15"
+    },
+    "mining_interval": {
+      "type": "int",
+      "default": "5"
+    },
+    "mining_top_fraction": {
+      "type": "float",
+      "default": "0.1"
+    },
+    "mining_oversample_factor": {
+      "type": "float",
+      "default": "3.0"
+    },
+    "freeze_backbone": {
+      "type": "bool",
+      "default": "True"
+    },
+    "freeze_layers": {
+      "type": "int",
+      "default": "10"
+    },
+    "freeze_epochs": {
+      "type": "int",
+      "default": "15"
+    },
+    "wandb_enabled": {
+      "type": "bool",
+      "default": "True"
+    },
+    "wandb_project": {
+      "type": "str",
+      "default": "'yolo-lpr-training'"
+    },
+    "export_onnx": {
+      "type": "bool",
+      "default": "True"
+    },
+    "export_trt": {
+      "type": "bool",
+      "default": "True"
+    },
+    "export_half": {
+      "type": "bool",
+      "default": "True"
+    }
+  },
+  "field_count": 64
+}

@@ -1,0 +1,16 @@
+Before delegating a subtask from your implementation work, reason through:
+
+1. WHY delegate? Is this subtask outside your current scope, or do you need
+   specialized exploration/research before you can continue?
+
+2. WHAT specifically do you need back? A code snippet? A file path? An answer
+   to a technical question? Be precise about the output contract.
+
+3. SCOPE GUARD: Will the sub-agent need to modify files? If so, which ones?
+   Does this overlap with YOUR write scope? Overlapping scopes cause merge conflicts.
+
+4. CONTEXT HANDOFF: What does the sub-agent need to know about your current
+   TDD state? Which tests exist, which pass, which fail, and why?
+
+5. CONTINUATION: How will you use the sub-agent's output to continue your work?
+   What's your next step after receiving it?

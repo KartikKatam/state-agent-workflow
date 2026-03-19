@@ -1,0 +1,180 @@
+{
+  "per_module": {
+    "common": {
+      "files": 2,
+      "total_loc": 43,
+      "classes": 0,
+      "functions": 2,
+      "dataclasses": 0
+    },
+    "consumer": {
+      "files": 12,
+      "total_loc": 6225,
+      "classes": 28,
+      "functions": 104,
+      "dataclasses": 22
+    },
+    "ocr": {
+      "files": 1,
+      "total_loc": 3,
+      "classes": 0,
+      "functions": 0,
+      "dataclasses": 0
+    },
+    "producer": {
+      "files": 10,
+      "total_loc": 4304,
+      "classes": 26,
+      "functions": 111,
+      "dataclasses": 17
+    },
+    "scripts": {
+      "files": 9,
+      "total_loc": 2759,
+      "classes": 0,
+      "functions": 63,
+      "dataclasses": 0
+    },
+    "tests": {
+      "files": 41,
+      "total_loc": 29326,
+      "classes": 337,
+      "functions": 1514,
+      "dataclasses": 0
+    },
+    "tools": {
+      "files": 11,
+      "total_loc": 2306,
+      "classes": 1,
+      "functions": 51,
+      "dataclasses": 0
+    },
+    "training": {
+      "files": 52,
+      "total_loc": 11823,
+      "classes": 22,
+      "functions": 307,
+      "dataclasses": 5
+    },
+    "vendor": {
+      "files": 19,
+      "total_loc": 1457,
+      "classes": 4,
+      "functions": 44,
+      "dataclasses": 1
+    }
+  },
+  "top_complexity": [
+    {
+      "name": "__post_init__",
+      "file": "consumer/config.py",
+      "complexity": 52
+    },
+    {
+      "name": "_apply_pipeline",
+      "file": "training/augmentations.py",
+      "complexity": 25
+    },
+    {
+      "name": "generate_all",
+      "file": "tools/synthetic_data/generate_composites.py",
+      "complexity": 25
+    },
+    {
+      "name": "train_stride2",
+      "file": "training/regression/stride2/run.py",
+      "complexity": 24
+    },
+    {
+      "name": "train",
+      "file": "training/regression/production/train.py",
+      "complexity": 23
+    },
+    {
+      "name": "main",
+      "file": "scripts/sweep_photometric_parseq.py",
+      "complexity": 21
+    },
+    {
+      "name": "train",
+      "file": "training/train.py",
+      "complexity": 20
+    },
+    {
+      "name": "train",
+      "file": "training/efficientnet_b3/train.py",
+      "complexity": 20
+    },
+    {
+      "name": "update",
+      "file": "producer/ops_tracking.py",
+      "complexity": 20
+    },
+    {
+      "name": "annotate",
+      "file": "tools/corner_annotator/annotate.py",
+      "complexity": 19
+    }
+  ],
+  "dependency_edges": [
+    {
+      "source": "consumer",
+      "target": "common"
+    },
+    {
+      "source": "consumer",
+      "target": "producer"
+    },
+    {
+      "source": "scripts",
+      "target": "consumer"
+    },
+    {
+      "source": "scripts",
+      "target": "producer"
+    },
+    {
+      "source": "scripts",
+      "target": "tests"
+    },
+    {
+      "source": "scripts",
+      "target": "training"
+    },
+    {
+      "source": "tests",
+      "target": "common"
+    },
+    {
+      "source": "tests",
+      "target": "consumer"
+    },
+    {
+      "source": "tests",
+      "target": "producer"
+    },
+    {
+      "source": "tests",
+      "target": "tools"
+    },
+    {
+      "source": "tests",
+      "target": "training"
+    },
+    {
+      "source": "tools",
+      "target": "common"
+    },
+    {
+      "source": "training",
+      "target": "common"
+    },
+    {
+      "source": "vendor",
+      "target": "tests"
+    }
+  ],
+  "total_files": 157,
+  "total_loc": 58246,
+  "report_file_written": true
+}
