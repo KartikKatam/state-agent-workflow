@@ -1,5 +1,5 @@
-# Claude Code worktrees (created by isolation: worktree subagents)
-.claude/worktrees/
+# Claude Code
+.claude/
 
 # Python
 __pycache__/

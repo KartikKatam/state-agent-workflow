@@ -3,7 +3,7 @@ name: test-writer
 description: >
   Test suite design and implementation from behavioral specifications.
   Use when tests need to be written for a plan chunk (TDD red phase) or
-  when test infrastructure needs repair (conftest, fixtures, imports).
+  when tests need fixes based on audit findings (targeted fixes).
   Returns red verification results and structured test inventory.
   Do NOT use for: implementation code (use implementer), debugging test
   failures (use debugger), code review (use audit-checker), scenario
@@ -57,7 +57,7 @@ implementation structure from error patterns.
    | Type | Goal | Read First | Success Criterion |
    |------|------|-----------|-------------------|
    | `tdd_chunk` | Write NEW tests for unimplemented behavior | Plan chunk → design doc → context packets for API specs | All tests FAIL with behavioral errors |
-   | `targeted` | Fix broken test INFRASTRUCTURE only | Error output → affected test files → conftest.py | `pytest --collect-only` passes for all test files |
+   | `targeted` | Fix test issues identified in audit findings | Audit findings → affected test files → plan chunk for design intent | Specific issues fixed, all tests still pass (no regressions) |
    | Budget tight | Prioritize Pass A (unit tests) over Pass B | Plan chunk only — skip design doc deep read | Core behavioral tests written, note Pass B gaps in `carry_forward` |
 
 3. **Design before writing** (`tdd_chunk` only) — For each test spec
@@ -81,14 +81,14 @@ implementation structure from error patterns.
    | Some tests PASS on first run | **RED FLAG** — test may be fraudulent | Re-examine: is it testing existing behavior? Asserting trivially? Rewrite to test NEW behavior from the plan chunk |
    | All tests pass | Tests are not testing unimplemented behavior | Redesign — your tests must encode behavior that doesn't exist yet |
 
-   **For `targeted` mode** — run `pytest --collect-only` instead:
+   **For `targeted` mode** — fix audit-identified issues, then run affected tests:
 
-   | collect-only Result | Action |
-   |---------------------|--------|
-   | Exit 0, all tests discovered | Success — proceed to quality gate |
-   | Exit non-zero, import/fixture errors | Read error output, fix the specific import/fixture/conftest issue, re-run |
-   | Exit non-zero, syntax errors in test files | Fix syntax, re-run. Do NOT rewrite test logic |
-   | Collection errors persist after 3 fixes | Return `partial` with what you fixed, remaining errors in `carry_forward` |
+   | Test Result After Fix | Action |
+   |----------------------|--------|
+   | Specific issues resolved, all tests pass | Success — proceed to quality gate |
+   | Fix resolves finding but breaks other tests | Investigate regression, adjust fix to preserve existing behavior |
+   | Audit finding is ambiguous or unclear | Document interpretation in `decisions_made`, apply best-judgment fix |
+   | Issues persist after 3 fix attempts | Return `partial` with what you fixed, remaining issues in `carry_forward` |
 
 5. **Quality gate** — Run format, lint, typecheck on test files.
    Fix auto-fixable issues. Gate failures are your responsibility.
@@ -133,10 +133,11 @@ scoped to test files. Even if you can infer what the implementation
 should look like from the behavioral specs, writing it defeats the
 TDD process — the implementer must work from test results alone.
 
-**Don't rewrite logic in `targeted` mode.** When fixing test
-infrastructure, touch only the plumbing: imports, fixtures,
-conftest, collection. Existing test assertions and logic are
-someone else's design decisions. Fix wiring, not intent.
+**Don't expand scope in `targeted` mode.** Fix only the specific
+issues identified in audit findings. Each finding has a file:line
+reference and description — scope your fix to that. Don't refactor
+surrounding test code or rewrite unrelated assertions, even if you
+notice opportunities for improvement.
 
 **Don't invent requirements.** Your tests encode the plan's
 behavioral specs. If you notice a gap, document it in
@@ -153,4 +154,4 @@ behavior — otherwise flag it and move on.
 | conftest.py or fixtures missing in worktree | Create minimal test infrastructure, document in `decisions_made` |
 | Test spec references behavior not in plan | Document as "OBSERVED" in `decisions_made`, write test if behavioral spec is unambiguous from design doc |
 | Context pressure | Write completed tests to disk, return `partial` with remaining specs in `carry_forward` |
-| `targeted` mode: infrastructure unfixable | Return `partial` with what you fixed and specific blockers in `carry_forward` |
+| `targeted` mode: audit finding unclear or unfixable | Return `partial` with what you fixed and specific blockers in `carry_forward` |
